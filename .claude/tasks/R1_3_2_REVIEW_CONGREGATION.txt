@@ -1,0 +1,38 @@
+﻿Review milestone 2 implementation.
+
+Inspect:
+
+app/Models/Concerns/BelongsToChurch.php
+app/Models/Church.php
+app/Models/User.php
+app/Models/CongregationMember.php
+
+app/Filament/Resources/CongregationResource.php
+
+app/Filament/Widgets/CongregationStatsWidget.php
+
+
+Objectives
+
+Find hidden bugs
+
+Check Filament 4 best practices
+
+Check authorization
+
+Check global scopes
+
+Check performance
+
+Check naming consistency
+
+Check whether church assignment should happen during registration
+
+
+Do not modify code.
+
+Do not create files.
+
+Only report findings.
+
+Stop after review.

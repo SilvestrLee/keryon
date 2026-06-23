@@ -1,31 +1,16 @@
-Small adjustment before approval.
+Fix findings #1, #2 and #3 only.
 
-Please wrap addGlobalScope itself in a console check.
+Preserve existing behaviour.
 
-Use:
+Implement fail-closed tenancy:
+- Users without church_id must see zero records.
 
-if (! app()->runningInConsole()) {
+Introduce policies for CongregationMember.
 
-    static::addGlobalScope('church_tenant', function (Builder $query) {
+Implement a proper onboarding flow using Option A:
+- Church owner creates a church during setup
+- church_id is automatically assigned
 
-        if (
-            Auth::check()
-            && Auth::user()?->church_id
-        ) {
+Show the implementation plan before writing files.
 
-            $query->where(
-                $query->getModel()->getTable() . '.church_id',
-                Auth::user()->church_id
-            );
-
-        }
-
-    });
-
-}
-
-Everything else looks good.
-
-Regenerate BelongsToChurch.php and ask for approval again.
-
-Do not run migrations.
+Do not touch findings #4–#16.

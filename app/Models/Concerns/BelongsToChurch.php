@@ -19,12 +19,17 @@ trait BelongsToChurch
 
         if (! app()->runningInConsole()) {
             static::addGlobalScope('church_tenant', function (Builder $query) {
-                if (Auth::check() && Auth::user()?->church_id) {
-                    $query->where(
-                        $query->getModel()->getTable() . '.church_id',
-                        Auth::user()->church_id
-                    );
+                $churchId = Auth::check() ? Auth::user()?->church_id : null;
+
+                if (! $churchId) {
+                    $query->whereRaw('0 = 1');
+                    return;
                 }
+
+                $query->where(
+                    $query->getModel()->getTable() . '.church_id',
+                    $churchId
+                );
             });
         }
     }
