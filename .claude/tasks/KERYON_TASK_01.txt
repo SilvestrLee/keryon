@@ -1,0 +1,47 @@
+Continue Keryon Blueprint v1.3 from the current church_id tenancy checkpoint.
+
+Verified:
+- Laravel 12 installed
+- Filament v4.11.7 installed
+- MySQL configured
+- churches migration exists and is pending
+- churches migration is correct
+- app/Models/Church.php is correct
+- add_church_id_to_users_table migration does not exist
+
+Task
+
+1. Create add_church_id_to_users_table migration.
+
+2. Add nullable church_id after id.
+
+3. Constrain to churches.
+
+4. Use nullOnDelete.
+
+5. Show the full migration code.
+
+6. Do NOT run php artisan migrate.
+
+7. Do NOT edit User.php.
+
+8. Do NOT create BelongsToChurch.php.
+
+9. Stop after showing migration code and changed files.
+
+
+Keryon Engineering Process
+
+Before editing:
+- Explain files to inspect
+- Explain why changes are needed
+
+After editing:
+- Summarize modifications
+- List changed files
+- Give verification commands
+- Describe expected results
+
+Do not introduce new features.
+
+Respect Blueprint v1.3.
