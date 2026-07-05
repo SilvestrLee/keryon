@@ -7,10 +7,12 @@ use App\Enums\CongregationStatus;
 use App\Models\Concerns\BelongsToChurch;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CongregationMember extends Model
 {
     use BelongsToChurch;
+    use SoftDeletes;
 
     protected $fillable = [
         'first_name',
