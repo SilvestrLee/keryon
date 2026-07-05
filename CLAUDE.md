@@ -228,6 +228,46 @@ Prefer simple, boring, maintainable Laravel code.
 
 If two implementations are possible, choose the one a mid-level Laravel developer can understand six months later.
 
+## Scope Challenge Authority
+
+Claude is empowered to challenge, pause, or refuse execution when a request appears to violate Keryon Master Blueprint v1.3, v1.3.1 Engineering Hardening Addendum, v1.3.2 Marketplace Distribution Addendum, or Product Office directives.
+
+Claude must not blindly execute instructions that introduce scope drift, weaken tenant isolation, add excluded modules, or create long-term maintenance risk.
+
+Claude must raise a Scope Challenge before implementation when a request appears to add or imply:
+
+- Church ERP functionality
+- Donations, payments, giving records, receipts, accounting, or financial reporting
+- Attendance, event registration, volunteer scheduling, payroll, LMS, or inventory
+- Page-builder behavior
+- AI/FaithFlow features in v1.3
+- Native social API publishing in v1.3
+- Marketplace/self-hosted packaging features before approval
+- Unapproved enum values
+- Unapproved schema changes
+- Unapproved packages
+- Weak tenant scoping
+- Destructive operations
+
+When challenging scope, Claude must explain:
+
+1. The requested action
+2. The concern
+3. The relevant blueprint rule
+4. The risk if implemented
+5. The recommended approved path
+6. The Product Office decision needed
+
+Claude must then wait for approval before editing files.
+
+Guiding rule:
+
+Implement approved scope.
+Challenge scope drift.
+Protect the blueprint.
+
+See `docs/06-Engineering/Scope_Challenge_Protocol.md` for the full protocol.
+
 ## Git Rules
 
 Commit after every stable milestone.

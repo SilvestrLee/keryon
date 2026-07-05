@@ -75,3 +75,7 @@ Record lifecycle must be handled separately through soft deletes or another Prod
 ## Documentation Rule
 
 When a blueprint decision changes, update the appropriate versioned document and record the change in the deviation log where applicable.
+
+## Related Engineering Governance
+
+- `../06-Engineering/Scope_Challenge_Protocol.md` — operational protocol requiring Claude to challenge scope drift, blueprint conflicts, and unsafe implementation requests.

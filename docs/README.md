@@ -14,3 +14,7 @@ This folder contains product, engineering, and governance documentation for Kery
 The blueprint family is the source of truth for the product.
 
 Engineering should not introduce new modules, statuses, payment functionality, page-builder behavior, or marketplace packaging features unless Product Office explicitly approves them.
+
+## Engineering Governance
+
+- `06-Engineering/Scope_Challenge_Protocol.md` — defines when Claude must challenge scope drift, security risks, tenant isolation issues, and blueprint conflicts.
