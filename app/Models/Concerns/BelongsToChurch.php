@@ -17,21 +17,19 @@ trait BelongsToChurch
             }
         });
 
-        if (! app()->runningInConsole()) {
-            static::addGlobalScope('church_tenant', function (Builder $query) {
-                $churchId = Auth::check() ? Auth::user()?->church_id : null;
+        static::addGlobalScope('church_tenant', function (Builder $query) {
+            $churchId = Auth::check() ? Auth::user()?->church_id : null;
 
-                if (! $churchId) {
-                    $query->whereRaw('0 = 1');
-                    return;
-                }
+            if (! $churchId) {
+                $query->whereRaw('0 = 1');
+                return;
+            }
 
-                $query->where(
-                    $query->getModel()->getTable() . '.church_id',
-                    $churchId
-                );
-            });
-        }
+            $query->where(
+                $query->getModel()->getTable() . '.church_id',
+                $churchId
+            );
+        });
     }
 
     public function church(): BelongsTo
