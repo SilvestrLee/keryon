@@ -29,3 +29,15 @@ Thumbs.db
 .claude/skills/ui-ux-pro-max-skill/
 
 .claude/adjustment
+
+# Claude local runtime artifacts
+.claude/decisions/
+.claude/tasks/
+.claude/worktrees/
+
+# Local Claude backup files
+CLAUDE.md.bak-*
+
+# Accidental shell-output files
+all())
+count())
