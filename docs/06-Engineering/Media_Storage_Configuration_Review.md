@@ -200,3 +200,9 @@ S3-compatible storage requirement is recorded
 tenant media isolation requirement is recorded
 no media implementation has started
 ```
+
+---
+
+## Related Document
+
+- `Media_Path_Strategy.md` defines the required tenant-prefixed path pattern for future media implementation.
