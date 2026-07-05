@@ -20,3 +20,4 @@ Engineering should not introduce new modules, statuses, payment functionality, p
 - `06-Engineering/Scope_Challenge_Protocol.md` — defines when Claude must challenge scope drift, security risks, tenant isolation issues, and blueprint conflicts.
 - `06-Engineering/Media_Storage_Configuration_Review.md` — documents production media storage requirements, S3-compatible storage expectations, and tenant media isolation rules.
 - `06-Engineering/Media_Path_Strategy.md` — defines tenant-prefixed media path rules for future media storage and upload implementation.
+- `06-Engineering/Filament_Product_Experience_Review.md` — defines which Filament areas may remain CRUD and which must become curated product experiences.
