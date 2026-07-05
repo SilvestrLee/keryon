@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\CongregationStatus;
+
 use App\Models\Concerns\BelongsToChurch;
 use Illuminate\Database\Eloquent\Model;
 
@@ -23,6 +25,8 @@ class CongregationMember extends Model
     {
         return [
             'birthday' => 'date',
+            'status' => CongregationStatus::class,
         ];
     }
 }
+

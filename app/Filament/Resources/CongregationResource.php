@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\CongregationStatus;
+
 use App\Filament\Resources\CongregationResource\Pages\EditCongregationMember;
 use App\Filament\Resources\CongregationResource\Pages\ListCongregationMembers;
 use App\Models\CongregationMember;
@@ -41,12 +43,8 @@ class CongregationResource extends Resource
                 TextInput::make('email')->email()->nullable(),
                 DatePicker::make('birthday')->nullable(),
                 Select::make('status')
-                    ->options([
-                        'active' => 'Active',
-                        'visitor' => 'Visitor',
-                        'inactive' => 'Inactive',
-                    ])
-                    ->default('active')
+                    ->options(CongregationStatus::options())
+                    ->default(CongregationStatus::ACTIVE->value)
                     ->required(),
             ])
             ->columns(2);
@@ -79,20 +77,12 @@ class CongregationResource extends Resource
                     ->sortable(),
                 TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $state) => match ($state) {
-                        'active' => 'success',
-                        'visitor' => 'warning',
-                        'inactive' => 'gray',
-                        default => 'gray',
-                    }),
+                    ->formatStateUsing(fn (CongregationStatus $state): string => $state->label())
+                    ->color(fn (CongregationStatus $state): string => $state->color()),
             ])
             ->filters([
                 SelectFilter::make('status')
-                    ->options([
-                        'active' => 'Active',
-                        'visitor' => 'Visitor',
-                        'inactive' => 'Inactive',
-                    ]),
+                    ->options(CongregationStatus::options()),
                 Filter::make('birthdays_this_month')
                     ->label('Birthdays This Month')
                     ->query(fn (Builder $query) => $query
@@ -120,3 +110,4 @@ class CongregationResource extends Resource
         ];
     }
 }
+
