@@ -1,4 +1,4 @@
-﻿# Keryon Development Guide
+# Keryon Development Guide
 
 ## Project
 
@@ -239,3 +239,133 @@ git commit -m "feat: churches foundation"
 git commit -m "feat: belongs to church trait"
 git commit -m "feat: congregation resource"
 git commit -m "feat: dashboard widgets"
+
+## API Outage Protocol
+
+If Claude API returns 500 or 529 errors:
+
+1. Do not change implementation plans.
+2. Product Office creates task files via PowerShell.
+3. Resume work only by reading the task file.
+4. Never skip approval checkpoints because of API outages.
+
+<!-- KERYON-BLUEPRINT-GOVERNANCE:START -->
+## Keryon Blueprint Governance
+
+The Keryon blueprint family is binding for this project.
+
+### Governing Documents
+
+- `docs/00-Blueprint/Keryon_Master_Blueprint_v1.3.md`
+- `docs/00-Blueprint/Keryon_Blueprint_v1.3.1_Engineering_Hardening_Addendum.md`
+- `docs/00-Blueprint/Keryon_Blueprint_v1.3.2_Marketplace_Distribution_Addendum.md`
+- `docs/00-Blueprint/Blueprint_Index.md`
+
+### Authority
+
+Keryon Master Blueprint v1.3 is the source of truth.
+
+Keryon Blueprint v1.3.1 is binding for engineering hardening.
+
+Keryon Blueprint v1.3.2 is a future marketplace/self-hosted packaging consideration only. It must not change current sprint scope.
+
+### Product Scope Lock
+
+Keryon is a Church Communications Platform.
+
+Do not introduce these unless Product Office explicitly approves a versioned blueprint update:
+
+- Donations
+- Tithes
+- Offerings
+- Payment processing
+- Payment webhooks
+- Receipts
+- Financial reporting
+- Accounting
+- Attendance
+- Event registration
+- Volunteer scheduling
+- Church ERP functionality
+- Page-builder functionality
+- Marketplace installer
+- Licensing system
+- White-label reseller panel
+
+### Tenancy Rules
+
+Every tenant-owned model must:
+
+- Include `church_id`
+- Use the approved tenancy protection pattern
+- Be scoped by church
+- Be covered by tenant isolation tests where applicable
+
+Simple `church_id` tenancy remains approved.
+
+Weak tenancy is not approved.
+
+### Congregation Status Rule
+
+Approved `CongregationStatus` values only:
+
+- `active`
+- `visitor`
+- `inactive`
+
+Do not add:
+
+- `archived`
+- `deleted`
+- `pending`
+- `prospect`
+- `lead`
+- `member`
+
+Record lifecycle must be handled separately through soft deletes or another Product Office-approved lifecycle mechanism.
+
+### Claude Working Rules
+
+Before implementation, explain:
+
+- Files to inspect
+- Files to change
+- Reason for change
+- Risks
+- Verification plan
+
+After implementation, provide:
+
+- Changed files
+- Summary of changes
+- Verification commands
+- Expected result
+- Commit message
+
+Ask before:
+
+- Running migrations
+- Installing packages
+- Deleting files
+- Authentication changes
+- Destructive operations
+- Major architectural refactors
+- Schema changes beyond the approved task
+
+### Current Sprint
+
+Continue Congregation implementation.
+
+Current task:
+
+**Congregation C-04 â€” Status Enum**
+
+Then continue:
+
+1. C-07 â€” Fillable Guard
+2. C-05 â€” Full Name Accessor
+3. C-06 â€” Church Relationship
+4. C-02 â€” Delete Action
+5. C-03 â€” Soft Deletes
+6. C-01 â€” Member Profile Page
+<!-- KERYON-BLUEPRINT-GOVERNANCE:END -->
