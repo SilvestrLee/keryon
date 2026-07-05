@@ -6,15 +6,19 @@ use App\Enums\CongregationStatus;
 
 use App\Filament\Resources\CongregationResource\Pages\EditCongregationMember;
 use App\Filament\Resources\CongregationResource\Pages\ListCongregationMembers;
+use App\Filament\Resources\CongregationResource\Pages\ViewCongregationMember;
 use App\Models\CongregationMember;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
@@ -49,6 +53,44 @@ class CongregationResource extends Resource
                     ->required(),
             ])
             ->columns(2);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                Section::make('Member Summary')
+                    ->schema([
+                        TextEntry::make('full_name')
+                            ->label('Full Name'),
+                        TextEntry::make('status')
+                            ->badge()
+                            ->formatStateUsing(fn (CongregationStatus $state): string => $state->label())
+                            ->color(fn (CongregationStatus $state): string => $state->color()),
+                        TextEntry::make('birthday')
+                            ->date('M j, Y'),
+                    ])
+                    ->columns(3),
+                Section::make('Contact Information')
+                    ->schema([
+                        TextEntry::make('phone'),
+                        TextEntry::make('email'),
+                    ])
+                    ->columns(2),
+                Section::make('Church Information')
+                    ->schema([
+                        TextEntry::make('church.name')
+                            ->label('Church'),
+                    ]),
+                Section::make('Record Information')
+                    ->schema([
+                        TextEntry::make('created_at')
+                            ->dateTime(),
+                        TextEntry::make('updated_at')
+                            ->dateTime(),
+                    ])
+                    ->columns(2),
+            ]);
     }
 
     public static function table(Table $table): Table
@@ -91,6 +133,7 @@ class CongregationResource extends Resource
                         ->whereMonth('birthday', now()->month)),
             ])
             ->actions([
+                ViewAction::make(),
                 EditAction::make(),
                 DeleteAction::make(),
             ])
@@ -108,6 +151,7 @@ class CongregationResource extends Resource
     {
         return [
             'index' => ListCongregationMembers::route('/'),
+            'view' => ViewCongregationMember::route('/{record}'),
             'edit' => EditCongregationMember::route('/{record}/edit'),
         ];
     }
