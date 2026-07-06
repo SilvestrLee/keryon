@@ -91,6 +91,7 @@ class PrayerRequestResource extends Resource
                         Textarea::make('request')
                             ->label('Prayer Request')
                             ->required()
+                            ->helperText('Record the request clearly and respectfully.')
                             ->columnSpanFull(),
                         Select::make('visibility')
                             ->label('Visibility')
