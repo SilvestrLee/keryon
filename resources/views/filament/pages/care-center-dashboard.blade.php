@@ -58,7 +58,7 @@
 
         <div class="rounded-2xl bg-white border border-gray-100 shadow-sm p-6">
             <h2 class="text-base font-bold text-gray-900">Currently Praying</h2>
-            <p class="text-sm text-gray-500 mt-1">Requests your church is actively praying over.</p>
+            <p class="text-sm text-gray-500 mt-1">Requests {{ \App\Support\CurrentChurch::name() }} is actively praying over.</p>
 
             <div class="mt-4 space-y-3">
                 @forelse ($this->getCurrentlyPraying() as $prayerRequest)
@@ -84,7 +84,7 @@
 
     <div class="mt-6 rounded-2xl bg-white border border-gray-100 shadow-sm p-6">
         <h2 class="text-base font-bold text-gray-900">Recently Submitted</h2>
-        <p class="text-sm text-gray-500 mt-1">The latest prayer requests submitted by your church community.</p>
+        <p class="text-sm text-gray-500 mt-1">The latest prayer requests submitted by {{ \App\Support\CurrentChurch::name() }}.</p>
 
         <div class="mt-4 overflow-x-auto">
             <table class="w-full text-sm">
@@ -123,7 +123,7 @@
                     @empty
                         <tr>
                             <td colspan="5" class="py-4 text-sm text-gray-400">
-                                No prayer requests yet. Prayer requests submitted by your church community will appear here.
+                                No prayer requests yet. Prayer requests submitted by {{ \App\Support\CurrentChurch::name() }} will appear here.
                             </td>
                         </tr>
                     @endforelse

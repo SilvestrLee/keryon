@@ -9,6 +9,7 @@ use App\Filament\Resources\PrayerRequestResource\Pages\ListPrayerRequests;
 use App\Filament\Resources\PrayerRequestResource\Pages\ViewPrayerRequest;
 use App\Models\CongregationMember;
 use App\Models\PrayerRequest;
+use App\Support\CurrentChurch;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -228,7 +229,7 @@ class PrayerRequestResource extends Resource
                 DeleteAction::make(),
             ])
             ->emptyStateHeading('No prayer requests yet.')
-            ->emptyStateDescription('Prayer requests submitted by your church community will appear here.')
+            ->emptyStateDescription(fn (): string => 'Prayer requests submitted by ' . CurrentChurch::name() . ' will appear here.')
             ->emptyStateIcon('heroicon-o-heart')
             ->emptyStateActions([
                 CreateAction::make()

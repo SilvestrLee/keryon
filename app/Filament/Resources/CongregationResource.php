@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Enums\CongregationStatus;
 
+use App\Support\CurrentChurch;
 use App\Filament\Resources\CongregationResource\Pages\EditCongregationMember;
 use App\Filament\Resources\CongregationResource\Pages\ListCongregationMembers;
 use App\Filament\Resources\CongregationResource\Pages\ViewCongregationMember;
@@ -138,7 +139,7 @@ class CongregationResource extends Resource
                 DeleteAction::make(),
             ])
             ->emptyStateHeading('No members yet.')
-            ->emptyStateDescription('Start building your congregation directory.')
+            ->emptyStateDescription(fn (): string => 'Start building ' . CurrentChurch::possessiveName() . ' congregation directory.')
             ->emptyStateIcon('heroicon-o-users')
             ->emptyStateActions([
                 CreateAction::make()
