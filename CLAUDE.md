@@ -190,6 +190,76 @@ Use for:
 
 Do not use it to introduce new features.
 
+## Mandatory UI/Product Experience Tooling
+
+For every sprint involving UI, UX, layout, copy, Filament resources, Filament pages, dashboards, widgets, empty states, navigation, buttons, forms, tables, or product experience, Claude must explicitly consult and apply:
+
+- `.claude/skills/ui-ux-pro-max-skill/KERYON_OVERRIDES.md`
+- `docs/06-Engineering/Product_Language_Standard.md`
+- `docs/06-Engineering/Filament_Product_Experience_Review.md`
+- 21st.dev / Magic MCP where useful and available
+
+These tools are mandatory for UI/product-experience work.
+
+They are not required for pure backend/data/model/migration/test-only tasks unless the sprint touches user-facing behavior.
+
+### UI Tooling Authority Order
+
+1. Keryon Master Blueprint v1.3
+2. Product Office sprint directive
+3. Scope Challenge Protocol
+4. Product Language Standard
+5. KERYON_OVERRIDES.md
+6. UI UX Pro Max Skill
+7. 21st.dev / Magic MCP suggestions
+
+If 21st.dev or the UI skill suggests anything outside the approved sprint scope, reject it and report the rejection.
+
+### Required UI Tooling Report
+
+Every UI/product-experience sprint final report must include:
+
+```txt
+UI UX Pro Max consulted: yes/no
+KERYON_OVERRIDES consulted: yes/no
+Product Language Standard consulted: yes/no
+21st.dev / Magic MCP used: yes/no
+MCP suggestions accepted:
+MCP suggestions rejected:
+Scope expansions rejected:
+```
+
+### 21st.dev / Magic MCP Rules
+
+Use 21st.dev / Magic MCP for:
+
+- layout review
+- component hierarchy
+- dashboard polish
+- empty states
+- spacing and visual hierarchy
+- Filament UI refinement
+- design inspiration within the approved scope
+
+Do not use it to:
+
+- introduce unapproved features
+- create new modules
+- change database architecture
+- add page-builder behavior
+- add AI features
+- add marketplace features
+- install packages without approval
+- override Product Office decisions
+
+### Theme / Styling Warning
+
+If UI classes appear in Blade or Filament files but do not render correctly in the browser, do not patch randomly.
+
+Report whether the Filament custom theme is wired through the panel provider.
+
+Theme registration, Tailwind/Vite changes, or AdminPanelProvider changes require a dedicated Product Office-approved sprint.
+
 ## Claude Working Process
 
 Claude may directly edit files for small, reversible development steps.

@@ -564,6 +564,16 @@ Blueprint and Product Office decisions remain higher authority than UI tools.
 
 ---
 
+## Required UI Tooling Check
+
+Before implementing or polishing Filament UI, Engineering must consult the UI UX Pro Max Skill, KERYON_OVERRIDES.md, and the Product Language Standard.
+
+21st.dev / Magic MCP may be used for UI review and layout guidance, but all suggestions must remain inside the approved sprint scope.
+
+If a UI appears unstyled because Tailwind/Filament theme classes are not loading, this should be raised as a theme wiring issue and handled in a dedicated sprint.
+
+---
+
 ## Product Office Decision
 
 T-05 is complete when:
