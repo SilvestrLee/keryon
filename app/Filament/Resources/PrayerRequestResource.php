@@ -229,7 +229,7 @@ class PrayerRequestResource extends Resource
                 DeleteAction::make(),
             ])
             ->emptyStateHeading('No prayer requests yet.')
-            ->emptyStateDescription(fn (): string => 'Prayer requests submitted by ' . CurrentChurch::name() . ' will appear here.')
+            ->emptyStateDescription(fn (): string => 'Prayer requests for ' . CurrentChurch::name() . ' will appear here.')
             ->emptyStateIcon('heroicon-o-heart')
             ->emptyStateActions([
                 CreateAction::make()
