@@ -113,6 +113,10 @@ Avoid gradients and excessive animations.
 
 Empty states are required.
 
+## Product Language Rule
+
+Use `docs/06-Engineering/Product_Language_Standard.md` for all user-facing copy. Do not mechanically replace "your church" with the church name. Rewrite sentences so the church name flows naturally.
+
 ## Website Content Rule
 
 Keryon is not a page builder.
