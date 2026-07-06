@@ -5,6 +5,7 @@ namespace Tests\Feature\Tenancy;
 use App\Models\Church;
 use App\Models\CongregationMember;
 use App\Models\Concerns\BelongsToChurch;
+use App\Models\PrayerRequest;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
@@ -22,6 +23,7 @@ class TenantOwnedModelsTest extends TestCase
      */
     protected array $tenantOwnedModels = [
         CongregationMember::class,
+        PrayerRequest::class,
     ];
 
     public function test_tenant_owned_models_have_church_id_column(): void
