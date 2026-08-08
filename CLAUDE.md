@@ -14,9 +14,9 @@ Primary domain: `keryon.app`
 
 ## Stack
 
-- Laravel 12
+- Laravel 13
 - Filament v4
-- Livewire 3
+- Livewire 3 (provided via Filament v4, not an independently pinned dependency)
 - MySQL
 - Laravel Herd
 - VS Code
@@ -138,6 +138,24 @@ Website publishing workflow:
 - Publish
 
 Never publish immediately after Save.
+
+Every editable website component must be specified against the contract format in `docs/06-Engineering/Website_Content_Contract.md` before it is built.
+
+## Engineering Standards
+
+CLAUDE.md stays a fast operating guide. Detailed standards live in `docs/06-Engineering/` — read the linked document rather than expecting the rule restated here.
+
+- `docs/06-Engineering/Scope_Challenge_Protocol.md` — when to challenge, pause, or refuse a request; also the data-contract inspection rule.
+- `docs/06-Engineering/Filament_Product_Experience_Review.md` — which Filament areas may stay CRUD vs. require a curated experience.
+- `docs/06-Engineering/Product_Language_Standard.md` — product voice and church-name personalization.
+- `docs/06-Engineering/UX_Feedback_and_System_State_Standard.md` — workflow state, progress, attention, success, and error language.
+- `docs/06-Engineering/Website_Content_Contract.md` — the content-contract format for editable website components.
+- `docs/06-Engineering/Responsive_and_Accessibility_Standard.md` — responsive-viewport and accessibility verification.
+- `docs/06-Engineering/Logging_Standard.md` — what may, must not, and must never be logged.
+- `docs/06-Engineering/Media_Path_Strategy.md` / `Media_Storage_Configuration_Review.md` — tenant media path and storage rules for future upload work.
+- `docs/06-Engineering/Deployment_Guardrails.md` — required inspection before any deployment command, pending a full runbook.
+
+Evidence-based completion: a task is not "complete" without evidence proportionate to its size — passing tests, a successful build, a route/policy check, a database inspection, or browser verification, as relevant. Never report an assumption as a verified result.
 
 ## Installed Skills
 
@@ -275,6 +293,9 @@ After editing files:
 2. Summarize the changes.
 3. Provide exact verification commands.
 4. Explain expected results.
+5. For user-facing UI changes, distinguish CODE VERIFICATION (tests, build, lint), BEHAVIOURAL VERIFICATION (routes, authorization, database/workflow outcome), and VISUAL VERIFICATION (browser inspection of relevant states and viewport sizes). If visual verification was not performed, say so explicitly ("Visual verification not performed") — do not present an assumption as a verified result. See `docs/06-Engineering/Responsive_and_Accessibility_Standard.md`.
+
+Before changing a controlled value (enum, status, role, foreign key, lifecycle field), inspect what currently exists first — see `docs/06-Engineering/Scope_Challenge_Protocol.md` ("Inspect Before Mutating Data Contracts"). Do not assume repository data matches documentation.
 
 Claude must ask before:
 

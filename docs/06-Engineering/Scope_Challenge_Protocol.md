@@ -108,6 +108,29 @@ Claude must not edit files until Product Office confirms the path.
 
 ---
 
+## Inspect Before Mutating Data Contracts
+
+Before changing a controlled, production-compatible value — an enum, a status, a role, a foreign key, a required relationship value, or any other lifecycle value — inspect what currently exists in the repository and, where the environment allows it, the database. Do not assume the current data matches what the documentation says it should be.
+
+```txt
+Example: before restricting `status` to a new enum,
+inspect existing distinct status values first.
+```
+
+If inspection turns up a value that isn't accounted for:
+
+```txt
+Stop the mutation.
+Report the unexpected value.
+Explain the compatibility implication.
+Do not silently map it.
+Do not silently delete it.
+```
+
+This rule applies in addition to, not instead of, the Enum and Status Drift trigger below — that section defines which values are approved; this section defines the inspection step that must happen before any change to what values are allowed.
+
+---
+
 ## Scope Challenge Triggers
 
 Claude must challenge requests involving any of the categories below.
