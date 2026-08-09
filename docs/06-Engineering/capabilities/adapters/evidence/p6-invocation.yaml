@@ -1,0 +1,27 @@
+# CAPSYS-P6 invocation record — paired with p6-resolution.yaml. Conforms to
+# evidence/CONTRACT.md and schemas/evidence.schema.yaml at central HEAD
+# 855f8dfaa9224ffdba31fa4c9693bac126d7206b.
+
+kind: invocation
+capability_id: nextlevelbuilder/ui-ux-pro-max-skill/ui-ux-pro-max
+task: >
+  CAPSYS-P6: audit Keryon's existing UI/UX Pro Max governance and, if the
+  central adapter contract fits truthfully, write one project-owned
+  Project Adapter record plus this evidence pair.
+invocation_status: NOT_INVOKED
+reason: >
+  Resolution for this task was NOT_REQUIRED (see p6-resolution.yaml) — P6
+  is governance/documentation work, not a design decision, so the
+  capability was not invoked merely because it was the subject being
+  integrated (installed/available is not invocation evidence;
+  evidence/CONTRACT.md's "INSTALLED ≠ INVOKED").
+scope: not_applicable
+result: not_applicable
+evidence_quality: NOT_RECORDED
+limitations: >
+  This record does not describe the capability's general availability or
+  callability in Keryon's environment — see this adapter's
+  local_enablement field for that separate finding (INSTALLED_CALLABLE,
+  demonstrated by two real `search.py` invocations during a distinct,
+  prior, genuinely design-scoped task in this same session — K-WEB-001,
+  not CAPSYS-P6).

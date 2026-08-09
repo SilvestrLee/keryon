@@ -1,0 +1,160 @@
+# Keryon Project Adapter — real, project-owned integration record.
+#
+# Declares Keryon's own relationship to the central Capability System's
+# canonical UI/UX Pro Max identity, per
+# /Users/silvestr/Documents/capability-system/adapters/CONTRACT.md and
+# schemas/adapter.schema.yaml at central HEAD
+# 855f8dfaa9224ffdba31fa4c9693bac126d7206b (CAPSYS-P6, third-consumer
+# validation). This file expresses how Keryon uses the capability; it does
+# not itself decide what Keryon's product is — Keryon Product Office and
+# Keryon's own governance (CLAUDE.md, docs/06-Engineering/) remain
+# authoritative over Keryon. See adapters/CONTRACT.md's "core invariant":
+# AVAILABLE ≠ AUTHORIZED ≠ REQUIRED.
+#
+# Not copied from SlipGuard's or Rive Webworks' adapters — every value below
+# is Keryon's own, independently observed truth.
+
+project: Keryon
+
+capability_id: nextlevelbuilder/ui-ux-pro-max-skill/ui-ux-pro-max
+
+authorization: REQUIRED
+# Scoped, not blanket. CLAUDE.md's "Mandatory UI/Product Experience
+# Tooling" section: required "For every sprint involving UI, UX, layout,
+# copy, Filament resources, Filament pages, dashboards, widgets, empty
+# states, navigation, buttons, forms, tables, or product experience."
+# The same section and KERYON_OVERRIDES.md both explicitly exclude:
+# "Migrations, Models, Traits, Policies, Authentication, Queues, Tests,
+# Database structure, Tenancy architecture" — "not required for pure
+# backend/data/model/migration/test-only tasks unless the sprint touches
+# user-facing behavior" (CLAUDE.md). REQUIRED here means the narrower,
+# evidenced claim, not "required for every task in the repository."
+
+authority_weight: supporting
+# Not primary. CLAUDE.md's "UI Tooling Authority Order" ranks UI UX Pro
+# Max 6th of 7, below Keryon Master Blueprint v1.3, the Product Office
+# sprint directive, the Scope Challenge Protocol, and the Product Language
+# Standard, and below KERYON_OVERRIDES.md itself — above only 21st.dev/
+# Magic MCP suggestions. Filament_Product_Experience_Review.md's "UI Skill
+# and MCP Usage" section: usable for "layout suggestions, dashboard
+# refinement, empty states, component hierarchy, spacing, cards, widgets,
+# visual polish"; "must not be used to introduce new product modules,
+# expand scope, change database architecture, add page-builder behavior,
+# add AI features, add marketplace features, override blueprint rules" —
+# "Blueprint and Product Office decisions remain higher authority than UI
+# tools." .claude/decisions/DECISION_005_engineering_workflow.md names it
+# as the "UI Specialist" role within Keryon's Product Architect → Engineer
+# workflow — participates at review, does not hold approval authority
+# (approval belongs to Product Owner/Architect, step 6 of that workflow).
+# The capability participates in design work; it does not make Keryon's
+# final product decisions.
+
+local_enablement: >
+  Full vendored copy at .claude/skills/ui-ux-pro-max-skill/ (skill.json
+  reports version 2.5.0). This path is explicitly git-ignored
+  (.gitignore line 29: ".claude/skills/ui-ux-pro-max-skill/") — it exists
+  on this machine's local working copy only, is not committed to the
+  Keryon repository, and is not tracked by skills-lock.json (which covers
+  only the separate 12-skill "TasteSkill" package under .agents/skills/,
+  and is itself currently untracked/uncommitted in this working tree as
+  of CAPSYS-P6, unrelated pre-existing work). A fresh clone of Keryon at
+  the current HEAD would not include this capability's files, despite
+  CLAUDE.md's mandate for it being fully committed and version-controlled.
+  Callability demonstrated directly this session:
+  `python3 .claude/skills/ui-ux-pro-max-skill/src/ui-ux-pro-max/scripts/search.py
+  "<query>" --domain ux -n 5`, run twice, both times returning real,
+  structured result rows (not a description of expected output).
+
+project_restrictions: >
+  Reference/pattern guidance only, subordinate to Keryon Master Blueprint
+  v1.3 and Product Office decisions (CLAUDE.md's UI Tooling Authority
+  Order; Filament_Product_Experience_Review.md's "UI Skill and MCP Usage").
+  Must not introduce new product modules, expand scope, change database
+  architecture, add page-builder behaviour, add AI features, add
+  marketplace features, or override Blueprint rules. Explicitly out of
+  scope: Migrations, Models, Traits, Policies, Authentication, Queues,
+  Tests, Database structure, Tenancy architecture (CLAUDE.md,
+  KERYON_OVERRIDES.md). If 21st.dev/Magic MCP or this skill suggests
+  anything outside an approved sprint's scope, CLAUDE.md requires the
+  suggestion be rejected and the rejection reported. Keryon's own
+  TasteSkill package (Leonxlnx/taste-skill, central registry
+  canonical_id, 12 skills vendored under .agents/skills/) is recorded
+  centrally as conflicting with this capability
+  (registry/capabilities/taste-skill-package.yaml `conflicts:`); Keryon's
+  own governance (CLAUDE.md, .claude/project.md, docs/06-Engineering/)
+  contains zero mentions of TasteSkill — it is present on disk but
+  ungoverned, not authorized, not restricted, not referenced anywhere in
+  Keryon's own rules. This adapter does not resolve that; it records it
+  as observed, unaddressed local fact. 21st.dev/Magic MCP is named in
+  CLAUDE.md as a conditional complement ("where useful and available")
+  ranked below this capability in the Authority Order; no .mcp.json
+  exists in this repository and no callable 21st.dev/Magic MCP tool was
+  found in this session — only prior npx CLI attempts recorded in
+  .claude/settings.local.json's permission history
+  (`npx -y @21st-dev/magic@latest --help`). This capability's
+  authorization does not depend on 21st.dev's own availability.
+
+project_overrides: NOT_RECORDED
+
+version_constraint: >
+  Vendored copy pinned at v2.5.0 (.claude/skills/ui-ux-pro-max-skill/skill.json),
+  observed 2026-08-09. The central capability record
+  (registry/capabilities/ui-ux-pro-max.yaml) notes version 2.11.0,
+  observed via SlipGuard's/Rive Webworks' Claude Code plugin-marketplace
+  installs. Keryon's vendored copy is on a materially older version with
+  no recorded update mechanism — a plugin-marketplace install can pick up
+  a newer version on next sync; a manually vendored, git-ignored copy
+  cannot, absent someone re-vendoring it by hand.
+
+project_specific_context: >
+  .claude/skills/ui-ux-pro-max-skill/KERYON_OVERRIDES.md (local design
+  tokens, personality, dashboard inspiration, ignore-list — takes
+  precedence over the skill's general recommendations per CLAUDE.md);
+  docs/06-Engineering/Filament_Product_Experience_Review.md ("UI Skill and
+  MCP Usage", "Required UI Tooling Check"); docs/06-Engineering/Product_Language_Standard.md;
+  .claude/project.md ("UI/Product Experience Tooling" section);
+  .claude/decisions/DECISION_005_engineering_workflow.md (defines the "UI
+  Specialist" role).
+
+evidence_channels:
+  - kind: task
+    location: "CLAUDE.md's \"Required UI Tooling Report\" block, included in every UI/product-experience sprint's final report (also restated in .claude/project.md)"
+    purpose: >
+      Keryon's own pre-existing, per-task convention: each UI/product-
+      experience sprint's final report must state, for that task,
+      whether UI UX Pro Max was consulted, whether KERYON_OVERRIDES.md
+      and the Product Language Standard were consulted, whether 21st.dev/
+      Magic MCP was used, and which of its suggestions were accepted or
+      rejected. Predates CAPSYS-P6 (present in CLAUDE.md since commit
+      8322aec, 2026-07-06). Note: Product Office itself has recorded that
+      this convention is not reliably reconstructable after the fact —
+      docs/06-Engineering/Deviation_Log.md's 2026-07-16 entry required an
+      explicit "Historical tooling invocation... could not be
+      conclusively verified" disclosure rather than a retroactive claim,
+      because no durable record of a past task's report survives once
+      that task's own report is not separately archived.
+  - kind: integration
+    location: docs/06-Engineering/capabilities/adapters/evidence/
+    purpose: >
+      Structured resolution/invocation records for capability-system
+      integration work specifically (CAPSYS-P6), mirroring the pattern
+      independently established by CAPSYS-P2 (SlipGuard) and CAPSYS-P3
+      (Rive Webworks). Newly established by this adapter's own creation,
+      not a pre-existing Keryon convention — see this adapter's notes
+      field and the CAPSYS-P6 report for the distinction between the two
+      channels above.
+
+notes: >
+  Keryon has no dedicated capability/skill registry document analogous to
+  SlipGuard's CAPABILITY-REGISTRY.md or Rive Webworks' SKILL_REGISTRY.md /
+  CAPABILITY_REGISTER.md — its governance is distributed across CLAUDE.md,
+  .claude/project.md, KERYON_OVERRIDES.md, and
+  docs/06-Engineering/Filament_Product_Experience_Review.md, all
+  independently converging on the same REQUIRED/supporting, task-class-
+  scoped treatment. Both evidence channels above are genuine, but they
+  are not symmetric: the "task" channel is Keryon's own convention,
+  observed unmodified; the "integration" channel is being created by this
+  adapter itself, for the same structural reason CAPSYS-P2/P3 each ended
+  up creating one for their own consumer — see the CAPSYS-P6 report's
+  Evidence Model Result section before treating this as independent
+  three-consumer convergence.

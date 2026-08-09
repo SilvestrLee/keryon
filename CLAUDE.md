@@ -154,6 +154,7 @@ CLAUDE.md stays a fast operating guide. Detailed standards live in `docs/06-Engi
 - `docs/06-Engineering/Logging_Standard.md` — what may, must not, and must never be logged.
 - `docs/06-Engineering/Media_Path_Strategy.md` / `Media_Storage_Configuration_Review.md` — tenant media path and storage rules for future upload work.
 - `docs/06-Engineering/Deployment_Guardrails.md` — required inspection before any deployment command, pending a full runbook.
+- `docs/06-Engineering/capabilities/adapters/ui-ux-pro-max.adapter.yaml` — Keryon's declared relationship to the central Capability System's canonical UI/UX Pro Max identity (CAPSYS-P6); a discoverability record, not a change to the UI-tooling rules already stated above.
 
 Evidence-based completion: a task is not "complete" without evidence proportionate to its size — passing tests, a successful build, a route/policy check, a database inspection, or browser verification, as relevant. Never report an assumption as a verified result.
 

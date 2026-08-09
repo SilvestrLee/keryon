@@ -1,0 +1,26 @@
+# CAPSYS-P6 resolution record — was UI/UX Pro Max required for P6 itself?
+# Conforms to evidence/CONTRACT.md and schemas/evidence.schema.yaml at
+# central HEAD 855f8dfaa9224ffdba31fa4c9693bac126d7206b.
+
+kind: resolution
+capability_id: nextlevelbuilder/ui-ux-pro-max-skill/ui-ux-pro-max
+task: >
+  CAPSYS-P6: audit Keryon's existing UI/UX Pro Max governance and, if the
+  central adapter contract fits truthfully, write one project-owned
+  Project Adapter record plus this evidence pair. Governance/integration
+  documentation work — no interface, layout, copy, or product-experience
+  decision is made in producing it.
+resolution: NOT_REQUIRED
+reason: >
+  Under Keryon's own governance (CLAUDE.md's "Mandatory UI/Product
+  Experience Tooling" section; KERYON_OVERRIDES.md's ignore-list), UI UX
+  Pro Max is required for UI, UX, layout, copy, Filament, dashboard,
+  widget, empty-state, navigation, or product-experience work. Writing a
+  YAML adapter file that transcribes Keryon's existing, already-decided
+  governance is none of those — it is documentation of a decision already
+  made elsewhere (CLAUDE.md, KERYON_OVERRIDES.md,
+  Filament_Product_Experience_Review.md, DECISION_005), not a new design
+  decision. This mirrors evidence/CONTRACT.md's own worked example of a
+  legitimate NOT_REQUIRED result (faithful reuse / no new design decision
+  being made), generalized to "no design decision at all."
+evidence_quality: E1_STRUCTURED_EVALUATION
