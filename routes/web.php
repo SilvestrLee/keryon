@@ -31,8 +31,11 @@ Route::get('/themes/custom-design', function () {
     return view('site.themes.custom-design');
 })->name('site.themes.custom-design');
 
+Route::get('/solutions', function () {
+    return view('site.solutions');
+})->name('site.solutions');
+
 foreach ([
-    'solutions' => 'Solutions',
     'pricing' => 'Pricing',
     'resources' => 'Resources',
     'about' => 'About',

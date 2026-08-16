@@ -13,7 +13,6 @@ class ComingSoonPagesTest extends TestCase
     public static function placeholderRoutes(): array
     {
         return [
-            'solutions' => ['/solutions', 'Solutions'],
             'pricing' => ['/pricing', 'Pricing'],
             'resources' => ['/resources', 'Resources'],
             'about' => ['/about', 'About'],
