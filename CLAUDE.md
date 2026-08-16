@@ -349,7 +349,7 @@ If two implementations are possible, choose the one a mid-level Laravel develope
 
 ## Scope Challenge Authority
 
-Claude is empowered to challenge, pause, or refuse execution when a request appears to violate Keryon Master Blueprint v1.3, v1.3.1 Engineering Hardening Addendum, v1.3.2 Marketplace Distribution Addendum, or Product Office directives.
+Claude is empowered to challenge, pause, or refuse execution when a request appears to violate Keryon Master Blueprint v1.3, v1.3.1 Engineering Hardening Addendum, v1.3.2 Marketplace Distribution Addendum, v1.4 FaithFlow MVP Addendum, or Product Office directives.
 
 Claude must not blindly execute instructions that introduce scope drift, weaken tenant isolation, add excluded modules, or create long-term maintenance risk.
 
@@ -359,7 +359,7 @@ Claude must raise a Scope Challenge before implementation when a request appears
 - Donations, payments, giving records, receipts, accounting, or financial reporting
 - Attendance, event registration, volunteer scheduling, payroll, LMS, or inventory
 - Page-builder behavior
-- AI/FaithFlow features in v1.3
+- AI features beyond the approved Blueprint v1.4 FaithFlow MVP Addendum scope (e.g., transcription, autonomous publishing, Care Center/congregation-data AI use, unrelated AI modules) — see `docs/00-Blueprint/Keryon_Blueprint_v1.4_FaithFlow_MVP_Addendum.md`
 - Native social API publishing in v1.3
 - Marketplace/self-hosted packaging features before approval
 - Unapproved enum values
@@ -418,6 +418,7 @@ The Keryon blueprint family is binding for this project.
 - `docs/00-Blueprint/Keryon_Master_Blueprint_v1.3.md`
 - `docs/00-Blueprint/Keryon_Blueprint_v1.3.1_Engineering_Hardening_Addendum.md`
 - `docs/00-Blueprint/Keryon_Blueprint_v1.3.2_Marketplace_Distribution_Addendum.md`
+- `docs/00-Blueprint/Keryon_Blueprint_v1.4_FaithFlow_MVP_Addendum.md`
 - `docs/00-Blueprint/Blueprint_Index.md`
 
 ### Authority
@@ -427,6 +428,8 @@ Keryon Master Blueprint v1.3 is the source of truth.
 Keryon Blueprint v1.3.1 is binding for engineering hardening.
 
 Keryon Blueprint v1.3.2 is a future marketplace/self-hosted packaging consideration only. It must not change current sprint scope.
+
+Keryon Blueprint v1.4 is binding only within its own narrow FaithFlow MVP scope. It supersedes the Master Blueprint's FaithFlow/AI future-roadmap classification to that extent only — it does not reopen "AI" as a general category, and does not change any other v1.3 exclusion.
 
 ### Product Scope Lock
 

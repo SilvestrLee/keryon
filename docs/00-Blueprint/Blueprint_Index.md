@@ -9,14 +9,16 @@ This directory contains the governing product and engineering documentation for 
 | v1.3 | `Keryon_Master_Blueprint_v1.3.md` | Source of truth for product, strategy, scope, modules, platform architecture, engineering governance, business strategy, and roadmap. |
 | v1.3.1 | `Keryon_Blueprint_v1.3.1_Engineering_Hardening_Addendum.md` | Binding engineering hardening addendum for tenancy safety, media scalability, UI guardrails, Claude Code rules, and scope protection. |
 | v1.3.2 | `Keryon_Blueprint_v1.3.2_Marketplace_Distribution_Addendum.md` | Future marketplace/self-hosted packaging consideration. It must not change current sprint scope. |
+| v1.4 | `Keryon_Blueprint_v1.4_FaithFlow_MVP_Addendum.md` | Binding, but narrow: moves FaithFlow from future roadmap into a defined Communications Hub → Content Studio MVP capability. Does not reopen "AI" generally — all other AI capability remains future roadmap. |
 
 ## Interpretation Rules
 
 1. The Master Blueprint v1.3 is the primary source of truth.
 2. The v1.3.1 Engineering Hardening Addendum is binding for implementation safety.
 3. The v1.3.2 Marketplace Distribution Addendum is strategic only until Product Office issues a specific marketplace preparation directive.
-4. If there is a conflict between a chat instruction and the blueprint, stop and ask Product Office for clarification.
-5. Any product expansion requires a versioned Product Office decision.
+4. The v1.4 FaithFlow MVP Addendum is binding only within its own narrow scope boundary — it supersedes the Master Blueprint's FaithFlow/AI future-roadmap classification to that extent only, and does not authorize AI capability outside what it explicitly approves.
+5. If there is a conflict between a chat instruction and the blueprint, stop and ask Product Office for clarification.
+6. Any product expansion requires a versioned Product Office decision.
 
 ## Current Product Boundary
 
