@@ -6,8 +6,6 @@ Keryon is a Church Communications Platform.
 
 Tagline: Your Church's Digital Communications Staff Member
 
-Project path: `C:\Users\VALPOSHIE\Herd\keryon`
-
 Blueprint version: v1.3
 
 Primary domain: `keryon.app`
@@ -18,13 +16,38 @@ Primary domain: `keryon.app`
 - Filament v4
 - Livewire 3 (provided via Filament v4, not an independently pinned dependency)
 - MySQL
-- Laravel Herd
 - VS Code
-- PowerShell
 - Claude Code
 - 21st.dev / Magic MCP
 - UI UX Pro Max Skill
 - Git
+
+See "Local Development Environment" below for the current platform-specific toolchain and startup workflow.
+
+## Local Development Environment
+
+### macOS
+
+Keryon's current macOS development environment uses:
+
+- Homebrew PHP
+- Homebrew Composer
+- Homebrew Node
+- Homebrew npm
+- Local MySQL
+- Vite
+
+Do not assume Laravel Herd is installed, active, or required on macOS.
+
+Use the current shell-resolved Homebrew binaries and verify tool resolution before running development commands.
+
+### Windows
+
+Historical Windows development used Laravel Herd and PowerShell.
+
+Windows-specific paths, Herd behaviour, and PowerShell instructions must not be applied to macOS unless explicitly relevant.
+
+See `docs/06-Engineering/Local_Development.md` for the current development workflow.
 
 ## Product Scope
 
