@@ -2,6 +2,7 @@
     $navLinks = [
         ['label' => 'Features', 'route' => 'site.features'],
         ['label' => 'Solutions', 'route' => 'site.solutions'],
+        ['label' => 'Themes', 'route' => 'site.themes'],
         ['label' => 'Pricing', 'route' => 'site.pricing'],
         ['label' => 'Resources', 'route' => 'site.resources'],
         ['label' => 'About', 'route' => 'site.about'],

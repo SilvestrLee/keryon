@@ -7,6 +7,8 @@
 
         <nav class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-ink/70" aria-label="Footer">
             <a href="{{ route('site.features') }}" class="rounded-button hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface">Features</a>
+            <a href="{{ route('site.themes') }}" class="rounded-button hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface">Themes</a>
+            <a href="{{ route('site.themes.custom-design') }}" class="rounded-button hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface">Custom Design</a>
             <a href="{{ route('site.pricing') }}" class="rounded-button hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface">Pricing</a>
             <a href="{{ route('site.about') }}" class="rounded-button hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface">About</a>
             <a href="{{ route('site.book-demo') }}" class="rounded-button hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface">Book a Demo</a>

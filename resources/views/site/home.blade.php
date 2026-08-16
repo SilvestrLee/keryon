@@ -97,6 +97,21 @@
         </dl>
     </section>
 
+    {{-- Section — Website Themes Discovery --}}
+    <section class="border-y border-slate-200/80 bg-white/50">
+        <div class="mx-auto max-w-3xl px-4 py-16 text-center sm:px-6 lg:px-8">
+            <h2 class="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+                A website that feels like your church.
+            </h2>
+            <p class="mt-4 text-base leading-relaxed text-ink/70">
+                Start with a professionally designed Keryon theme — or commission a custom website built around your church.
+            </p>
+            <a href="{{ route('site.themes') }}" class="mt-8 inline-block rounded-button bg-primary px-6 py-3 text-sm font-semibold text-white transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface">
+                Explore Themes
+            </a>
+        </div>
+    </section>
+
     {{-- Section 07 — Final CTA --}}
     <section class="bg-primary">
         <div class="mx-auto max-w-3xl px-4 py-20 text-center sm:px-6 lg:px-8">

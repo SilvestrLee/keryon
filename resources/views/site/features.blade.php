@@ -132,6 +132,10 @@
                     </div>
                 @endforeach
             </div>
+            <p class="mt-4 text-sm text-ink/60">
+                Pair it with a professionally designed
+                <a href="{{ route('site.themes') }}" class="font-medium text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface">Keryon theme</a>.
+            </p>
         </div>
     </section>
 
