@@ -10,8 +10,11 @@ Route::get('/book-demo', function () {
     return view('site.book-demo');
 })->name('site.book-demo');
 
+Route::get('/features', function () {
+    return view('site.features');
+})->name('site.features');
+
 foreach ([
-    'features' => 'Features',
     'solutions' => 'Solutions',
     'pricing' => 'Pricing',
     'resources' => 'Resources',
