@@ -10,7 +10,10 @@
 @endphp
 
 <header class="sticky top-0 z-30 border-b border-slate-200/80 bg-surface/95 backdrop-blur">
-    <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+    <div
+        class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 motion-safe:transition-[padding] motion-safe:duration-200 sm:px-6 lg:px-8"
+        :class="scrolled ? 'py-2' : 'py-4'"
+    >
         <a href="{{ route('home') }}" class="rounded-button text-lg font-semibold tracking-tight text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface">
             Keryon
         </a>
@@ -66,10 +69,18 @@
             </a>
         </nav>
     </div>
-
-    <div class="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200/80 bg-surface/95 p-3 backdrop-blur lg:hidden">
-        <a href="{{ route('site.book-demo') }}" class="block rounded-button bg-primary px-4 py-3 text-center text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface">
-            Book a Demo
-        </a>
-    </div>
 </header>
+
+{{-- Deliberately a sibling of <header>, not a descendant: <header> has
+     backdrop-blur (backdrop-filter), which per spec creates a new
+     containing block for `position: fixed` descendants — nesting this bar
+     inside <header> made `fixed; bottom: 0` resolve against the header's
+     own short box near the top of the page instead of the viewport. --}}
+<div
+    class="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200/80 bg-surface/95 p-3 backdrop-blur motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out lg:hidden"
+    :class="scrolled ? 'translate-y-0' : 'translate-y-full'"
+>
+    <a href="{{ route('site.book-demo') }}" class="block rounded-button bg-primary px-4 py-3 text-center text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface">
+        Book a Demo
+    </a>
+</div>

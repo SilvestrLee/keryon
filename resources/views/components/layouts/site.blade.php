@@ -8,7 +8,11 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-[100dvh] bg-surface font-sans text-ink antialiased" x-data="{ mobileNavOpen: false }">
+<body
+    class="min-h-[100dvh] bg-surface font-sans text-ink antialiased"
+    x-data="{ mobileNavOpen: false, scrolled: false }"
+    x-init="window.addEventListener('scroll', () => { scrolled = window.scrollY > 24 }, { passive: true })"
+>
     <x-site.nav />
 
     <main>
