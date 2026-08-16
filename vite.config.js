@@ -9,8 +9,8 @@ export default defineConfig({
             input: ['resources/css/app.css', 'resources/js/app.js', 'resources/css/filament/admin/theme.css'],
             refresh: true,
             fonts: [
-                bunny('Instrument Sans', {
-                    weights: [400, 500, 600],
+                bunny('Inter', {
+                    weights: [400, 500, 600, 700, 800],
                 }),
             ],
         }),
