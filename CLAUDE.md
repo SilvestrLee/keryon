@@ -419,6 +419,7 @@ The Keryon blueprint family is binding for this project.
 - `docs/00-Blueprint/Keryon_Blueprint_v1.3.1_Engineering_Hardening_Addendum.md`
 - `docs/00-Blueprint/Keryon_Blueprint_v1.3.2_Marketplace_Distribution_Addendum.md`
 - `docs/00-Blueprint/Keryon_Blueprint_v1.4_FaithFlow_MVP_Addendum.md`
+- `docs/00-Blueprint/Keryon_Blueprint_v1.4.1_Product_Surfaces_Identity_Membership_Authorization_Addendum.md`
 - `docs/00-Blueprint/Blueprint_Index.md`
 
 ### Authority
@@ -430,6 +431,8 @@ Keryon Blueprint v1.3.1 is binding for engineering hardening.
 Keryon Blueprint v1.3.2 is a future marketplace/self-hosted packaging consideration only. It must not change current sprint scope.
 
 Keryon Blueprint v1.4 is binding only within its own narrow FaithFlow MVP scope. It supersedes the Master Blueprint's FaithFlow/AI future-roadmap classification to that extent only — it does not reopen "AI" as a general category, and does not change any other v1.3 exclusion.
+
+Keryon Blueprint v1.4.1 is the authoritative direction for product surfaces, User identity, church membership, and authorization architecture, but is documentation only — it authorizes no schema, model, policy, middleware, or Filament change. Implementation requires its own separately commissioned milestone(s), staged per `docs/06-Engineering/Keryon_Identity_Membership_Authorization_Architecture_v1.4.1.md`.
 
 ### Product Scope Lock
 

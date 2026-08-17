@@ -10,6 +10,7 @@ Engineering Governance Protocol
 - Keryon Blueprint v1.3.1 Engineering Hardening Addendum
 - Keryon Blueprint v1.3.2 Marketplace Distribution & Self-Hosted Edition Addendum
 - Keryon Blueprint v1.4 FaithFlow MVP Addendum
+- Keryon Blueprint v1.4.1 Product Surfaces, Identity, Membership & Authorization Addendum
 - CLAUDE.md
 
 ## Status
@@ -475,6 +476,30 @@ Resetting the database
 Changing authentication behavior
 Changing authorization behavior
 ```
+
+---
+
+### 13. Identity / Authorization Architecture Drift
+
+Keryon Blueprint v1.4.1 defines the target identity, church membership, and authorization architecture (`docs/00-Blueprint/Keryon_Blueprint_v1.4.1_Product_Surfaces_Identity_Membership_Authorization_Addendum.md`), but is documentation only. Implementing any part of it requires its own dedicated, commissioned milestone, staged per `docs/06-Engineering/Keryon_Identity_Membership_Authorization_Architecture_v1.4.1.md`.
+
+Challenge any request that, without such a dedicated milestone:
+
+```txt
+Creates a church_memberships table or model
+Implements a TenantContext service
+Converts BelongsToChurch's tenant-resolution source
+Installs an RBAC package (e.g. spatie/laravel-permission)
+Installs a tenancy package (e.g. stancl/tenancy)
+Removes or bypasses users.church_id before its documented supersession evidence exists
+Creates a Central Filament panel or platform-staff authorization domain
+Grants Care Center access to a role/membership that doesn't hold the Care responsibility
+Encodes Primary Administrator as a plain church responsibility role rather than an ownership designation
+```
+
+Reason:
+
+v1.4.1 is architecture direction, approved in principle, sequenced explicitly (`K-GOV-1.4.1 → K-IDENTITY-001 → K-AUTH-001 → ...`) to avoid a big-bang identity rewrite. Building any piece out of that order, or without a fresh commission, reintroduces the exact risk the addendum was written to prevent.
 
 ---
 
