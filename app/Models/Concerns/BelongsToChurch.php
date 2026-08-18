@@ -3,22 +3,31 @@
 namespace App\Models\Concerns;
 
 use App\Models\Church;
+use App\Support\TenantContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Auth;
 
 trait BelongsToChurch
 {
+    /**
+     * Tenant ID source: TenantContext, resolved from the active
+     * ChurchMembership — not a direct Auth::user()->church_id read.
+     * See Keryon_Identity_Membership_Authorization_Architecture_v1.4.1.md
+     * §3. The fail-closed mechanics below are unchanged from before that
+     * conversion — only the source of the church ID changed.
+     */
     protected static function bootBelongsToChurch(): void
     {
         static::creating(function ($model) {
-            if (Auth::check() && Auth::user()?->church_id && empty($model->church_id)) {
-                $model->church_id = Auth::user()->church_id;
+            $churchId = app(TenantContext::class)->currentChurchId();
+
+            if ($churchId && empty($model->church_id)) {
+                $model->church_id = $churchId;
             }
         });
 
         static::addGlobalScope('church_tenant', function (Builder $query) {
-            $churchId = Auth::check() ? Auth::user()?->church_id : null;
+            $churchId = app(TenantContext::class)->currentChurchId();
 
             if (! $churchId) {
                 $query->whereRaw('0 = 1');

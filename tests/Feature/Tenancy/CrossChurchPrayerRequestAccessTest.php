@@ -39,8 +39,8 @@ class CrossChurchPrayerRequestAccessTest extends TestCase
             'slug' => 'church-b',
         ]);
 
-        $this->userA = User::factory()->create(['church_id' => $this->churchA->id]);
-        $this->userB = User::factory()->create(['church_id' => $this->churchB->id]);
+        $this->userA = User::factory()->forChurch($this->churchA)->create();
+        $this->userB = User::factory()->forChurch($this->churchB)->create();
 
         $this->actingAs($this->userA);
         $memberA = CongregationMember::create([

@@ -15,7 +15,7 @@ class ChurchNamePersonalizationTest extends TestCase
     public function test_it_returns_the_authenticated_users_church_name(): void
     {
         $church = Church::create(['name' => 'Demo Church', 'slug' => 'demo-church']);
-        $user = User::factory()->create(['church_id' => $church->id]);
+        $user = User::factory()->forChurch($church)->create();
 
         $this->actingAs($user);
 
@@ -39,7 +39,7 @@ class ChurchNamePersonalizationTest extends TestCase
     public function test_possessive_name_appends_apostrophe_s_for_the_churchs_name(): void
     {
         $church = Church::create(['name' => 'Demo Church', 'slug' => 'demo-church']);
-        $user = User::factory()->create(['church_id' => $church->id]);
+        $user = User::factory()->forChurch($church)->create();
 
         $this->actingAs($user);
 
@@ -54,7 +54,7 @@ class ChurchNamePersonalizationTest extends TestCase
     public function test_possessive_name_appends_only_apostrophe_when_name_ends_in_s(): void
     {
         $church = Church::create(['name' => 'Believers Fellowship Saints', 'slug' => 'believers-fellowship-saints']);
-        $user = User::factory()->create(['church_id' => $church->id]);
+        $user = User::factory()->forChurch($church)->create();
 
         $this->actingAs($user);
 

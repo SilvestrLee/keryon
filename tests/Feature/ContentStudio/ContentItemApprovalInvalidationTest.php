@@ -20,7 +20,7 @@ class ContentItemApprovalInvalidationTest extends TestCase
         parent::setUp();
 
         $church = Church::create(['name' => 'Test Church', 'slug' => 'test-church']);
-        $this->user = User::factory()->create(['church_id' => $church->id]);
+        $this->user = User::factory()->forChurch($church)->create();
         $this->actingAs($this->user);
     }
 

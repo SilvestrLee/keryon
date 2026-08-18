@@ -26,8 +26,8 @@ class ContentItemAttributionTransitionTest extends TestCase
         parent::setUp();
 
         $church = Church::create(['name' => 'Test Church', 'slug' => 'test-church']);
-        $this->userA = User::factory()->create(['church_id' => $church->id]);
-        $this->userB = User::factory()->create(['church_id' => $church->id]);
+        $this->userA = User::factory()->forChurch($church)->create();
+        $this->userB = User::factory()->forChurch($church)->create();
 
         $this->actingAs($this->userA);
         $this->contentItem = ContentItem::create([

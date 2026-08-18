@@ -83,7 +83,7 @@ class TenantOwnedModelsTest extends TestCase
             'slug' => 'test-church',
         ]);
 
-        $user = User::factory()->create(['church_id' => $church->id]);
+        $user = User::factory()->forChurch($church)->create();
 
         $this->actingAs($user);
 

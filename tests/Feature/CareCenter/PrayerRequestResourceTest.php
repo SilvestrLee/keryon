@@ -36,7 +36,7 @@ class PrayerRequestResourceTest extends TestCase
     public function test_list_page_renders_and_shows_records_for_the_current_church(): void
     {
         $church = Church::create(['name' => 'QA Church', 'slug' => 'qa-church']);
-        $user = User::factory()->create(['church_id' => $church->id]);
+        $user = User::factory()->forChurch($church)->create();
 
         $this->actingAs($user);
         $prayerRequest = PrayerRequest::create(['request' => 'Please pray for the QA suite.']);
@@ -48,7 +48,7 @@ class PrayerRequestResourceTest extends TestCase
     public function test_create_action_saves_a_prayer_request_without_exposing_church_id(): void
     {
         $church = Church::create(['name' => 'QA Church', 'slug' => 'qa-church']);
-        $user = User::factory()->create(['church_id' => $church->id]);
+        $user = User::factory()->forChurch($church)->create();
 
         $this->actingAs($user);
 
@@ -72,7 +72,7 @@ class PrayerRequestResourceTest extends TestCase
     public function test_view_page_renders_for_an_existing_record(): void
     {
         $church = Church::create(['name' => 'QA Church', 'slug' => 'qa-church']);
-        $user = User::factory()->create(['church_id' => $church->id]);
+        $user = User::factory()->forChurch($church)->create();
 
         $this->actingAs($user);
         $prayerRequest = PrayerRequest::create(['request' => 'Please pray for clarity.']);
@@ -84,7 +84,7 @@ class PrayerRequestResourceTest extends TestCase
     public function test_edit_action_updates_status_and_visibility(): void
     {
         $church = Church::create(['name' => 'QA Church', 'slug' => 'qa-church']);
-        $user = User::factory()->create(['church_id' => $church->id]);
+        $user = User::factory()->forChurch($church)->create();
 
         $this->actingAs($user);
         $prayerRequest = PrayerRequest::create(['request' => 'Please pray for strength.']);
@@ -104,7 +104,7 @@ class PrayerRequestResourceTest extends TestCase
     public function test_delete_action_soft_deletes_instead_of_hard_deleting(): void
     {
         $church = Church::create(['name' => 'QA Church', 'slug' => 'qa-church']);
-        $user = User::factory()->create(['church_id' => $church->id]);
+        $user = User::factory()->forChurch($church)->create();
 
         $this->actingAs($user);
         $prayerRequest = PrayerRequest::create(['request' => 'Please pray for peace.']);
