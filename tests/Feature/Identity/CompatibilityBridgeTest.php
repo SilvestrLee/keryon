@@ -25,15 +25,17 @@ class CompatibilityBridgeTest extends TestCase
         $this->assertSame($church->id, $user->fresh()->church_id);
     }
 
-    public function test_legacy_same_church_policy_checks_still_function_via_the_compatibility_mirror(): void
+    public function test_church_id_mirror_persists_independent_of_policy_conversion(): void
     {
         $church = Church::create(['name' => 'Test Church', 'slug' => 'test-church']);
         $user = User::factory()->forChurch($church)->create();
 
-        // ContentItemPolicy / CongregationMemberPolicy are deliberately
-        // untouched by K-IDENTITY-001B — see engineering doc §38/§12 —
-        // and still read $user->church_id directly. This must keep
-        // working until K-AUTH-001 converts them.
+        // ContentItemPolicy / CongregationMemberPolicy / PrayerRequestPolicy
+        // stopped reading $user->church_id in K-AUTH-001B — see
+        // K-AUTH-001B §40 — but the physical compatibility mirror on
+        // users.church_id remains intentionally intact until its own,
+        // later, isolated retirement milestone. This proves the mirror
+        // itself, not any current authorization behavior.
         $this->assertTrue($user->church_id !== null);
         $this->assertSame($church->id, $user->church_id);
     }

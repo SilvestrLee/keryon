@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Capability;
 use App\Enums\ChurchRole;
 use App\Enums\MembershipStatus;
 use App\Exceptions\CannotRemoveFinalPrimaryAdministratorException;
@@ -81,6 +82,32 @@ class ChurchMembership extends Model
     public function roleValues(): array
     {
         return $this->roles()->pluck('role')->map(fn (ChurchRole $role) => $role->value)->all();
+    }
+
+    /**
+     * The effective capability set for this membership — the union of every
+     * responsibility role it holds, via ChurchRole::capabilities(). No role
+     * precedence, no cancellation. Deliberately does not factor in
+     * is_primary — Primary Administrator is account governance, not a
+     * ministry responsibility, and must never implicitly grant a ministry
+     * capability. See Keryon Blueprint v1.4.1 §7/§10 and K-AUTH-001B §15/§17.
+     *
+     * @return list<Capability>
+     */
+    public function capabilities(): array
+    {
+        return $this->roles()
+            ->get()
+            ->pluck('role')
+            ->flatMap(fn (ChurchRole $role) => $role->capabilities())
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    public function hasCapability(Capability $capability): bool
+    {
+        return in_array($capability, $this->capabilities(), true);
     }
 
     /**

@@ -2,9 +2,11 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\Capability;
 use App\Enums\PrayerRequestStatus;
 use App\Filament\Resources\PrayerRequestResource;
 use App\Models\PrayerRequest;
+use App\Support\TenantContext;
 use Filament\Actions\Action;
 use Filament\Pages\Page;
 use Illuminate\Database\Eloquent\Collection;
@@ -24,6 +26,20 @@ class CareCenterDashboard extends Page
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-squares-2x2';
 
     protected static ?int $navigationSort = 0;
+
+    /**
+     * Care is explicit — see Keryon Blueprint v1.4.1 §10 and K-AUTH-001A
+     * §G/§H. Without this override, Filament's custom-page default
+     * (`canAccess(): true`) allowed any authenticated same-church user to
+     * reach every Care Center metric and record regardless of role. This
+     * also gates navigation registration (Page::registerNavigationItems()
+     * checks canAccess()), so no separate navigation-visibility override
+     * is needed.
+     */
+    public static function canAccess(): bool
+    {
+        return app(TenantContext::class)->currentMembership()?->hasCapability(Capability::CareView) ?? false;
+    }
 
     protected function getHeaderActions(): array
     {

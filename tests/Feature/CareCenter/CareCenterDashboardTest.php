@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\CareCenter;
 
+use App\Enums\ChurchRole;
 use App\Filament\Pages\CareCenterDashboard;
 use App\Models\Church;
 use App\Models\PrayerRequest;
@@ -32,7 +33,7 @@ class CareCenterDashboardTest extends TestCase
     public function test_authenticated_church_user_can_render_care_center_dashboard(): void
     {
         $church = Church::create(['name' => 'Dashboard QA Church', 'slug' => 'dashboard-qa-church']);
-        $user = User::factory()->forChurch($church)->create();
+        $user = User::factory()->forChurch($church, [ChurchRole::CARE])->create();
 
         $this->actingAs($user);
 
@@ -43,7 +44,7 @@ class CareCenterDashboardTest extends TestCase
     public function test_dashboard_shows_own_church_prayer_request_data(): void
     {
         $church = Church::create(['name' => 'Dashboard QA Church', 'slug' => 'dashboard-qa-church']);
-        $user = User::factory()->forChurch($church)->create();
+        $user = User::factory()->forChurch($church, [ChurchRole::CARE])->create();
 
         $this->actingAs($user);
 
@@ -60,8 +61,8 @@ class CareCenterDashboardTest extends TestCase
         $churchA = Church::create(['name' => 'Church A', 'slug' => 'dashboard-church-a']);
         $churchB = Church::create(['name' => 'Church B', 'slug' => 'dashboard-church-b']);
 
-        $userA = User::factory()->forChurch($churchA)->create();
-        $userB = User::factory()->forChurch($churchB)->create();
+        $userA = User::factory()->forChurch($churchA, [ChurchRole::CARE])->create();
+        $userB = User::factory()->forChurch($churchB, [ChurchRole::CARE])->create();
 
         $this->actingAs($userB);
         PrayerRequest::create(['request' => 'Please pray for Church B.', 'status' => 'new']);
