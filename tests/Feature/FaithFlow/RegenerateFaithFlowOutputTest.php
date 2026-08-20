@@ -195,4 +195,19 @@ class RegenerateFaithFlowOutputTest extends TestCase
 
         app(RegenerateFaithFlowOutput::class)->handle($output->fresh());
     }
+
+    // --- K-FAITHFLOW-001E §23: approved output immutability ---
+
+    public function test_cannot_regenerate_an_approved_output(): void
+    {
+        $output = $this->generatedOutput(content: 'A');
+        $output->forceFill([
+            'status' => FaithFlowOutputStatus::APPROVED,
+            'approved_at' => now(),
+        ])->save();
+
+        $this->expectException(LogicException::class);
+
+        app(RegenerateFaithFlowOutput::class)->handle($output->fresh());
+    }
 }

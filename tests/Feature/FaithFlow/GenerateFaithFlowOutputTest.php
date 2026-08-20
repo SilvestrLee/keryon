@@ -252,6 +252,26 @@ class GenerateFaithFlowOutputTest extends TestCase
         $this->assertTrue($result->canBeApproved());
     }
 
+    // --- K-FAITHFLOW-001E §23: approved output immutability ---
+
+    public function test_generate_on_an_already_approved_output_is_idempotent_and_makes_no_new_prompt(): void
+    {
+        TextOutputGenerationAgent::fake(['Untouched content.'])->preventStrayPrompts();
+
+        $output = FaithFlowOutput::factory()->approved()->create([
+            'church_id' => $this->church->id,
+            'faithflow_run_id' => $this->analyzedRun()->id,
+            'output_type' => FaithFlowOutputType::DEVOTIONAL,
+        ]);
+        $original = $output->fresh();
+
+        $result = app(GenerateFaithFlowOutput::class)->handle($output);
+
+        $this->assertSame(FaithFlowOutputStatus::APPROVED, $result->status);
+        $this->assertSame($original->generated_content, $result->generated_content);
+        $this->assertSame($original->content, $result->content);
+    }
+
     // --- Failure / retry / usage (mirrors AnalyzeFaithFlowSourceTest's proven pattern) ---
 
     public function test_provider_failure_transitions_a_first_time_generation_to_failed(): void

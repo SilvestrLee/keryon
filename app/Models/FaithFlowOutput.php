@@ -84,4 +84,25 @@ class FaithFlowOutput extends Model
     {
         return $this->status === FaithFlowOutputStatus::GENERATED;
     }
+
+    /**
+     * K-FAITHFLOW-001E §8/§22/§50: only a GENERATED output is editable.
+     * PENDING/GENERATING never had content to edit; FAILED has no usable
+     * content (see canBeApproved()'s own doc); APPROVED is deliberately
+     * immutable — once handed off, FaithFlow becomes provenance/history and
+     * further edits belong to Content Studio (§22/§24).
+     */
+    public function isEditable(): bool
+    {
+        return $this->status === FaithFlowOutputStatus::GENERATED;
+    }
+
+    /**
+     * Whether this output has already produced (or been linked to) a
+     * Content Studio ContentItem — see K-FAITHFLOW-001E §13/§16/§50.
+     */
+    public function hasBeenHandedOff(): bool
+    {
+        return $this->content_item_id !== null;
+    }
 }
