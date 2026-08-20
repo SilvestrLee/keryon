@@ -15,6 +15,9 @@ enum ContentType: string
     case DISCUSSION_QUESTIONS = 'discussion_questions';
     case CAMPAIGN_COPY = 'campaign_copy';
     case WEBSITE_COPY = 'website_copy';
+    // Added for the FaithFlow handoff — see K-FAITHFLOW-001B §3.5/§27.
+    case SERMON_SUMMARY = 'sermon_summary';
+    case WHATSAPP_STATUS_COPY = 'whatsapp_status_copy';
 
     public function label(): string
     {
@@ -27,6 +30,8 @@ enum ContentType: string
             self::DISCUSSION_QUESTIONS => 'Discussion Questions',
             self::CAMPAIGN_COPY => 'Campaign Copy',
             self::WEBSITE_COPY => 'Website Copy',
+            self::SERMON_SUMMARY => 'Sermon Summary',
+            self::WHATSAPP_STATUS_COPY => 'WhatsApp / Status Copy',
         };
     }
 

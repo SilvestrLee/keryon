@@ -20,6 +20,8 @@ class ContentTypeTest extends TestCase
             'discussion_questions',
             'campaign_copy',
             'website_copy',
+            'sermon_summary',
+            'whatsapp_status_copy',
         ], $values);
     }
 
@@ -37,5 +39,7 @@ class ContentTypeTest extends TestCase
         $this->assertSame('General', $options['general']);
         $this->assertSame('Campaign Copy', $options['campaign_copy']);
         $this->assertSame('Website Copy', $options['website_copy']);
+        $this->assertSame('Sermon Summary', $options['sermon_summary']);
+        $this->assertSame('WhatsApp / Status Copy', $options['whatsapp_status_copy']);
     }
 }
