@@ -37,6 +37,26 @@ enum Capability: string
     case WebsitePublish = 'website.publish';
     case WebsiteDomainManage = 'website.domain.manage';
 
+    /**
+     * K-CHURCHWEB-001B — the church's public institutional identity: Brand
+     * Profile (logo/colors/typography), physical address, service times,
+     * social links. Deliberately its own capability pair rather than
+     * reusing `website.content.*` — this data is not Website-owned (it
+     * would remain true about the church if Website disappeared, per
+     * K-CHURCHWEB-001B §22) and is also the future Design Studio/Campaigns
+     * brand source. See K-CHURCHWEB-001B §7-§8, §23-§24.
+     */
+    case ChurchIdentityView = 'church.identity.view';
+    case ChurchIdentityManage = 'church.identity.manage';
+
+    /**
+     * K-CHURCHWEB-001B — institutional media assets (§12-§16). Not
+     * `website.*` — Website is one consumer among future others (Design
+     * Studio as producer, Campaigns as another consumer).
+     */
+    case MediaView = 'media.view';
+    case MediaManage = 'media.manage';
+
     case StaffView = 'staff.view';
     case StaffManage = 'staff.manage';
 
@@ -59,6 +79,10 @@ enum Capability: string
             self::WebsiteThemeManage => 'Manage Website Theme',
             self::WebsitePublish => 'Publish Website',
             self::WebsiteDomainManage => 'Manage Website Domain',
+            self::ChurchIdentityView => 'View Church Identity',
+            self::ChurchIdentityManage => 'Manage Church Identity',
+            self::MediaView => 'View Media',
+            self::MediaManage => 'Manage Media',
             self::StaffView => 'View Staff',
             self::StaffManage => 'Manage Staff',
         };

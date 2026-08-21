@@ -39,6 +39,13 @@ class AdminPanelProvider extends PanelProvider
             ->pages([
                 Dashboard::class,
             ])
+            // K-CHURCHWEB-001C §37 — the Website Management cluster
+            // (Overview/Home/About/Leadership/Ministries/Contact/Church
+            // Information/Brand/Theme) lives under its own directory so
+            // its pages/resources share one "Website" sidebar entry with
+            // Filament's built-in sub-navigation, instead of exploding
+            // into unrelated top-level nav items.
+            ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\Filament\Clusters')
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
                 AccountWidget::class,

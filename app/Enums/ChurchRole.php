@@ -46,6 +46,12 @@ enum ChurchRole: string
      * unassigned pending future Primary-governance/K-DOMAIN-001 design.
      * See K-AUTH-001B §16.
      *
+     * `Capability::ChurchIdentityView/Manage` and `MediaView/Manage`
+     * (K-CHURCHWEB-001B) are granted only to COMMUNICATIONS, matching
+     * every other Website-adjacent capability — Administrator does not
+     * automatically gain them, per Keryon Blueprint v1.4.1 §9's
+     * responsibility-boundary rule. See K-CHURCHWEB-001B §33.
+     *
      * @return list<Capability>
      */
     public function capabilities(): array
@@ -70,6 +76,10 @@ enum ChurchRole: string
                 Capability::WebsiteContentManage,
                 Capability::WebsiteThemeManage,
                 Capability::WebsitePublish,
+                Capability::ChurchIdentityView,
+                Capability::ChurchIdentityManage,
+                Capability::MediaView,
+                Capability::MediaManage,
             ],
             self::CARE => [
                 Capability::CongregationView,
