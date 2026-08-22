@@ -113,6 +113,43 @@ ministry responsibility. See `Capability::ChurchIdentityView/Manage`,
 `MediaView/Manage`, and the pre-existing `WebsiteContentView/Manage`,
 `WebsiteThemeManage`, `WebsitePublish` in `app/Enums/Capability.php`.
 
+## Campaign Architecture Reconciliation
+
+Product Office directive K-CAMPAIGN-001A/001B narrows the v1 Campaign
+domain to communication orchestration:
+
+- `Campaign` is a Church-owned communication initiative, not a project,
+  task, event, fundraising, marketing-automation, or analytics system.
+- `CampaignCommunication` is the planned communication intent and may
+  exist before canonical content does.
+- Content Studio remains authoritative for communication content and its
+  workflow; a CampaignCommunication may optionally reference one
+  same-Church ContentItem, and one ContentItem may satisfy plan entries
+  across multiple Campaigns.
+- Campaign readiness is derived from authoritative linked state. No
+  progress percentage is stored.
+- Manual giving goals/progress and vague campaign-performance analytics
+  are excluded from the v1 Campaign domain; v1 insight is operational
+  readiness only.
+- Website publishing, Institutional Media, FaithFlow, Calendar/Publishing
+  Queue, and future Design Studio retain their own ownership boundaries.
+- K-CAMPAIGN-001D adds only an explicit orchestration seam:
+  `CampaignCommunication` may initialize Content Studio or FaithFlow, and
+  the resulting canonical `ContentItem` links back to the plan entry.
+  Content Studio still owns content/workflow; FaithFlow still owns
+  generation/review; Campaigns still own only communication intent.
+- K-CAMPAIGN-001E associates existing Institutional Media without changing
+  MediaAsset ownership or storage. Website-channel plan entries navigate to
+  canonical Website Management and may show overall Website operational state,
+  but they do not edit, publish, or claim Campaign-specific Website readiness.
+- In-flight FaithFlow work legitimately started while a Campaign was actionable
+  may finish after the Campaign becomes Completed. New contextual work remains
+  limited to Draft/Planned/Active; Archived or cancelled context fails closed.
+
+The historical Master Blueprint remains the record of its time; this
+reconciliation governs K-CAMPAIGN-001 implementation where its narrower
+boundary differs from older campaign-project/giving-performance language.
+
 ## Current Congregation Sprint
 
 The immediate active task remains:

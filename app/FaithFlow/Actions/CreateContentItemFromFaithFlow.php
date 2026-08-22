@@ -2,6 +2,8 @@
 
 namespace App\FaithFlow\Actions;
 
+use App\Campaigns\CampaignCommunicationContext;
+use App\Campaigns\CampaignCommunicationManager;
 use App\Enums\ContentOrigin;
 use App\Models\ContentItem;
 use App\Models\FaithFlowOutput;
@@ -36,7 +38,10 @@ class CreateContentItemFromFaithFlow
             // withTrashed(): a soft-deleted handoff target is still the
             // authoritative prior handoff — see §40, no silent second
             // ContentItem is ever created for the same output.
-            return ContentItem::withTrashed()->findOrFail($output->content_item_id);
+            $contentItem = ContentItem::withTrashed()->findOrFail($output->content_item_id);
+            $this->linkCampaignCommunication($output, $contentItem);
+
+            return $contentItem;
         }
 
         $contentType = $output->output_type->contentType();
@@ -84,8 +89,28 @@ class CreateContentItemFromFaithFlow
             // any new column or polymorphic provenance table.
             $output->forceFill(['content_item_id' => $contentItem->id])->save();
 
+            $this->linkCampaignCommunication($output, $contentItem);
+
             return $contentItem;
         });
+    }
+
+    private function linkCampaignCommunication(FaithFlowOutput $output, ContentItem $contentItem): void
+    {
+        $communicationId = $output->run?->campaign_communication_id;
+
+        if ($communicationId === null) {
+            return;
+        }
+
+        $communication = app(CampaignCommunicationContext::class)
+            ->forFaithFlowHandoff($communicationId);
+
+        if ($communication->church_id !== $output->church_id || $contentItem->church_id !== $output->church_id) {
+            throw new LogicException('FaithFlow Campaign handoff must remain within the active Church.');
+        }
+
+        app(CampaignCommunicationManager::class)->linkContentItem($communication, $contentItem);
     }
 
     /**

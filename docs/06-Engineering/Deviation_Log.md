@@ -47,3 +47,39 @@ Changed: Established the Church Website domain foundation — a shared Church Br
 Reason: Product Office directive K-CHURCHWEB-001B, following the read-only K-CHURCHWEB-001A architecture audit (historically `K-WEB-001A`; see the identifier reconciliation note in `Blueprint_Index.md`), authorized implementation of the smallest durable domain foundation Website Management, Proclaim, Design Studio, and Campaigns can all safely build on, per the Theme≠Content and shared-brand/shared-media principles already approved in Blueprint v1.3 §9/§12/§13 and v1.4.1 §14.
 Approved By: Product Office (confirmed in-session, 2026-08-21)
 Implementation Notes: 11 migrations (see the K-CHURCHWEB-001B report §20 for the full list), 10 new Eloquent models, 10 new Policy classes (all via the existing `ResolvesTenantMembership`/`BelongsToChurch` pattern, no new authorization mechanism), 5 new bounded enums (`BrandFontChoice`, `SocialPlatform`, `DayOfWeek`, `LeadershipCategory`, `WebsiteTheme`), and a new `ValidatesMediaAssetOwnership` trait enforcing that a media reference can never cross a Church boundary. No package installed — Spatie Media Library was considered and deliberately not installed this milestone (see report §10). Institutional-ownership test applied throughout: physical address moved to `Church` (not a Website field), service times and social links modeled as Church-owned (not Website-owned) tables. Updated `Blueprint_Index.md`'s "Current Engineering Priority" (reconciled to reflect actual completed work), added a "Church Website Identifier Reconciliation" note distinguishing `K-CHURCHWEB-*` from the historical marketing-site `K-WEB-001`–`K-WEB-005` identifiers, and added "Shared Cross-Product Architecture" / "Responsibility-Aware Communications" sections recording Brand Profile and Institutional Media as explicitly not Website-owned. No public website rendering, Proclaim implementation, custom-domain work, Design Studio, or Campaigns code was created — full suite passed at 580/580 (536 pre-existing + 44 new), no regressions.
+
+## 2026-08-22 — Campaign Domain Boundary Reconciliation
+
+Blueprint Version: v1.3 §Module 4 / v1.4.1 responsibility architecture
+
+Changed: Approved the minimum v1 Campaign aggregate as `Campaign` → `CampaignCommunication` → optional canonical `ContentItem`. Campaign is a Church-owned communication initiative; CampaignCommunication is planned communication intent that may exist before content. Readiness is derived from Content Studio and future publishing state rather than stored as progress. The existing `campaigns.view/manage` capability pair remains sufficient and Communications-only.
+
+Reason: K-CAMPAIGN-001A audited Campaigns against the implemented Content Studio, FaithFlow, Website publication, Institutional Media, TenantContext, and capability architecture. Product Office accepted the audit and explicitly excluded project/task/event/fundraising/analytics scope, manual giving goals/progress, and vague campaign-performance metrics from v1.
+
+Approved By: Product Office (confirmed in-session, 2026-08-22)
+
+Implementation Notes: K-CAMPAIGN-001B is limited to the Campaign/CampaignCommunication domain foundation, typed status/channel vocabulary, tenant-safe actions/policies, and tests. FaithFlow, Website, Media, Calendar/Publishing Queue, Design Studio, and UI integrations remain separately sequenced. Historical Blueprint language is not rewritten; the Blueprint Index reconciliation records which boundary governs current implementation.
+
+## 2026-08-22 — Campaign Content Orchestration Seam
+
+Blueprint Version: v1.3 §Module 4 / v1.4 FaithFlow / v1.4.1 responsibility architecture
+
+Changed: A CampaignCommunication may explicitly initialize canonical Content Studio creation or a FaithFlow run. The resulting ContentItem is linked back to the communication intent; Campaigns do not own copy, generation, review, or approval state.
+
+Reason: Product Office directive K-CAMPAIGN-001D authorized the minimum cross-domain handoff needed to turn planned communication intent into canonical content while preserving Content Studio and FaithFlow ownership and authorization.
+
+Approved By: Product Office (confirmed in-session, 2026-08-22)
+
+Implementation Notes: Explicit tenant-validated CampaignCommunication context is carried by query state into Content Studio creation and by one nullable foreign key on FaithFlowRun. FaithFlow prompt behavior is unchanged. Approval, ContentItem creation, and Campaign linkage use the existing transactional handoff. Website, Media, Calendar/Publishing Queue, and Design Studio remain excluded.
+
+## 2026-08-22 — Campaign Media and Website Coordination Seam
+
+Blueprint Version: v1.3 §Module 4 / Website delivery checkpoint / v1.4.1 responsibility architecture
+
+Changed: Campaigns may associate existing Church-owned Institutional Media through an explicit Campaign–MediaAsset association. Website-channel plan entries gain capability-gated navigation and truthful Church Website operational context, but no Website target persistence, editing, readiness claim, or publication authority.
+
+Reason: Product Office directive K-CAMPAIGN-001E authorized the smallest cross-domain coordination layer while retaining MediaAsset and Website ownership boundaries.
+
+Approved By: Product Office (confirmed in-session, 2026-08-22)
+
+Implementation Notes: Campaign media associations carry only an optional Campaign label and ordering; they neither duplicate asset metadata nor create storage. The Website panel explicitly distinguishes Content Studio readiness from Website action and publication. Existing FaithFlow work may finish after a Campaign becomes Completed, but new contextual work remains limited to Draft/Planned/Active and Archived/cancelled contexts fail closed. Calendar, Publishing Queue, Website publication from Campaigns, and Design Studio remain excluded.

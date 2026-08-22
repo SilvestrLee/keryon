@@ -31,6 +31,18 @@
 @endphp
 
 <x-filament-panels::page>
+    @if ($campaignCommunication)
+        <section class="mb-6 flex flex-col gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between" aria-label="Campaign context">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-emerald-800">Creating for Campaign</p>
+                <p class="mt-1 font-medium text-gray-950">{{ $campaignCommunication->title }}</p>
+                <p class="mt-1 text-sm text-gray-600">FaithFlow remains a Content Studio workflow. Approved content will return to this communication plan.</p>
+            </div>
+            <a href="{{ $this->campaignWorkspaceUrl() }}" wire:navigate class="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl px-4 text-sm font-semibold text-emerald-800 hover:bg-emerald-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">
+                Back to Campaign
+            </a>
+        </section>
+    @endif
     <div class="ff" x-data="{}">
         @if ($currentRun === null)
             {{-- ================= FIRST USE / SOURCE ENTRY — Level A, expressive (§5/§12/§13) ================= --}}

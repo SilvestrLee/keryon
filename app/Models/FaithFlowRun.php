@@ -20,9 +20,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class FaithFlowRun extends Model
 {
+    use BelongsToChurch;
+
     /** @use HasFactory<FaithFlowRunFactory> */
     use HasFactory;
-    use BelongsToChurch;
+
     use SoftDeletes;
 
     protected $table = 'faithflow_runs';
@@ -49,6 +51,11 @@ class FaithFlowRun extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function campaignCommunication(): BelongsTo
+    {
+        return $this->belongsTo(CampaignCommunication::class);
     }
 
     public function outputs(): HasMany

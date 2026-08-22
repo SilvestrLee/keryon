@@ -2,18 +2,46 @@
 
 namespace App\Filament\Resources\ContentItemResource\Pages;
 
+use App\Campaigns\CampaignCommunicationContext;
+use App\Campaigns\CreateCampaignContentItem;
 use App\Enums\ContentStatus;
+use App\Enums\ContentType;
+use App\Filament\Pages\CampaignWorkspace;
 use App\Filament\Resources\ContentItemResource;
+use App\Models\CampaignCommunication;
 use App\Models\ContentItem;
+use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
+use Livewire\Attributes\Url;
+use LogicException;
 
 class ListContentItems extends ListRecords
 {
     protected static string $resource = ContentItemResource::class;
+
+    #[Url(as: 'campaign_communication')]
+    public ?int $campaignCommunicationId = null;
+
+    public ?CampaignCommunication $campaignCommunication = null;
+
+    public function mount(): void
+    {
+        parent::mount();
+
+        if ($this->campaignCommunicationId !== null) {
+            try {
+                $this->campaignCommunication = app(CampaignCommunicationContext::class)
+                    ->forContentCreation($this->campaignCommunicationId);
+            } catch (AuthorizationException|LogicException) {
+                abort(403);
+            }
+        }
+    }
 
     public function getTitle(): string
     {
@@ -27,9 +55,39 @@ class ListContentItems extends ListRecords
 
     protected function getHeaderActions(): array
     {
+        if ($this->campaignCommunication !== null) {
+            return [$this->campaignCreateAction()];
+        }
+
         return [
             ContentItemResource::createContentAction(),
         ];
+    }
+
+    private function campaignCreateAction(): CreateAction
+    {
+        $communication = $this->campaignCommunication;
+
+        return ContentItemResource::createContentAction()
+            ->label('Create content')
+            ->modalHeading('Create content for '.$communication->title)
+            ->modalDescription($communication->purpose ?: 'Create the canonical Content Studio draft for this planned communication.')
+            ->fillForm([
+                'title' => $communication->title,
+                'content_type' => $this->suggestedContentType($communication)?->value,
+            ])
+            ->using(fn (array $data): ContentItem => app(CreateCampaignContentItem::class)->handle($communication->id, $data))
+            ->successRedirectUrl(CampaignWorkspace::getUrl(['campaign' => $communication->campaign_id]));
+    }
+
+    private function suggestedContentType(CampaignCommunication $communication): ?ContentType
+    {
+        return match ($communication->channel->value) {
+            'instagram', 'facebook', 'youtube' => ContentType::SOCIAL_CAPTION,
+            'whatsapp' => ContentType::WHATSAPP_STATUS_COPY,
+            'website' => ContentType::WEBSITE_COPY,
+            default => null,
+        };
     }
 
     /**

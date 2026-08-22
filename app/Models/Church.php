@@ -91,4 +91,14 @@ class Church extends Model
     {
         return $this->hasMany(MediaAsset::class);
     }
+
+    public function campaigns(): HasMany
+    {
+        return $this->hasMany(Campaign::class);
+    }
+
+    public function campaignCommunications(): HasMany
+    {
+        return $this->hasMany(CampaignCommunication::class);
+    }
 }

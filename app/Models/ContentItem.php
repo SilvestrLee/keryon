@@ -8,6 +8,7 @@ use App\Enums\ContentType;
 use App\Models\Concerns\BelongsToChurch;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 use InvalidArgumentException;
@@ -92,6 +93,11 @@ class ContentItem extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function campaignCommunications(): HasMany
+    {
+        return $this->hasMany(CampaignCommunication::class);
     }
 
     /**

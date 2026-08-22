@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Campaigns\CampaignCommunicationContext;
 use App\Enums\FaithFlowOutputStatus;
 use App\Enums\FaithFlowOutputType;
 use App\Enums\FaithFlowRunStatus;
@@ -10,17 +11,20 @@ use App\FaithFlow\Actions\EditFaithFlowOutput;
 use App\Jobs\FaithFlow\AnalyzeFaithFlowSourceJob;
 use App\Jobs\FaithFlow\GenerateFaithFlowOutputJob;
 use App\Jobs\FaithFlow\RegenerateFaithFlowOutputJob;
+use App\Models\CampaignCommunication;
 use App\Models\ContentItem;
 use App\Models\FaithFlowOutput;
 use App\Models\FaithFlowRun;
 use App\Support\TenantContext;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use InvalidArgumentException;
+use Livewire\Attributes\Url;
 use LogicException;
 use ValueError;
 
@@ -60,6 +64,11 @@ class FaithFlow extends Page
 
     public ?FaithFlowRun $currentRun = null;
 
+    #[Url(as: 'campaign_communication')]
+    public ?int $campaignCommunicationId = null;
+
+    public ?CampaignCommunication $campaignCommunication = null;
+
     public string $sourceText = '';
 
     /** @var array<int, string> */
@@ -91,7 +100,26 @@ class FaithFlow extends Page
             $this->currentRun = FaithFlowRun::query()->with(['outputs'])->findOrFail($run);
             Gate::authorize('view', $this->currentRun);
 
+            if (
+                $this->campaignCommunicationId !== null
+                && $this->campaignCommunicationId !== $this->currentRun->campaign_communication_id
+            ) {
+                abort(404);
+            }
+
+            $this->campaignCommunicationId = $this->currentRun->campaign_communication_id;
             $this->activeOutputId = $this->currentRun->outputs->first()?->id;
+        }
+
+        if ($this->campaignCommunicationId !== null) {
+            $context = app(CampaignCommunicationContext::class);
+            try {
+                $this->campaignCommunication = $this->currentRun === null
+                    ? $context->forFaithFlow($this->campaignCommunicationId)
+                    : $context->forFaithFlowView($this->campaignCommunicationId);
+            } catch (AuthorizationException|LogicException) {
+                abort(403);
+            }
         }
     }
 
@@ -151,6 +179,11 @@ class FaithFlow extends Page
     {
         Gate::authorize('create', FaithFlowRun::class);
 
+        if ($this->campaignCommunicationId !== null) {
+            $this->campaignCommunication = app(CampaignCommunicationContext::class)
+                ->forFaithFlow($this->campaignCommunicationId);
+        }
+
         $validated = $this->validate([
             'sourceText' => ['required', 'string', 'min:100', 'max:60000'],
         ], [], [
@@ -161,7 +194,9 @@ class FaithFlow extends Page
             'source_text' => $validated['sourceText'],
             'source_char_count' => mb_strlen($validated['sourceText']),
         ]);
-        $this->currentRun->save();
+        $this->currentRun->forceFill([
+            'campaign_communication_id' => $this->campaignCommunication?->id,
+        ])->save();
 
         $this->redirect(static::getUrl(['run' => $this->currentRun->id]));
     }
@@ -377,6 +412,13 @@ class FaithFlow extends Page
     public function dismissCelebration(): void
     {
         $this->showCelebration = false;
+    }
+
+    public function campaignWorkspaceUrl(): ?string
+    {
+        return $this->campaignCommunication === null
+            ? null
+            : CampaignWorkspace::getUrl(['campaign' => $this->campaignCommunication->campaign_id]);
     }
 
     protected function allSelectedOutputsAreSettled(): bool

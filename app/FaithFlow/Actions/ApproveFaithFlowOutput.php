@@ -55,6 +55,10 @@ class ApproveFaithFlowOutput
             // Idempotent (§16/§39) — a duplicate approve click or a retried
             // request must not re-run handoff, overwrite the original
             // approval attribution, or create a second ContentItem.
+            if ($output->output_type->contentType() !== null) {
+                $this->createContentItem->handle($output);
+            }
+
             return $output;
         }
 
