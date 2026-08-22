@@ -9,6 +9,8 @@ Engineering Governance Protocol
 - Keryon Master Blueprint v1.3
 - Keryon Blueprint v1.3.1 Engineering Hardening Addendum
 - Keryon Blueprint v1.3.2 Marketplace Distribution & Self-Hosted Edition Addendum
+- Keryon Blueprint v1.4 FaithFlow MVP Addendum
+- Keryon Blueprint v1.4.1 Product Surfaces, Identity, Membership & Authorization Addendum
 - CLAUDE.md
 
 ## Status
@@ -233,7 +235,7 @@ Editable banners
 Draft → Preview → Publish workflow
 ```
 
-Deferred to v1.4:
+Deferred to a future page-builder-adjacent addendum (not yet versioned — do not confuse with Blueprint v1.4, which is reserved for the FaithFlow MVP Addendum):
 
 ```txt
 Curated section stacking
@@ -245,22 +247,22 @@ Approved section reordering
 
 ### 4. AI Scope Drift
 
-Challenge any request that adds or implies:
+FaithFlow is approved for a narrowly-defined MVP inside Communications Hub → Content Studio, per `docs/00-Blueprint/Keryon_Blueprint_v1.4_FaithFlow_MVP_Addendum.md`. Ordinary implementation of that approved FaithFlow MVP scope does not by itself require a fresh Scope Challenge.
+
+Challenge any request that adds or implies AI capability exceeding the approved FaithFlow MVP boundary, including:
 
 ```txt
-FaithFlow
-Keryon AI
-Sermon transcription
-AI content generation
-AI scheduling
-AI devotionals
-AI prayer summaries
-AI campaign automation
+Sermon/video/audio transcription or live speech-to-text
+Autonomous or automatic publishing of AI-generated content
+AI use of Care Center or private congregation data as generation input
+AI features unrelated to the approved FaithFlow MVP (chatbots, pastoral counselling, member scoring, financial/giving content, unrestricted image/video generation, external-agent orchestration)
+Any AI output type outside the approved FaithFlow MVP catalogue (Sermon Summary, Key Themes, Key Quotes, Devotional Content, Prayer Points, Social Captions, WhatsApp/Status Copy, Discussion Questions)
+"Keryon AI" as a platform-wide assistant beyond the FaithFlow MVP boundary
 ```
 
 Reason:
 
-AI is future roadmap, not v1.3 implementation scope.
+Only the narrow FaithFlow MVP defined in Blueprint v1.4 is approved. All other AI capability remains future roadmap, not v1.3/v1.4 implementation scope.
 
 ---
 
@@ -477,6 +479,30 @@ Changing authorization behavior
 
 ---
 
+### 13. Identity / Authorization Architecture Drift
+
+Keryon Blueprint v1.4.1 defines the target identity, church membership, and authorization architecture (`docs/00-Blueprint/Keryon_Blueprint_v1.4.1_Product_Surfaces_Identity_Membership_Authorization_Addendum.md`), but is documentation only. Implementing any part of it requires its own dedicated, commissioned milestone, staged per `docs/06-Engineering/Keryon_Identity_Membership_Authorization_Architecture_v1.4.1.md`.
+
+Challenge any request that, without such a dedicated milestone:
+
+```txt
+Creates a church_memberships table or model
+Implements a TenantContext service
+Converts BelongsToChurch's tenant-resolution source
+Installs an RBAC package (e.g. spatie/laravel-permission)
+Installs a tenancy package (e.g. stancl/tenancy)
+Removes or bypasses users.church_id before its documented supersession evidence exists
+Creates a Central Filament panel or platform-staff authorization domain
+Grants Care Center access to a role/membership that doesn't hold the Care responsibility
+Encodes Primary Administrator as a plain church responsibility role rather than an ownership designation
+```
+
+Reason:
+
+v1.4.1 is architecture direction, approved in principle, sequenced explicitly (`K-GOV-1.4.1 → K-IDENTITY-001 → K-AUTH-001 → ...`) to avoid a big-bang identity rewrite. Building any piece out of that order, or without a fresh commission, reintroduces the exact risk the addendum was written to prevent.
+
+---
+
 ## Challenge Severity Levels
 
 Claude should classify challenges using one of these levels.
@@ -505,7 +531,7 @@ Example:
 "Let churches reorder website sections"
 ```
 
-This is deferred to v1.4 as curated section stacking.
+This is deferred to a future page-builder-adjacent addendum (not Blueprint v1.4, which is reserved for FaithFlow) as curated section stacking.
 
 ---
 

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Tenancy;
 
+use App\Enums\ChurchRole;
 use App\Filament\Resources\CongregationResource;
 use App\Filament\Resources\CongregationResource\Pages\ListCongregationMembers;
 use App\Models\Church;
@@ -44,8 +45,8 @@ class CrossChurchCongregationAccessTest extends TestCase
             'slug' => 'church-b',
         ]);
 
-        $this->userA = User::factory()->create(['church_id' => $this->churchA->id]);
-        $this->userB = User::factory()->create(['church_id' => $this->churchB->id]);
+        $this->userA = User::factory()->forChurch($this->churchA, [ChurchRole::ADMINISTRATOR])->create();
+        $this->userB = User::factory()->forChurch($this->churchB, [ChurchRole::ADMINISTRATOR])->create();
 
         $this->actingAs($this->userA);
         $this->memberA = CongregationMember::create([

@@ -2,6 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Enums\ChurchRole;
+use App\Models\Church;
+use App\Models\ChurchMembership;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -41,5 +44,43 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    /**
+     * Give this User an active ChurchMembership in $church with the given
+     * responsibility roles. Also mirrors church_id — the legacy
+     * compatibility bridge (Blueprint v1.4.1 §11) — so existing test
+     * assertions against $user->church_id remain valid during the
+     * transition.
+     *
+     * @param  list<\App\Enums\ChurchRole|string>  $roles
+     */
+    public function forChurch(Church $church, array $roles = [], bool $primary = false): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'church_id' => $church->id,
+        ])->afterCreating(function (User $user) use ($church, $roles, $primary) {
+            $membership = ChurchMembership::factory()
+                ->for($church)
+                ->for($user)
+                ->state(['is_primary' => $primary])
+                ->create();
+
+            $membership->assignRoles($roles);
+        });
+    }
+
+    /**
+     * The person who created $church — Primary Administrator, with the
+     * full onboarding-default responsibility bundle. See Blueprint v1.4.1
+     * preflight decision #3.
+     *
+     * @param  list<\App\Enums\ChurchRole|string>  $roles
+     */
+    public function asPrimaryAdministratorOf(
+        Church $church,
+        array $roles = [ChurchRole::ADMINISTRATOR, ChurchRole::COMMUNICATIONS, ChurchRole::CARE],
+    ): static {
+        return $this->forChurch($church, $roles, primary: true);
     }
 }
