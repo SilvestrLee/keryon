@@ -7,6 +7,7 @@ use App\Enums\ContentStatus;
 use App\Models\Concerns\BelongsToChurch;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use LogicException;
 
@@ -72,6 +73,11 @@ class CampaignCommunication extends Model
     public function contentItem(): BelongsTo
     {
         return $this->belongsTo(ContentItem::class)->withTrashed();
+    }
+
+    public function designs(): HasMany
+    {
+        return $this->hasMany(Design::class);
     }
 
     public function readiness(): string

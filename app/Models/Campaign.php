@@ -64,6 +64,11 @@ class Campaign extends Model
         return $this->hasMany(CampaignMedia::class)->orderBy('sort_order');
     }
 
+    public function designs(): HasMany
+    {
+        return $this->hasMany(Design::class);
+    }
+
     public function transitionTo(CampaignStatus $status): void
     {
         if (! $this->status->canTransitionTo($status)) {

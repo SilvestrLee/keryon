@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Design\Rendering\DesignRenderer;
+use App\Design\Rendering\PlaywrightDesignRenderer;
 use App\FaithFlow\FaithFlowAi;
 use App\PublicWebsite\PublicWebsiteContext;
 use App\PublicWebsite\Themes\ThemeRegistry;
@@ -31,6 +33,7 @@ class AppServiceProvider extends ServiceProvider
         // FaithFlow's own provider boundary — see K-FAITHFLOW-001B §17/§47.
         // Stateless, so a plain singleton (not scoped) is correct.
         $this->app->singleton(FaithFlowAi::class);
+        $this->app->bind(DesignRenderer::class, PlaywrightDesignRenderer::class);
     }
 
     /**

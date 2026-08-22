@@ -100,6 +100,11 @@ class ContentItem extends Model
         return $this->hasMany(CampaignCommunication::class);
     }
 
+    public function designs(): HasMany
+    {
+        return $this->hasMany(Design::class);
+    }
+
     /**
      * draft|rejected -> review. Resubmission clears stale feedback.
      * updated_by reflects the acting user, per K-CONTENT-002 §6 —

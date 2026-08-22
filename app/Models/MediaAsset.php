@@ -63,4 +63,14 @@ class MediaAsset extends Model
     {
         return $this->hasMany(CampaignMedia::class);
     }
+
+    public function designSelections(): HasMany
+    {
+        return $this->hasMany(DesignMedia::class);
+    }
+
+    public function generatedDesignOutputs(): HasMany
+    {
+        return $this->hasMany(DesignOutput::class);
+    }
 }

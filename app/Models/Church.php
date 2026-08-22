@@ -101,4 +101,9 @@ class Church extends Model
     {
         return $this->hasMany(CampaignCommunication::class);
     }
+
+    public function designs(): HasMany
+    {
+        return $this->hasMany(Design::class);
+    }
 }

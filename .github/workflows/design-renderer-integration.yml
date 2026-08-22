@@ -1,0 +1,45 @@
+name: Design Renderer Integration
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'renderer/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/design-renderer-integration.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  renderer-proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      DESIGN_RENDER_ARTIFACT_DIR: ${{ github.workspace }}/artifacts/design-renderer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.18.0'
+          cache: npm
+      - name: Report Node version
+        run: node --version
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Verify Playwright version
+        run: test "$(node -p "require('playwright/package.json').version")" = "1.62.1"
+      - name: Install Chromium only
+        run: npx playwright install --with-deps chromium
+      - name: Verify renderer contract
+        run: npm run test:design-renderer
+      - name: Render and verify PNGs
+        run: npm run test:design-renderer:integration
+      - name: Retain synthetic proof PNGs
+        uses: actions/upload-artifact@v4
+        with:
+          name: design-renderer-proof
+          path: artifacts/design-renderer/*.png
+          retention-days: 7
+          if-no-files-found: error

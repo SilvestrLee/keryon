@@ -72,6 +72,8 @@ enum ChurchRole: string
                 Capability::FaithflowUse,
                 Capability::CampaignsView,
                 Capability::CampaignsManage,
+                Capability::DesignsView,
+                Capability::DesignsManage,
                 Capability::WebsiteContentView,
                 Capability::WebsiteContentManage,
                 Capability::WebsiteThemeManage,

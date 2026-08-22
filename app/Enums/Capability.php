@@ -31,6 +31,9 @@ enum Capability: string
     case CampaignsView = 'campaigns.view';
     case CampaignsManage = 'campaigns.manage';
 
+    case DesignsView = 'designs.view';
+    case DesignsManage = 'designs.manage';
+
     case WebsiteContentView = 'website.content.view';
     case WebsiteContentManage = 'website.content.manage';
     case WebsiteThemeManage = 'website.theme.manage';
@@ -74,6 +77,8 @@ enum Capability: string
             self::FaithflowUse => 'Use FaithFlow',
             self::CampaignsView => 'View Campaigns',
             self::CampaignsManage => 'Manage Campaigns',
+            self::DesignsView => 'View Designs',
+            self::DesignsManage => 'Manage Designs',
             self::WebsiteContentView => 'View Website Content',
             self::WebsiteContentManage => 'Manage Website Content',
             self::WebsiteThemeManage => 'Manage Website Theme',

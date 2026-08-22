@@ -150,6 +150,28 @@ The historical Master Blueprint remains the record of its time; this
 reconciliation governs K-CAMPAIGN-001 implementation where its narrower
 boundary differs from older campaign-project/giving-performance language.
 
+## Communications Design Architecture Reconciliation
+
+Product Office directive K-DESIGN-001 establishes Design Studio as a
+structured communications renderer, not a canvas or page builder:
+
+- Keryon-curated template contracts and renderers are immutable application
+  code addressed by stable `template-key@version` identities.
+- Church-owned Designs persist normalized working inputs, a semantic Brand
+  Profile snapshot, explicit ContentItem/Campaign provenance, and same-Church
+  Institutional Media selections.
+- Each requested format has its own DesignOutput; successful files become
+  canonical MediaAsset records. Design does not own a second asset library.
+- Square, portrait, and story are layout-aware variants, never resized copies.
+- Churches edit structured content, selected media, template, format, and
+  curated variants only. Positions, layers, CSS, arbitrary fonts/effects, and
+  tenant-authored templates remain prohibited.
+- Rendering is deterministic and independent of Filament, AI imagery,
+  publishing channels, Website mutation, and Campaign ownership.
+
+The implementation contract is recorded in
+`../06-Engineering/Communications_Design_Rendering_Architecture.md`.
+
 ## Current Congregation Sprint
 
 The immediate active task remains:

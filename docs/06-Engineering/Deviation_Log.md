@@ -83,3 +83,15 @@ Reason: Product Office directive K-CAMPAIGN-001E authorized the smallest cross-d
 Approved By: Product Office (confirmed in-session, 2026-08-22)
 
 Implementation Notes: Campaign media associations carry only an optional Campaign label and ordering; they neither duplicate asset metadata nor create storage. The Website panel explicitly distinguishes Content Studio readiness from Website action and publication. Existing FaithFlow work may finish after a Campaign becomes Completed, but new contextual work remains limited to Draft/Planned/Active and Archived/cancelled contexts fail closed. Calendar, Publishing Queue, Website publication from Campaigns, and Design Studio remain excluded.
+
+## 2026-08-22 - Communications Design System and Rendering Architecture
+
+Blueprint Version: v1.3 Communications Hub / v1.4.1 responsibility architecture
+
+Changed: Established Design as a Church-owned structured creative instance built from an immutable Keryon-curated template/version contract. Design snapshots normalized inputs and semantic Church Brand Profile values, explicitly references ContentItem/Campaign context, selects Institutional Media by declared slot, and records independent per-format outputs that resolve to canonical MediaAsset records.
+
+Reason: Product Office directive K-DESIGN-001 authorized the architecture and minimum foundation required for a future structured Design Studio while permanently prohibiting a general-purpose canvas, tenant-authored template schema, duplicated media repository, AI imagery, and publishing coupling.
+
+Approved By: Product Office (confirmed in-session, 2026-08-22)
+
+Implementation Notes: Added a code-owned DesignTemplateRegistry, typed template/slot/brand/format contracts, one internal non-production reference definition, Eloquent-free rendering context and renderer interface, Design/DesignMedia/DesignOutput persistence, Communications-only designs.view/manage capabilities, tenant-safe creation/context services, and contract/authorization/tenancy tests. Square, portrait, and story dimensions are fixed. Design lifecycle is draft/approved; output lifecycle is pending/rendered/failed. No renderer package, Design Studio UI, AI generation, marketplace, publishing integration, or template builder was added. Browser rendering with pinned Chromium remains a separate package/runtime authorization gate.
