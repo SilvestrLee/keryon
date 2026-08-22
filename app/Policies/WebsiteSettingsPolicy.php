@@ -66,4 +66,18 @@ class WebsiteSettingsPolicy
             && $membership->hasCapability(Capability::WebsiteThemeManage)
             && $settings->church_id === $membership->church_id;
     }
+
+    public function publish(User $user, WebsiteSettings $settings): bool
+    {
+        $membership = $this->membershipFor($user);
+
+        return $membership !== null
+            && $membership->hasCapability(Capability::WebsitePublish)
+            && $settings->church_id === $membership->church_id;
+    }
+
+    public function unpublish(User $user, WebsiteSettings $settings): bool
+    {
+        return $this->publish($user, $settings);
+    }
 }

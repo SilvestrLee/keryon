@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\WebsiteTheme;
 use App\Models\Concerns\BelongsToChurch;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * K-CHURCHWEB-001B §19 ("Global") + §25 (theme-selection seam). One row
@@ -20,6 +21,7 @@ class WebsiteSettings extends Model
     protected $fillable = [
         'theme',
         'footer_note',
+        'current_publication_id',
     ];
 
     protected function casts(): array
@@ -27,5 +29,10 @@ class WebsiteSettings extends Model
         return [
             'theme' => WebsiteTheme::class,
         ];
+    }
+
+    public function currentPublication(): BelongsTo
+    {
+        return $this->belongsTo(WebsitePublication::class, 'current_publication_id');
     }
 }

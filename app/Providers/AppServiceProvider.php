@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\FaithFlow\FaithFlowAi;
+use App\PublicWebsite\PublicWebsiteContext;
+use App\PublicWebsite\Themes\ThemeRegistry;
 use App\Support\TenantContext;
 use Illuminate\Support\ServiceProvider;
 
@@ -19,6 +21,12 @@ class AppServiceProvider extends ServiceProvider
         // requests under Octane (Container::forgetScopedInstances()) —
         // singleton() would not be. See K-IDENTITY-001B-R1 §4/§5.
         $this->app->scoped(TenantContext::class);
+
+        // Public visitors have no membership and must never be projected
+        // into TenantContext. This separate scoped boundary is resolved
+        // once per request from a first-party Website host.
+        $this->app->scoped(PublicWebsiteContext::class);
+        $this->app->singleton(ThemeRegistry::class);
 
         // FaithFlow's own provider boundary — see K-FAITHFLOW-001B §17/§47.
         // Stateless, so a plain singleton (not scoped) is correct.

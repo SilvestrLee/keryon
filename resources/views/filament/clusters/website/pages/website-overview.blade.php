@@ -1,5 +1,47 @@
 <x-filament-panels::page>
     <div class="space-y-8">
+        <section class="rounded-2xl border border-gray-200 bg-white p-5" aria-labelledby="website-publication-status">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Public Website</p>
+                    <h2 id="website-publication-status" class="mt-1 text-lg font-semibold text-gray-900">
+                        @if ($publicationStatus['state'] === 'published')
+                            Published
+                        @elseif ($publicationStatus['state'] === 'offline')
+                            Offline
+                        @else
+                            Not published yet
+                        @endif
+                    </h2>
+                    <p class="mt-1 max-w-2xl text-sm text-gray-600">
+                        @if ($publicationStatus['state'] === 'published' && $publicationStatus['pending'])
+                            Your public Website is live. You have unpublished changes ready to preview and publish.
+                        @elseif ($publicationStatus['state'] === 'published')
+                            Your public Website matches your current working content.
+                        @elseif ($publicationStatus['state'] === 'offline')
+                            Your Website is private. Your working content and previous publication are preserved.
+                        @else
+                            Your church Website is still private. Preview it before the first publication.
+                        @endif
+                    </p>
+                </div>
+                @if ($publicationStatus['state'] === 'published')
+                    <span class="inline-flex w-fit rounded-full px-3 py-1 text-xs font-semibold {{ $publicationStatus['pending'] ? 'bg-amber-50 text-amber-800' : 'bg-emerald-50 text-emerald-700' }}">
+                        {{ $publicationStatus['pending'] ? 'Unpublished changes' : 'Up to date' }}
+                    </span>
+                @endif
+            </div>
+
+            @if ($publicationStatus['latest'])
+                <p class="mt-4 text-xs text-gray-500">
+                    Last published {{ $publicationStatus['latest']->published_at->format('j M Y, H:i') }}
+                    @if ($publicationStatus['latest']->publisher)
+                        by {{ $publicationStatus['latest']->publisher->name }}
+                    @endif
+                </p>
+            @endif
+        </section>
+
         <div>
             <h2 class="text-base font-semibold" style="color: #132E35">Pages</h2>
             <p class="mt-1 text-sm text-gray-500">What your church website says, organized the way visitors see it.</p>

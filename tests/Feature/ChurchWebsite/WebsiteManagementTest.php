@@ -15,10 +15,13 @@ use App\Filament\Clusters\Website\Resources\WebsiteLeadershipResource\Pages\List
 use App\Filament\Clusters\Website\Resources\WebsiteMinistryResource\Pages\ListWebsiteMinistries;
 use App\Models\Church;
 use App\Models\User;
+use App\Models\WebsiteAboutContent;
+use App\Models\WebsiteContactContent;
 use App\Models\WebsiteHomeContent;
 use App\Models\WebsiteSettings;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -51,6 +54,24 @@ class WebsiteManagementTest extends TestCase
         $this->actingAs($this->commsUserFor($church));
 
         Livewire::test(WebsiteOverview::class)->assertSuccessful();
+    }
+
+    public function test_overview_shows_truthful_publication_status_and_actions(): void
+    {
+        $church = Church::create(['name' => 'Lifecycle Church', 'slug' => 'lifecycle-church']);
+        $this->actingAs($this->commsUserFor($church));
+        WebsiteSettings::create([]);
+
+        Livewire::test(WebsiteOverview::class)
+            ->assertSuccessful()
+            ->assertSee('Not published yet')
+            ->assertActionVisible('preview')
+            ->assertActionVisible('publish')
+            ->assertActionHidden('unpublish')
+            ->callAction('publish')
+            ->assertNotified('Your church Website is live.')
+            ->assertSee('Published')
+            ->assertActionVisible('unpublish');
     }
 
     public function test_care_user_cannot_access_website_overview(): void
@@ -156,7 +177,7 @@ class WebsiteManagementTest extends TestCase
             ->call('save')
             ->assertHasNoFormErrors();
 
-        $about = \App\Models\WebsiteAboutContent::first();
+        $about = WebsiteAboutContent::first();
         $this->assertSame('Founded in 1985...', $about->church_story);
         $this->assertSame('To reach every neighborhood.', $about->vision);
     }
@@ -171,7 +192,7 @@ class WebsiteManagementTest extends TestCase
             ->call('save')
             ->assertHasNoFormErrors();
 
-        $this->assertSame('Mon-Fri 9am-5pm', \App\Models\WebsiteContactContent::first()->office_hours);
+        $this->assertSame('Mon-Fri 9am-5pm', WebsiteContactContent::first()->office_hours);
     }
 
     public function test_church_information_page_persists_church_fields_and_repeaters(): void
@@ -217,8 +238,8 @@ class WebsiteManagementTest extends TestCase
 
         $settings = WebsiteSettings::create([]);
 
-        $this->assertTrue(\Illuminate\Support\Facades\Gate::allows('changeTheme', $settings));
-        $this->assertTrue(\Illuminate\Support\Facades\Gate::allows('update', $settings));
+        $this->assertTrue(Gate::allows('changeTheme', $settings));
+        $this->assertTrue(Gate::allows('update', $settings));
     }
 
     public function test_care_user_cannot_change_theme(): void
@@ -230,7 +251,7 @@ class WebsiteManagementTest extends TestCase
         $careUser = User::factory()->forChurch($church, [ChurchRole::CARE])->create();
         $this->actingAs($careUser);
 
-        $this->assertFalse(\Illuminate\Support\Facades\Gate::allows('changeTheme', $settings));
+        $this->assertFalse(Gate::allows('changeTheme', $settings));
     }
 
     public function test_theme_page_persists_theme_selection(): void
