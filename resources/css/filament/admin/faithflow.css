@@ -1,0 +1,370 @@
+/*
+ * K-FAITHFLOW-001F-R2 — Signature Experience Correction.
+ *
+ * The R1 implementation used flat white bordered cards with two static
+ * circular gradient blobs — accurate brand colors, but not an organic
+ * Keryon Forms composition, no Light/illumination behavior, no depth, no
+ * visual rhythm. This file replaces that with an actual compositional
+ * system: real organic (non-circular) SVG silhouettes at varied scale,
+ * amber treated as illumination rather than accent fill, a deliberate
+ * intensity map (CREATE/GENERATE expressive → REVIEW focused → APPROVE
+ * meaningful completion), and a genuine (if restrained) Celebration
+ * treatment. Still scoped to FaithFlow only (`.ff` wrapper) — the
+ * panel-wide Filament primary color is untouched. See R2 report §E-I for
+ * the reasoning behind each piece.
+ */
+
+.ff {
+    --ff-teal: #132e35;
+    --ff-teal-soft: #1c4048;
+    --ff-teal-100: #e4eceb;
+    --ff-teal-50: #f2f6f5;
+    --ff-amber: #e09f3e;
+    --ff-amber-soft: #f0c17a;
+    --ff-amber-100: #fbf0dc;
+    --ff-amber-50: #fdf8ef;
+    --ff-white: #ffffff;
+    --ff-paper: #fbfaf7;
+    --ff-surface: #f8fafc;
+    --ff-border: #e2e8f0;
+    --ff-border-soft: #edf1f4;
+    --ff-text: #111827;
+    --ff-text-muted: #6b7280;
+    --ff-danger: #dc2626;
+    --ff-success: #15803d;
+
+    --ff-radius-card: 20px;
+    --ff-radius-button: 12px;
+    --ff-space: 8px;
+}
+
+/* ============ KERYON LOGO — approved master artwork, geometry untouched ============
+ *
+ * K-FAITHFLOW-001F-R2B — a single brand-anchor placement in the hero only
+ * (see R2B report §5). Sizing is constrained via `max-width`/`height:auto`
+ * so the SVG's own intrinsic aspect ratio governs proportion — no explicit
+ * mismatched width/height, no stretching, no filter-based recoloring. Clear
+ * space (`margin-bottom`) keeps it away from the Keryon Forms shapes and
+ * the eyebrow/heading text beneath it.
+ */
+.ff-logo {
+    display: block;
+    height: clamp(40px, 4vw, 56px);
+    width: auto;
+    margin-bottom: 28px;
+}
+
+/* ============ TYPOGRAPHY — deliberate hierarchy, not utility soup ============ */
+
+.ff-hero-title {
+    font-size: clamp(1.625rem, 1.1rem + 2vw, 2.25rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    color: var(--ff-teal);
+}
+
+.ff-section-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--ff-teal);
+}
+
+.ff-eyebrow {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ff-text-muted);
+}
+
+.ff-lede {
+    font-size: 1rem;
+    line-height: 1.65;
+    max-width: 60ch;
+    color: var(--ff-text-muted);
+}
+
+.ff-body-copy {
+    font-size: 1rem;
+    line-height: 1.75;
+    max-width: 65ch;
+    color: var(--ff-text);
+}
+
+/* ============ SURFACES / DEPTH ============ */
+
+.ff-workspace-surface {
+    background: var(--ff-white);
+    border: 1px solid var(--ff-border);
+    border-radius: var(--ff-radius-card);
+}
+
+/* The review/reading surface is deliberately a different, quieter
+   material than the workspace surfaces around it — a warm paper tone,
+   generous padding, no competing borders inside it — the CREATE/GENERATE
+   → REVIEW intensity drop the directive asks for (§16). */
+.ff-reading-surface {
+    background: var(--ff-paper);
+    border: 1px solid var(--ff-border-soft);
+    border-radius: var(--ff-radius-card);
+}
+
+.ff-btn-primary {
+    background: var(--ff-teal);
+    color: var(--ff-white);
+    border-radius: var(--ff-radius-button);
+    transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.ff-btn-primary:hover {
+    background: var(--ff-teal-soft);
+}
+
+.ff-btn-primary:active {
+    transform: scale(0.98);
+}
+
+.ff-btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.ff-btn-secondary {
+    background: transparent;
+    border: 1px solid var(--ff-border);
+    color: var(--ff-text);
+    border-radius: var(--ff-radius-button);
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.ff-btn-secondary:hover {
+    border-color: var(--ff-teal);
+    background: var(--ff-teal-50);
+}
+
+.ff-accent-badge {
+    background: var(--ff-amber-100);
+    color: var(--ff-teal);
+    border-radius: 999px;
+}
+
+.ff-focus:focus-visible {
+    outline: 2px solid var(--ff-amber);
+    outline-offset: 2px;
+}
+
+/* ============ KERYON FORMS — a compositional system, not a sticker ============
+ *
+ * Three related silhouettes (one visual family: same smooth-bezier
+ * construction, varied proportions), representing GROW / RISE / UNFOLD.
+ * Deliberately cropped at edges, layered at different scales and
+ * opacities, never centered, never repeated identically. Used only at
+ * approved moments (§9/§13/§14/§17): the first-use hero, the analysis-
+ * result "understanding" moment, the generation/progress state, and the
+ * completion/celebration moment — never as per-card wallpaper.
+ */
+
+.ff-atmosphere {
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(ellipse 120% 90% at 12% -15%, var(--ff-teal-100) 0%, transparent 58%),
+        radial-gradient(ellipse 90% 70% at 108% 112%, var(--ff-amber-50) 0%, transparent 52%),
+        var(--ff-white);
+}
+
+.ff-forms {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.ff-form {
+    position: absolute;
+}
+
+.ff-form svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.ff-form--rise {
+    width: 22rem;
+    height: 24rem;
+    top: -9rem;
+    left: -7rem;
+    opacity: 0.5;
+}
+
+.ff-form--unfold {
+    width: 16rem;
+    height: 16rem;
+    bottom: -6rem;
+    right: -5rem;
+    opacity: 0.45;
+}
+
+.ff-form--spark {
+    width: 5rem;
+    height: 5rem;
+    top: 18%;
+    right: 10%;
+    opacity: 0.3;
+}
+
+.ff-form-fill-teal {
+    fill: var(--ff-teal-100);
+}
+
+.ff-form-fill-amber {
+    fill: var(--ff-amber-100);
+}
+
+@keyframes ff-breathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.035); }
+}
+
+.ff-form--breathe {
+    animation: ff-breathe 7s ease-in-out infinite;
+    transform-origin: center;
+}
+
+/* Mobile: reduce number/scale, keep exactly one recognizable gesture
+   (§22) — the large "rise" form stays, cropped smaller; the small
+   secondary forms are dropped so decoration never competes with content
+   in a constrained viewport. */
+@media (max-width: 640px) {
+    .ff-form--unfold,
+    .ff-form--spark {
+        display: none;
+    }
+
+    .ff-form--rise {
+        width: 14rem;
+        height: 15rem;
+        top: -5rem;
+        left: -4rem;
+        opacity: 0.4;
+    }
+}
+
+/* ============ KERYON LIGHT — illumination, not an accent fill ============ */
+
+.ff-light-bloom {
+    position: absolute;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(224, 159, 62, 0.4) 0%, rgba(224, 159, 62, 0) 72%);
+    pointer-events: none;
+}
+
+@keyframes ff-glow {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 0.85; }
+}
+
+.ff-light-bloom--glow {
+    animation: ff-glow 4s ease-in-out infinite;
+}
+
+/* ============ KERYON PROGRESS — staged reveal, explicitly indeterminate ============
+ *
+ * Four conceptual stages fade in with a staggered, fixed-timing entrance
+ * (0 / 1.4s / 2.8s / 4.2s) once, then hold — this communicates sequence
+ * and movement honestly without claiming to track real backend progress
+ * (the underlying analysis is one provider call with no observable
+ * sub-stages; see R2 report §G). A slow breathing pulse on the icon
+ * continues for however long the real wait actually takes.
+ */
+
+.ff-stage {
+    opacity: 0;
+    transform: translateY(4px);
+    animation: ff-stage-in 0.6s ease forwards;
+}
+
+.ff-stage:nth-child(1) { animation-delay: 0s; }
+.ff-stage:nth-child(2) { animation-delay: 1.4s; }
+.ff-stage:nth-child(3) { animation-delay: 2.8s; }
+.ff-stage:nth-child(4) { animation-delay: 4.2s; }
+
+@keyframes ff-stage-in {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============ KERYON CELEBRATION — restrained, one-time, teal + amber ============ */
+
+.ff-celebration {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--ff-radius-card);
+    background: linear-gradient(135deg, var(--ff-teal) 0%, var(--ff-teal-soft) 100%);
+    color: var(--ff-white);
+}
+
+.ff-celebration-icon {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: var(--ff-white);
+    color: var(--ff-teal);
+}
+
+.ff-celebration-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    border: 2px solid rgba(224, 159, 62, 0.55);
+    animation: ff-ring-expand 1.6s ease-out both;
+}
+
+.ff-celebration-ring--delay {
+    animation-delay: 0.25s;
+}
+
+@keyframes ff-ring-expand {
+    0% { transform: scale(0.7); opacity: 0.9; }
+    100% { transform: scale(2.1); opacity: 0; }
+}
+
+/* ============ REDUCED MOTION ============
+ * Every decorative animation stops. Information that was communicated
+ * via a staggered entrance must remain fully visible immediately — never
+ * stuck at opacity: 0 waiting for a transition that will not run. */
+@media (prefers-reduced-motion: reduce) {
+    .ff-form--breathe,
+    .ff-light-bloom--glow,
+    .ff-celebration-ring {
+        animation: none !important;
+    }
+
+    .ff-celebration-ring {
+        display: none;
+    }
+
+    .ff-stage {
+        opacity: 1 !important;
+        transform: none !important;
+        animation: none !important;
+    }
+
+    .ff-btn-primary:active {
+        transform: none;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .ff {
+        /* Filament's admin panel has darkMode(false) — this is a
+           forward-compatible placeholder only, not an active dark theme. */
+        --ff-surface: #f8fafc;
+        --ff-text: #111827;
+    }
+}
