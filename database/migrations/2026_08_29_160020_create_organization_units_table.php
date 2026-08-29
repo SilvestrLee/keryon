@@ -19,9 +19,9 @@ return new class extends Migration
             $table->string('status')->default('active');
             $table->timestamps();
 
-            $table->unique(['organization_id', 'code']);
-            $table->index(['organization_id', 'parent_id', 'status']);
-            $table->index(['organization_id', 'organization_unit_type_id', 'status']);
+            $table->unique(['organization_id', 'code'], 'org_units_org_code_unique');
+            $table->index(['organization_id', 'parent_id', 'status'], 'org_units_org_parent_status_idx');
+            $table->index(['organization_id', 'organization_unit_type_id', 'status'], 'org_units_org_type_status_idx');
         });
 
         Schema::table('organizations', function (Blueprint $table): void {

@@ -22,9 +22,9 @@ return new class extends Migration
             $table->string('reason', 500)->nullable();
             $table->timestamps();
 
-            $table->index(['church_id', 'status', 'requested_at']);
-            $table->index(['organization_id', 'status', 'requested_at']);
-            $table->index(['organization_unit_id', 'status', 'requested_at']);
+            $table->index(['church_id', 'status', 'requested_at'], 'church_org_assign_church_status_req_idx');
+            $table->index(['organization_id', 'status', 'requested_at'], 'church_org_assign_org_status_req_idx');
+            $table->index(['organization_unit_id', 'status', 'requested_at'], 'church_org_assign_unit_status_req_idx');
         });
     }
 

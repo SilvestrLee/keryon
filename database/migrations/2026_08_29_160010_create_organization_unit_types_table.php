@@ -17,8 +17,8 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
-            $table->unique(['organization_id', 'code']);
-            $table->index(['organization_id', 'is_active', 'sort_order']);
+            $table->unique(['organization_id', 'code'], 'org_unit_types_org_code_unique');
+            $table->index(['organization_id', 'is_active', 'sort_order'], 'org_unit_types_org_active_sort_idx');
         });
     }
 

@@ -19,9 +19,9 @@ return new class extends Migration
             $table->timestamp('removed_at')->nullable();
             $table->timestamps();
 
-            $table->unique(['organization_id', 'user_id']);
-            $table->index(['user_id', 'status']);
-            $table->index(['organization_id', 'status']);
+            $table->unique(['organization_id', 'user_id'], 'org_memberships_org_user_unique');
+            $table->index(['user_id', 'status'], 'org_memberships_user_status_idx');
+            $table->index(['organization_id', 'status'], 'org_memberships_org_status_idx');
         });
     }
 

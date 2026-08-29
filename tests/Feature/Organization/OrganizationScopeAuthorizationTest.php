@@ -130,7 +130,7 @@ class OrganizationScopeAuthorizationTest extends TestCase
 
         $this->assertStringContainsString('org_role_assignments_membership_status_role_index', $unitPlan);
         $this->assertStringContainsString('sqlite_autoindex_organization_unit_paths_1', $unitPlan);
-        $this->assertStringContainsString('church_organization_assignments_organization_id_status_requested_at_index', $churchPlan);
+        $this->assertStringContainsString('church_org_assign_org_status_req_idx', $churchPlan);
         $this->assertStringContainsString('SEARCH churches USING INTEGER PRIMARY KEY', $churchPlan);
         $this->assertStringContainsString('org_role_assignments_membership_status_role_index', $churchPlan);
     }

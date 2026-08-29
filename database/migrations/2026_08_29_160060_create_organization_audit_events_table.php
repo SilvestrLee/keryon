@@ -21,11 +21,11 @@ return new class extends Migration
             $table->json('new_state')->nullable();
             $table->timestamp('occurred_at');
 
-            $table->index(['organization_id', 'occurred_at']);
-            $table->index(['organization_id', 'event_type', 'occurred_at']);
-            $table->index(['subject_type', 'subject_id', 'occurred_at']);
-            $table->index(['church_id', 'occurred_at']);
-            $table->index(['organization_unit_id', 'occurred_at']);
+            $table->index(['organization_id', 'occurred_at'], 'org_audit_org_occurred_idx');
+            $table->index(['organization_id', 'event_type', 'occurred_at'], 'org_audit_org_event_occurred_idx');
+            $table->index(['subject_type', 'subject_id', 'occurred_at'], 'org_audit_subject_occurred_idx');
+            $table->index(['church_id', 'occurred_at'], 'org_audit_church_occurred_idx');
+            $table->index(['organization_unit_id', 'occurred_at'], 'org_audit_unit_occurred_idx');
         });
     }
 
