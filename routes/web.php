@@ -45,8 +45,11 @@ Route::get('/solutions', function () {
     return view('site.solutions');
 })->name('site.solutions');
 
+Route::get('/pricing', function () {
+    return view('site.pricing');
+})->name('site.pricing');
+
 foreach ([
-    'pricing' => 'Pricing',
     'resources' => 'Resources',
     'about' => 'About',
 ] as $slug => $pageTitle) {
