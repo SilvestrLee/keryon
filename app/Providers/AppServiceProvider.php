@@ -5,6 +5,10 @@ namespace App\Providers;
 use App\Design\Rendering\DesignRenderer;
 use App\Design\Rendering\PlaywrightDesignRenderer;
 use App\FaithFlow\FaithFlowAi;
+use App\Marketplace\Delivery\FilesystemMarketplaceDelivery;
+use App\Marketplace\Delivery\MarketplaceDeliveryMechanism;
+use App\Marketplace\Entitlements\DefaultMarketplaceEntitlement;
+use App\Marketplace\Entitlements\MarketplaceEntitlement;
 use App\PublicWebsite\PublicWebsiteContext;
 use App\PublicWebsite\Themes\ThemeRegistry;
 use App\Support\TenantContext;
@@ -34,6 +38,8 @@ class AppServiceProvider extends ServiceProvider
         // Stateless, so a plain singleton (not scoped) is correct.
         $this->app->singleton(FaithFlowAi::class);
         $this->app->bind(DesignRenderer::class, PlaywrightDesignRenderer::class);
+        $this->app->bind(MarketplaceEntitlement::class, DefaultMarketplaceEntitlement::class);
+        $this->app->bind(MarketplaceDeliveryMechanism::class, FilesystemMarketplaceDelivery::class);
     }
 
     /**

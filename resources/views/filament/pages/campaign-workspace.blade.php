@@ -159,6 +159,9 @@
                                             @if ($this->canCreateContextualFaithFlow($communication))
                                                 <a href="{{ $this->createWithFaithFlowUrl($communication) }}" wire:navigate class="inline-flex min-h-10 items-center rounded-lg px-3 text-sm font-medium text-[#1E5631] hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600">Create with FaithFlow</a>
                                             @endif
+                                            @if ($this->canCreateContextualDesign($communication))
+                                                <a href="{{ $this->createDesignUrl($communication) }}" wire:navigate class="inline-flex min-h-10 items-center rounded-lg px-3 text-sm font-medium text-[#1E5631] hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600">Create design</a>
+                                            @endif
                                             @if ($this->canLinkExistingContent())
                                                 <button type="button" wire:click="mountAction('linkExistingContent', { communication: {{ $communication->id }} })" class="min-h-10 rounded-lg px-3 text-sm font-medium text-gray-700 hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600">Link existing content</button>
                                             @endif

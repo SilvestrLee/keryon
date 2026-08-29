@@ -15,6 +15,7 @@ use App\Models\Campaign;
 use App\Models\CampaignCommunication;
 use App\Models\CampaignMedia;
 use App\Models\ContentItem;
+use App\Models\Design;
 use App\Models\MediaAsset;
 use App\PublicWebsite\PublicMedia;
 use App\PublicWebsite\WebsitePublicationStatus;
@@ -478,6 +479,20 @@ class CampaignWorkspace extends Page
     public function createWithFaithFlowUrl(CampaignCommunication $communication): string
     {
         return FaithFlow::getUrl(['campaign_communication' => $communication->id]);
+    }
+
+    public function canCreateContextualDesign(CampaignCommunication $communication): bool
+    {
+        return Gate::allows('view', $communication)
+            && Gate::allows('create', Design::class);
+    }
+
+    public function createDesignUrl(CampaignCommunication $communication): string
+    {
+        return DesignStudio::getUrl([
+            'create' => true,
+            'campaign_communication' => $communication->id,
+        ]);
     }
 
     public function canViewCampaignMedia(): bool
