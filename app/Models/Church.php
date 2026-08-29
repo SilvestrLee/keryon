@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
@@ -105,5 +106,15 @@ class Church extends Model
     public function designs(): HasMany
     {
         return $this->hasMany(Design::class);
+    }
+
+    public function organizationAssignments(): HasMany
+    {
+        return $this->hasMany(ChurchOrganizationAssignment::class);
+    }
+
+    public function currentOrganizationAssignment(): BelongsTo
+    {
+        return $this->belongsTo(ChurchOrganizationAssignment::class, 'current_organization_assignment_id');
     }
 }
