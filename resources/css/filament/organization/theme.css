@@ -1,0 +1,12 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+@import '../../brand.css';
+@import './workspace.css';
+
+@source '../../../../app/Filament/Organization/**/*';
+@source '../../../../resources/views/filament/organization/**/*';
+
+html,
+body,
+.fi-body {
+    font-family: var(--font-ui);
+}

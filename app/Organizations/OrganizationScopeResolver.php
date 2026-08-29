@@ -78,7 +78,7 @@ class OrganizationScopeResolver
     }
 
     /** @return Builder<OrganizationUnit> */
-    public function unitsInScope(OrganizationCapability $capability = OrganizationCapability::UnitsView): Builder
+    public function unitsInScope(OrganizationCapability $capability = OrganizationCapability::UnitsView, bool $includeArchived = false): Builder
     {
         $membership = $this->trustedMembership();
         $query = OrganizationUnit::query()->whereRaw('0 = 1');
@@ -87,9 +87,8 @@ class OrganizationScopeResolver
             return $query;
         }
 
-        return OrganizationUnit::query()
+        $scoped = OrganizationUnit::query()
             ->where('organization_units.organization_id', $membership->organization_id)
-            ->where('organization_units.status', OrganizationUnitStatus::ACTIVE->value)
             ->whereExists(function ($scope) use ($membership, $capability): void {
                 $scope->selectRaw('1')
                     ->from('organization_unit_paths as scope_paths')
@@ -102,6 +101,10 @@ class OrganizationScopeResolver
                     ->whereIn('scope_roles.role', OrganizationRole::valuesGranting($capability))
                     ->where('scope_units.status', OrganizationUnitStatus::ACTIVE->value);
             });
+
+        return $includeArchived
+            ? $scoped
+            : $scoped->where('organization_units.status', OrganizationUnitStatus::ACTIVE->value);
     }
 
     /** @return Builder<Church> */
