@@ -38,6 +38,30 @@ return [
             'report' => false,
         ],
 
+        'marketplace' => [
+            'driver' => 'local',
+            'root' => storage_path('app/marketplace-private'),
+            'serve' => false,
+            'throw' => false,
+            'report' => false,
+        ],
+
+        'media-private' => [
+            'driver' => 'local',
+            'root' => storage_path('app/media-private'),
+            'serve' => false,
+            'throw' => false,
+            'report' => false,
+        ],
+
+        'media-public' => [
+            'driver' => 'local',
+            'root' => storage_path('app/media-public'),
+            'serve' => false,
+            'throw' => false,
+            'report' => false,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

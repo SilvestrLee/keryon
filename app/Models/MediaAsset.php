@@ -6,6 +6,8 @@ use App\Models\Concerns\BelongsToChurch;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -29,6 +31,7 @@ class MediaAsset extends Model
         'original_filename',
         'mime_type',
         'size',
+        'sha256',
         'width',
         'height',
         'alt_text',
@@ -72,5 +75,20 @@ class MediaAsset extends Model
     public function generatedDesignOutputs(): HasMany
     {
         return $this->hasMany(DesignOutput::class);
+    }
+
+    public function renditions(): HasMany
+    {
+        return $this->hasMany(MediaRendition::class);
+    }
+
+    public function publicReferences(): HasManyThrough
+    {
+        return $this->hasManyThrough(MediaPublicReference::class, MediaRendition::class);
+    }
+
+    public function rights(): HasOne
+    {
+        return $this->hasOne(MediaAssetRights::class);
     }
 }

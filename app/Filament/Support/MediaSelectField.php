@@ -4,9 +4,11 @@ namespace App\Filament\Support;
 
 use App\Models\MediaAsset;
 use App\Support\TenantContext;
+use App\Trust\Rights\RecordMediaAssetRights;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -76,7 +78,7 @@ class MediaSelectField
                     ->image()
                     ->acceptedFileTypes(self::ACCEPTED_MIME_TYPES)
                     ->maxSize(self::MAX_UPLOAD_SIZE_KB)
-                    ->disk('public')
+                    ->disk(config('media.private_disk', 'media-private'))
                     // Tenant-scoped staging only — never a cross-tenant or
                     // Website-specific path. Moved to its canonical
                     // per-asset home in ingest() below before the
@@ -110,7 +112,10 @@ class MediaSelectField
      */
     public static function ingest(string $stagingPath, string $originalFilename, ?string $altText = null): MediaAsset
     {
-        $disk = Storage::disk('public');
+        Gate::authorize('create', MediaAsset::class);
+
+        $diskName = (string) config('media.private_disk', 'media-private');
+        $disk = Storage::disk($diskName);
         $churchId = app(TenantContext::class)->currentChurchId();
 
         if ($churchId === null) {
@@ -170,11 +175,12 @@ class MediaSelectField
         [$width, $height] = $dimensions;
 
         $asset = new MediaAsset([
-            'disk' => 'public',
+            'disk' => $diskName,
             'path' => $finalPath,
             'original_filename' => basename($originalFilename),
             'mime_type' => $mimeType,
             'size' => $size,
+            'sha256' => hash('sha256', $disk->get($finalPath)),
             'width' => $width ?: null,
             'height' => $height ?: null,
             'alt_text' => $altText,
@@ -186,6 +192,7 @@ class MediaSelectField
         $asset->uuid = $uuid;
         try {
             $asset->save();
+            app(RecordMediaAssetRights::class)->churchDeclared($asset);
         } catch (\Throwable $exception) {
             $disk->delete($finalPath);
 

@@ -11,6 +11,15 @@ This directory contains the governing product and engineering documentation for 
 | v1.3.2 | `Keryon_Blueprint_v1.3.2_Marketplace_Distribution_Addendum.md` | Future marketplace/self-hosted packaging consideration. It must not change current sprint scope. |
 | v1.4 | `Keryon_Blueprint_v1.4_FaithFlow_MVP_Addendum.md` | Binding, but narrow: moves FaithFlow from future roadmap into a defined Communications Hub → Content Studio MVP capability. Does not reopen "AI" generally — all other AI capability remains future roadmap. |
 | v1.4.1 | `Keryon_Blueprint_v1.4.1_Product_Surfaces_Identity_Membership_Authorization_Addendum.md` | Architecture direction for product surfaces, User identity, church membership, and authorization. Documentation only — authorizes no schema, model, policy, middleware, or Filament change. Implementation constraints live in `../06-Engineering/Keryon_Identity_Membership_Authorization_Architecture_v1.4.1.md`. |
+| K-DESIGN-002 | `Keryon_Blueprint_K-DESIGN-002_AI_Design_Marketplace_Direction.md` | Binding future Design direction: finished raster artwork through AI Design; professional PSD/ZIP source distribution through a separate Free/Premium Marketplace; external editing only. Implementation is queued and requires K-DESIGN-DISCOVERY after the active K-AUTH-001B milestone. |
+| K-MARKET-001 | `../06-Engineering/Private_Design_Marketplace_Architecture.md` | Implemented private Design Marketplace domain foundation: platform-owned global catalogue/source metadata, Church-owned acquisitions, append-only download auditing, DesignsView/DesignsManage gating, Free entitlement and private controlled delivery. No customer UI, real PSD ingestion, Premium commerce, Central UI, or public catalogue. |
+| K-TRUST-001B | `../06-Engineering/Trust_Architecture_Product_Invariants.md` | Binding Trust architecture: lifecycle-aware data classification, categorical Care→AI prohibition, approved-processor boundary, private-by-default Church Media, asset-rights and Marketplace publication invariants, retention/deletion principles, and the Capability Compliance Gate. Authorizes no schema or broad Trust platform. |
+| K-TRUST-002 | `../06-Engineering/Private_Design_Marketplace_Architecture.md` | Implemented P0 Marketplace rights gate: explicit verified rights plus technical validity are required for availability/publication/acquisition/delivery; pending/rejected/revoked states deny future delivery while preserving historical acquisition/download evidence. |
+| K-TRUST-003 | `../06-Engineering/Trust_Architecture_Product_Invariants.md` | Implemented the first executable AI-processing boundary: FaithFlow requires valid tenant authorization, AI-eligible data, and an explicitly approved provider/capability/model with reviewed governance facts. Known Care-origin content and HIGHLY_RESTRICTED data fail closed. |
+| K-TRUST-004B | `../06-Engineering/Trust_Architecture_Product_Invariants.md` | Implemented the additive private-media transition foundation: new Church originals/staging and Design outputs are private and hashed; explicit Website publication creates separately stored public renditions with bounded references; legacy public MediaAssets and snapshots remain dual-readable pending evidence-driven K-TRUST-004C migration. |
+| K-TRUST-005 | `../06-Engineering/Anthropic_FaithFlow_Processor_Review.md` | Evidence-backed Anthropic/FaithFlow processor review and canonical code/config registry. The model ID is verified, but contracting entity, Terms/DPA acceptance, account retention/routing settings, and legal review remain unresolved; Anthropic stays `under_review` and production customer FaithFlow processing remains blocked. |
+| K-TRUST-006 | `../06-Engineering/Asset_Rights_Governance.md` | Implemented asset-rights boundary: Church media receives bounded operational-use rights without AI/training/redistribution inference; public renditions require publication-compatible rights; Marketplace retains stronger verified source-version redistribution clearance. Sunday Service remains pending and delivery-blocked. |
+| K-TRUST-007 | `../06-Engineering/Public_Publishing_Trust_Gate.md` | Implemented the canonical tenant-public transition against Church Website: explicit publisher intent, allowlisted public schema, rights-compatible renditions, AI-review seam, immutable destination evidence, atomic activation, immediate unpublish delivery removal, and degraded-publication health detection. |
 
 ## Interpretation Rules
 
@@ -21,6 +30,7 @@ This directory contains the governing product and engineering documentation for 
 5. The v1.4.1 Product Surfaces, Identity, Membership & Authorization Addendum is the authoritative direction for identity/membership/authorization architecture, but is documentation only — implementation requires its own separately commissioned milestone(s), staged per the order in its companion engineering document.
 6. If there is a conflict between a chat instruction and the blueprint, stop and ask Product Office for clarification.
 7. Any product expansion requires a versioned Product Office decision.
+8. K-TRUST-001B governs whether Keryon may process, transfer, generate from, publish, retain, or redistribute data/content. It complements rather than replaces K-AUTH authorization.
 
 ## Current Product Boundary
 
@@ -38,6 +48,11 @@ Keryon is not:
 - Page builder
 
 ## Current Engineering Priority
+
+**Product Office sequencing instruction — 22 August 2026:** K-AUTH-001B
+remains the active engineering milestone. K-DESIGN-002 is approved direction
+only and must not interrupt it; K-DESIGN-DISCOVERY must be separately
+commissioned after the active roadmap permits Design work.
 
 Reconciled by K-CHURCHWEB-001B (§5) — the flat priority list previously
 recorded here predated the work below and no longer reflected repository
@@ -66,7 +81,7 @@ has actually shipped versus what remains.
 - Media Library — full product experience (K-CHURCHWEB-001B's media foundation is a domain primitive only, not the product)
 - Templates
 - Campaigns
-- Design Studio — K-DESIGN-001 (Communications Design System & Rendering Architecture) → K-DESIGN-002 (Design Studio Product Experience) → K-DESIGN-003 (Creative Templates & Multi-Format Generation). Structured, curated, brand-aware, template-driven — not a general canvas/Canva-style tool.
+- Design capability — future direction is AI Design (finished flattened artwork) plus a separate Free/Premium PSD Marketplace (external editing only). Implementation is queued behind K-AUTH-001B and a required non-destructive K-DESIGN-DISCOVERY. Existing Design/renderer work must be audited before any deletion or repurposing.
 - Content Calendar / Publishing Queue
 - Settings
 - Custom domains (K-DOMAIN-001)
@@ -151,6 +166,28 @@ reconciliation governs K-CAMPAIGN-001 implementation where its narrower
 boundary differs from older campaign-project/giving-performance language.
 
 ## Communications Design Architecture Reconciliation
+
+**Superseding future-product direction (22 August 2026):**
+K-DESIGN-002 no longer assumes that the structured template renderer becomes
+Keryon's long-term church-facing editing product. The approved future branches
+are AI Design (finished flattened artwork) and a separate Free/Premium PSD
+Marketplace (private source distribution for external editing). There is no
+online PSD editor or general design canvas. The existing implementation remains
+intact pending K-DESIGN-DISCOVERY and Product Office classification; this
+direction authorizes no deletion, repurposing, schema, package, or product code.
+See `Keryon_Blueprint_K-DESIGN-002_AI_Design_Marketplace_Direction.md`.
+
+### Private Design Marketplace foundation
+
+K-MARKET-001 implements the private Marketplace bounded context independently
+from tenant-owned Design, DesignOutput, DesignMedia, and MediaAsset. Catalogue,
+preview, and versioned source-package records are Keryon-owned/global but are
+visible only after authenticated active-Church authorization. `DesignsView`
+gates catalogue visibility; `DesignsManage` gates acquisition/download. Free
+means included for eligible Keryon Churches, never public. Premium commercial
+entitlement, real PSD ingestion, customer UI, Central publishing, and seller
+infrastructure remain deferred. See
+`../06-Engineering/Private_Design_Marketplace_Architecture.md`.
 
 Product Office directive K-DESIGN-001 establishes Design Studio as a
 structured communications renderer, not a canvas or page builder:

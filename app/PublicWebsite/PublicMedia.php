@@ -2,11 +2,38 @@
 
 namespace App\PublicWebsite;
 
+use App\Enums\MediaRenditionState;
 use App\Models\MediaAsset;
+use App\Models\MediaRendition;
 use Illuminate\Support\Facades\Storage;
 
 class PublicMedia
 {
+    /** @return array{url: string, alt: string, width: int|null, height: int|null}|null */
+    public function rendition(?string $uuid, ?string $alt = null): ?array
+    {
+        if ($uuid === null) {
+            return null;
+        }
+
+        $rendition = MediaRendition::withoutGlobalScopes()
+            ->where('uuid', $uuid)
+            ->where('state', MediaRenditionState::Active->value)
+            ->whereHas('publicReferences', fn ($query) => $query->whereNull('deactivated_at'))
+            ->first();
+
+        if ($rendition === null || ! Storage::disk($rendition->disk)->exists($rendition->path)) {
+            return null;
+        }
+
+        return [
+            'url' => route('media.public', ['rendition' => $rendition->uuid]),
+            'alt' => $alt ?? MediaAsset::withoutGlobalScopes()->withTrashed()->find($rendition->media_asset_id)?->alt_text ?? '',
+            'width' => $rendition->width,
+            'height' => $rendition->height,
+        ];
+    }
+
     /** @return array{url: string, alt: string, width: int|null, height: int|null}|null */
     public function image(int $churchId, ?int $assetId, ?string $altOverride = null): ?array
     {

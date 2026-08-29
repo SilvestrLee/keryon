@@ -7,6 +7,8 @@ use App\Design\Rendering\DesignRenderingContextFactory;
 use App\Design\Rendering\Exceptions\DesignRendererException;
 use App\Models\DesignOutput;
 use App\Models\MediaAsset;
+use App\Trust\Rights\RecordMediaAssetRights;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use LogicException;
@@ -26,12 +28,14 @@ class RenderDesignOutput
             throw new LogicException('A Design output requires its same-Church Design.');
         }
 
+        Gate::authorize('update', $output->design);
+
         try {
             $rendered = $this->renderer->render($this->contexts->forDesign($output->design), $output->format);
             $uuid = (string) Str::uuid();
             $filename = "design-{$output->format->value}.png";
-            $path = "tenants/{$output->church_id}/media/{$uuid}/{$filename}";
-            $disk = config('design-renderer.disk', 'public');
+            $path = "tenants/{$output->church_id}/media/{$uuid}/original.png";
+            $disk = config('design-renderer.disk', 'media-private');
 
             if (! Storage::disk($disk)->put($path, $rendered->bytes)) {
                 throw new DesignRendererException('media_storage_failed');
@@ -44,11 +48,13 @@ class RenderDesignOutput
                     'original_filename' => $filename,
                     'mime_type' => $rendered->mimeType,
                     'size' => strlen($rendered->bytes),
+                    'sha256' => hash('sha256', $rendered->bytes),
                     'width' => $rendered->width,
                     'height' => $rendered->height,
                     'alt_text' => 'Generated church communication design',
                 ]);
                 $asset->forceFill(['church_id' => $output->church_id, 'uuid' => $uuid])->save();
+                app(RecordMediaAssetRights::class)->keryonCreated($asset);
                 $output->markRendered($asset);
             } catch (\Throwable $exception) {
                 Storage::disk($disk)->delete($path);

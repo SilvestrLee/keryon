@@ -23,6 +23,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class ProclaimRenderingTest extends TestCase
@@ -35,6 +36,7 @@ class ProclaimRenderingTest extends TestCase
     {
         parent::setUp();
         Storage::fake('public');
+        Storage::fake('media-public');
 
         $this->church = Church::create([
             'name' => 'The Fellowship of Grace and Hope Community Church',
@@ -62,10 +64,11 @@ class ProclaimRenderingTest extends TestCase
     {
         $uuid = (string) Str::uuid();
         $path = "tenants/{$this->church->id}/media/{$uuid}/original.png";
-        Storage::disk('public')->put($path, 'image bytes');
+        $bytes = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=');
+        Storage::disk('public')->put($path, $bytes);
         $asset = new MediaAsset([
             'disk' => 'public', 'path' => $path, 'original_filename' => $filename,
-            'mime_type' => 'image/png', 'size' => 11, 'width' => 1200, 'height' => 800,
+            'mime_type' => 'image/png', 'size' => strlen($bytes), 'width' => 1, 'height' => 1,
             'alt_text' => $alt,
         ]);
         $asset->uuid = $uuid;
@@ -103,7 +106,7 @@ class ProclaimRenderingTest extends TestCase
             ->assertSee('aria-label="Primary navigation"', false)
             ->assertSee('<h1>A home for faith, hope, and generous community</h1>', false)
             ->assertSee('alt="The congregation worshipping together"', false)
-            ->assertSee(Storage::disk('public')->url($hero->path))
+            ->assertSee(route('media.public', ['rendition' => $hero->renditions()->first()->uuid]))
             ->assertSee('--church-accent: #234E3D', false)
             ->assertSee('Romans 15:7');
     }
@@ -181,9 +184,8 @@ class ProclaimRenderingTest extends TestCase
             'created_at' => now(), 'updated_at' => now(),
         ]);
 
-        $this->publicGet()->assertOk()
-            ->assertDontSee('original.svg')
-            ->assertDontSee('unsafe.svg');
+        $this->expectException(ValidationException::class);
+        app(WebsitePublisher::class)->publish();
     }
 
     private function imageForChurch(Church $church, string $marker): MediaAsset

@@ -5,9 +5,15 @@ namespace App\Filament\Widgets;
 use App\Models\CongregationMember;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\Facades\Gate;
 
 class CongregationStatsWidget extends StatsOverviewWidget
 {
+    public static function canView(): bool
+    {
+        return Gate::allows('viewAny', CongregationMember::class);
+    }
+
     protected function getStats(): array
     {
         return [

@@ -88,6 +88,8 @@ class PublicWebsiteContent
         $church = $this->hydrate(Church::class, $snapshot['church']);
         $church->id = $publication->church_id;
         $brand = $this->hydrateNullable(ChurchBrandProfile::class, $snapshot['brand']);
+        $hasRenditionMap = array_key_exists('public_media', $snapshot);
+        $publicMedia = $snapshot['public_media'] ?? [];
 
         $socialLinks = $this->collection(ChurchSocialLink::class, $snapshot['social_links'])
             ->map(function (ChurchSocialLink $social): ChurchSocialLink {
@@ -100,8 +102,13 @@ class PublicWebsiteContent
         return [
             'church' => $church,
             'brand' => $brand,
-            'logo' => $this->media->image($publication->church_id, $brand?->primary_logo_media_id, $church->name),
-            'mark' => $this->media->image($publication->church_id, $brand?->mark_media_id, ''),
+            'logo' => $hasRenditionMap
+                ? $this->media->rendition($publicMedia['brand.logo'] ?? null, $church->name)
+                : $this->media->image($publication->church_id, $brand?->primary_logo_media_id, $church->name),
+            'mark' => $hasRenditionMap
+                ? $this->media->rendition($publicMedia['brand.mark'] ?? null, '')
+                : $this->media->image($publication->church_id, $brand?->mark_media_id, ''),
+            'publicMedia' => $hasRenditionMap ? $publicMedia : null,
             'serviceTimes' => $this->collection(ChurchServiceTime::class, $snapshot['service_times']),
             'socialLinks' => $socialLinks,
             'palette' => $this->palette($brand),

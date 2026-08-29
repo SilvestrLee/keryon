@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Design;
 
+use App\Campaigns\CampaignManager;
 use App\Design\Actions\CreateDesign;
 use App\Design\Actions\RenderDesignOutput;
 use App\Design\Actions\RetryDesignOutput;
@@ -9,16 +10,16 @@ use App\Design\Rendering\DesignRenderer;
 use App\Design\Rendering\DesignRenderingContext;
 use App\Design\Rendering\Exceptions\DesignRendererException;
 use App\Design\Rendering\RenderedDesignFile;
+use App\Enums\AssetProvenance;
 use App\Enums\ChurchRole;
 use App\Enums\DesignOutputFormat;
 use App\Enums\DesignOutputStatus;
 use App\Enums\DesignPurpose;
 use App\Models\CampaignMedia;
 use App\Models\Church;
-use App\Models\DesignOutput;
 use App\Models\MediaAsset;
+use App\Models\MediaRendition;
 use App\Models\User;
-use App\Campaigns\CampaignManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -28,6 +29,7 @@ class DesignRenderingFlowTest extends TestCase
     use RefreshDatabase;
 
     private Church $church;
+
     private User $user;
 
     protected function setUp(): void
@@ -42,6 +44,8 @@ class DesignRenderingFlowTest extends TestCase
 
     public function test_rendered_file_becomes_canonical_media_and_output(): void
     {
+        Storage::fake('media-private');
+        config(['design-renderer.disk' => 'media-private']);
         $design = $this->design([DesignOutputFormat::SQUARE]);
         $this->fakeRenderer(fn ($context, $format) => $this->png($format));
 
@@ -50,9 +54,15 @@ class DesignRenderingFlowTest extends TestCase
         $this->assertSame(DesignOutputStatus::RENDERED, $output->status);
         $this->assertNotNull($output->media_asset_id);
         $this->assertSame([1080, 1080], [$output->mediaAsset->width, $output->mediaAsset->height]);
-        Storage::disk('rendered')->assertExists($output->mediaAsset->path);
+        $this->assertSame('media-private', $output->mediaAsset->disk);
+        $this->assertSame(AssetProvenance::KeryonCreated, $output->mediaAsset->rights->provenance);
+        $this->assertSame(hash('sha256', $this->png(DesignOutputFormat::SQUARE)->bytes), $output->mediaAsset->sha256);
+        Storage::disk('media-private')->assertExists($output->mediaAsset->path);
         $this->assertStringNotContainsString('Grace', $output->mediaAsset->path);
         $this->assertSame(1, MediaAsset::query()->count());
+
+        $design->fresh()->approve($this->user);
+        $this->assertSame(0, MediaRendition::query()->count());
     }
 
     public function test_partial_failure_survives_and_failed_output_has_narrow_retry_seam(): void
@@ -60,7 +70,9 @@ class DesignRenderingFlowTest extends TestCase
         $design = $this->design([DesignOutputFormat::SQUARE, DesignOutputFormat::PORTRAIT]);
         $this->fakeRenderer(fn ($context, $format) => $format === DesignOutputFormat::PORTRAIT ? throw new DesignRendererException('renderer_timeout') : $this->png($format));
 
-        foreach ($design->outputs as $output) app(RenderDesignOutput::class)->handle($output);
+        foreach ($design->outputs as $output) {
+            app(RenderDesignOutput::class)->handle($output);
+        }
 
         $this->assertSame(DesignOutputStatus::RENDERED, $design->outputs()->where('format', 'square')->first()->status);
         $failed = $design->outputs()->where('format', 'portrait')->first();
@@ -105,9 +117,14 @@ class DesignRenderingFlowTest extends TestCase
 
     private function fakeRenderer(callable $callback): void
     {
-        $this->app->instance(DesignRenderer::class, new class($callback) implements DesignRenderer {
+        $this->app->instance(DesignRenderer::class, new class($callback) implements DesignRenderer
+        {
             public function __construct(private $callback) {}
-            public function render(DesignRenderingContext $context, DesignOutputFormat $format): RenderedDesignFile { return ($this->callback)($context, $format); }
+
+            public function render(DesignRenderingContext $context, DesignOutputFormat $format): RenderedDesignFile
+            {
+                return ($this->callback)($context, $format);
+            }
         });
     }
 

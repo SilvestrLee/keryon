@@ -9,6 +9,7 @@ use App\Models\MediaAsset;
 use App\Models\User;
 use App\Models\WebsiteHomeContent;
 use Filament\Facades\Filament;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -33,6 +34,7 @@ class MediaIngestionTest extends TestCase
         parent::setUp();
 
         Filament::setCurrentPanel(Filament::getPanel('admin'));
+        Storage::fake('media-private');
         Storage::fake('public');
     }
 
@@ -49,7 +51,7 @@ class MediaIngestionTest extends TestCase
     protected function stageUpload(Church $church, string $filename, ?string $bytes = null): string
     {
         $stagingPath = "tenants/{$church->id}/media/.staging/".uniqid().'.tmp';
-        Storage::disk('public')->put($stagingPath, $bytes ?? $this->fakePngBytes());
+        Storage::disk('media-private')->put($stagingPath, $bytes ?? $this->fakePngBytes());
 
         return $stagingPath;
     }
@@ -69,9 +71,11 @@ class MediaIngestionTest extends TestCase
         $asset = MediaSelectField::ingest($staged, 'hero.png');
 
         $this->assertSame("tenants/{$church->id}/media/{$asset->uuid}/original.png", $asset->path);
-        Storage::disk('public')->assertExists($asset->path);
+        $this->assertSame('media-private', $asset->disk);
+        Storage::disk('media-private')->assertExists($asset->path);
+        Storage::disk('public')->assertMissing($asset->path);
         // The staging copy must be gone — moved, not duplicated.
-        Storage::disk('public')->assertMissing($staged);
+        Storage::disk('media-private')->assertMissing($staged);
     }
 
     public function test_church_a_and_church_b_uploads_never_share_an_asset_namespace(): void
@@ -105,8 +109,8 @@ class MediaIngestionTest extends TestCase
         $second = MediaSelectField::ingest($stagedSecond, 'logo.png');
 
         $this->assertNotSame($first->path, $second->path);
-        Storage::disk('public')->assertExists($first->path);
-        Storage::disk('public')->assertExists($second->path);
+        Storage::disk('media-private')->assertExists($first->path);
+        Storage::disk('media-private')->assertExists($second->path);
         // Both still remember the same human filename as metadata —
         // that never had to be unique.
         $this->assertSame('logo.png', $first->original_filename);
@@ -140,6 +144,7 @@ class MediaIngestionTest extends TestCase
         $this->assertSame(1, $asset->width);
         $this->assertSame(1, $asset->height);
         $this->assertSame('A sanctuary photo.', $asset->alt_text);
+        $this->assertSame(hash('sha256', $this->fakePngBytes()), $asset->sha256);
     }
 
     public function test_ingested_asset_can_be_selected_by_website_content_afterward(): void
@@ -211,7 +216,7 @@ class MediaIngestionTest extends TestCase
         $church = Church::create(['name' => 'Large Image Church', 'slug' => 'large-image-church']);
         $this->actingAs($this->commsUserFor($church));
         $staged = $this->stageUpload($church, 'large.png', $this->fakePngBytes());
-        Storage::disk('public')->append($staged, str_repeat('x', (MediaSelectField::MAX_UPLOAD_SIZE_KB * 1024) + 1));
+        Storage::disk('media-private')->append($staged, str_repeat('x', (MediaSelectField::MAX_UPLOAD_SIZE_KB * 1024) + 1));
 
         $this->expectException(ValidationException::class);
         MediaSelectField::ingest($staged, 'large.png');
@@ -225,6 +230,18 @@ class MediaIngestionTest extends TestCase
         $this->actingAs($this->commsUserFor($churchB));
 
         $this->expectException(ValidationException::class);
+        MediaSelectField::ingest($staged, 'hero.png');
+    }
+
+    public function test_ingest_requires_media_management_capability_even_with_valid_tenant_context(): void
+    {
+        $church = Church::factory()->create();
+        $careUser = User::factory()->forChurch($church, [ChurchRole::CARE])->create();
+        $staged = $this->stageUpload($church, 'hero.png');
+        $this->actingAs($careUser);
+
+        $this->expectException(AuthorizationException::class);
+
         MediaSelectField::ingest($staged, 'hero.png');
     }
 
