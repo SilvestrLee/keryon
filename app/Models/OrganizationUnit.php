@@ -51,4 +51,9 @@ class OrganizationUnit extends Model
     {
         return $this->hasMany(OrganizationUnitPath::class, 'ancestor_id');
     }
+
+    public function roleAssignments(): HasMany
+    {
+        return $this->hasMany(OrganizationRoleAssignment::class);
+    }
 }

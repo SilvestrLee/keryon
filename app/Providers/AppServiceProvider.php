@@ -11,6 +11,7 @@ use App\Marketplace\Entitlements\DefaultMarketplaceEntitlement;
 use App\Marketplace\Entitlements\MarketplaceEntitlement;
 use App\PublicWebsite\PublicWebsiteContext;
 use App\PublicWebsite\Themes\ThemeRegistry;
+use App\Support\OrganizationContext;
 use App\Support\TenantContext;
 use Illuminate\Support\ServiceProvider;
 
@@ -27,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
         // requests under Octane (Container::forgetScopedInstances()) —
         // singleton() would not be. See K-IDENTITY-001B-R1 §4/§5.
         $this->app->scoped(TenantContext::class);
+        $this->app->scoped(OrganizationContext::class);
 
         // Public visitors have no membership and must never be projected
         // into TenantContext. This separate scoped boundary is resolved
