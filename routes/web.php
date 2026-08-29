@@ -1,6 +1,16 @@
 <?php
 
+use App\Http\Controllers\PrivateMediaController;
+use App\Http\Controllers\PublicMediaRenditionController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/media/{rendition}', PublicMediaRenditionController::class)
+    ->whereUuid('rendition')
+    ->name('media.public');
+
+Route::get('/app/media/{asset}', PrivateMediaController::class)
+    ->whereUuid('asset')
+    ->name('media.private');
 
 Route::get('/', function () {
     return view('site.home');
