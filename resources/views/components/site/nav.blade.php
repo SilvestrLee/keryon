@@ -14,8 +14,8 @@
         class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 motion-safe:transition-[padding] motion-safe:duration-200 sm:px-6 lg:px-8"
         :class="scrolled ? 'py-2' : 'py-4'"
     >
-        <a href="{{ route('home') }}" class="rounded-button text-lg font-semibold tracking-tight text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface">
-            Keryon
+        <a href="{{ route('home') }}" aria-label="Keryon home" class="rounded-button focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface">
+            <x-keryon-logo class="text-[1.3rem]" />
         </a>
 
         <nav class="hidden items-center gap-8 lg:flex" aria-label="Primary">

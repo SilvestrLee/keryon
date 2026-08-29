@@ -1,0 +1,72 @@
+@font-face {
+    font-family: 'Gilroy';
+    src: url('../fonts/gilroy/Gilroy-Regular.woff2') format('woff2');
+    font-display: swap;
+    font-style: normal;
+    font-weight: 400;
+}
+
+@font-face {
+    font-family: 'Gilroy';
+    src: url('../fonts/gilroy/Gilroy-Medium.woff2') format('woff2');
+    font-display: swap;
+    font-style: normal;
+    font-weight: 500;
+}
+
+@font-face {
+    font-family: 'Gilroy';
+    src: url('../fonts/gilroy/Gilroy-Semibold.woff2') format('woff2');
+    font-display: swap;
+    font-style: normal;
+    font-weight: 600;
+}
+
+@font-face {
+    font-family: 'Gilroy';
+    src: url('../fonts/gilroy/Gilroy-Bold.woff2') format('woff2');
+    font-display: swap;
+    font-style: normal;
+    font-weight: 700;
+}
+
+:root {
+    --font-keryon: 'Gilroy', ui-sans-serif, system-ui, sans-serif;
+    --font-heading: var(--font-keryon);
+    --font-body: var(--font-keryon);
+    --font-ui: var(--font-keryon);
+    --weight-regular: 400;
+    --weight-medium: 500;
+    --weight-semibold: 600;
+    --weight-bold: 700;
+}
+
+.keryon-lockup {
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+    gap: .48em;
+    color: #12353d;
+    font-family: var(--font-keryon);
+    font-size: 1.25rem;
+    font-weight: var(--weight-bold);
+    letter-spacing: -.035em;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.keryon-lockup--inverse {
+    color: #fff;
+}
+
+.keryon-lockup__symbol {
+    display: block;
+    width: 1.6em;
+    height: 1.6em;
+    flex: none;
+    object-fit: contain;
+}
+
+.keryon-lockup--compact .keryon-lockup__wordmark {
+    display: none;
+}

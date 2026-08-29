@@ -30,6 +30,8 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->darkMode(false)
+            ->brandLogo(fn () => view('components.keryon-logo'))
+            ->brandLogoHeight('2.25rem')
             ->login()
             ->colors([
                 'primary' => Color::Amber,

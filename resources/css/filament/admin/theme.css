@@ -1,5 +1,14 @@
 @import '../../../../vendor/filament/filament/resources/css/theme.css';
+@import '../../brand.css';
 @import './faithflow.css';
+@import './design-studio.css';
+@import './design-marketplace.css';
 
 @source '../../../../app/Filament/**/*';
 @source '../../../../resources/views/filament/**/*';
+
+html,
+body,
+.fi-body {
+    font-family: var(--font-ui);
+}
