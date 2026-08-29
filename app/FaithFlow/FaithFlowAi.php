@@ -2,12 +2,19 @@
 
 namespace App\FaithFlow;
 
+use App\Enums\AiCapability;
+use App\Enums\AiDataOrigin;
+use App\Enums\DataClassification;
 use App\Enums\FaithFlowOutputType;
 use App\FaithFlow\Ai\AnalysisResult;
 use App\FaithFlow\Ai\CanonicalAnalysisAgent;
 use App\FaithFlow\Ai\GenerationResult;
 use App\FaithFlow\Ai\StructuredOutputGenerationAgent;
 use App\FaithFlow\Ai\TextOutputGenerationAgent;
+use App\Models\FaithFlowRun;
+use App\Trust\Ai\AiProcessingPolicy;
+use App\Trust\Ai\AiProcessingRequest;
+use App\Trust\Ai\KnownCareContentGuard;
 use Laravel\Ai\Responses\AgentResponse;
 use Laravel\Ai\Responses\StructuredAgentResponse;
 
@@ -27,10 +34,18 @@ use Laravel\Ai\Responses\StructuredAgentResponse;
  */
 class FaithFlowAi
 {
-    public function analyze(string $sourceText): AnalysisResult
+    public function __construct(
+        private readonly AiProcessingPolicy $policy,
+        private readonly KnownCareContentGuard $care,
+    ) {}
+
+    public function analyze(FaithFlowRun $run): AnalysisResult
     {
+        $this->authorize($run, AiCapability::FaithFlowAnalysis, AiDataOrigin::FaithFlowSource);
+        $this->care->assertEligible($run->source_text, $run->church_id);
+
         /** @var StructuredAgentResponse $response */
-        $response = (new CanonicalAnalysisAgent)->prompt($sourceText);
+        $response = (new CanonicalAnalysisAgent)->prompt($run->source_text);
 
         return new AnalysisResult(
             data: $response->toArray(),
@@ -44,8 +59,9 @@ class FaithFlowAi
     /**
      * @param  array<string, mixed>  $canonicalAnalysis
      */
-    public function generateText(FaithFlowOutputType $type, array $canonicalAnalysis): GenerationResult
+    public function generateText(FaithFlowOutputType $type, array $canonicalAnalysis, FaithFlowRun $run): GenerationResult
     {
+        $this->authorize($run, AiCapability::FaithFlowGeneration, AiDataOrigin::FaithFlowAnalysis);
         /** @var AgentResponse $response */
         $response = (new TextOutputGenerationAgent($type))->prompt(json_encode($canonicalAnalysis));
 
@@ -61,8 +77,9 @@ class FaithFlowAi
     /**
      * @param  array<string, mixed>  $canonicalAnalysis
      */
-    public function generateStructured(FaithFlowOutputType $type, array $canonicalAnalysis): GenerationResult
+    public function generateStructured(FaithFlowOutputType $type, array $canonicalAnalysis, FaithFlowRun $run): GenerationResult
     {
+        $this->authorize($run, AiCapability::FaithFlowGeneration, AiDataOrigin::FaithFlowAnalysis);
         /** @var StructuredAgentResponse $response */
         $response = (new StructuredOutputGenerationAgent($type))->prompt(json_encode($canonicalAnalysis));
 
@@ -73,5 +90,17 @@ class FaithFlowAi
             provider: $response->meta->provider,
             model: $response->meta->model,
         );
+    }
+
+    private function authorize(FaithFlowRun $run, AiCapability $capability, AiDataOrigin $origin): void
+    {
+        $this->policy->authorize(new AiProcessingRequest(
+            capability: $capability,
+            classification: DataClassification::Sensitive,
+            origin: $origin,
+            churchId: $run->church_id,
+            provider: (string) config('faithflow.provider'),
+            model: (string) config('faithflow.model'),
+        ));
     }
 }

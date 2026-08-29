@@ -16,6 +16,9 @@ use App\Models\FaithFlowOutput;
 use App\Models\FaithFlowRun;
 use App\Models\User;
 use App\Support\TenantContext;
+use App\Support\TenantExecutionContext;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -56,7 +59,7 @@ class FaithFlowJobsTest extends TestCase
         ]]);
 
         $run = FaithFlowRun::factory()->forChurch($this->church)->create();
-        $context = new \App\Support\TenantExecutionContext($this->church->id, $this->user->id);
+        $context = new TenantExecutionContext($this->church->id, $this->user->id);
 
         (new AnalyzeFaithFlowSourceJob($context, $run->id))->handle(app(TenantContext::class));
 
@@ -76,7 +79,7 @@ class FaithFlowJobsTest extends TestCase
             ],
         ]);
         $output = FaithFlowOutput::factory()->forRun($run)->create(['output_type' => FaithFlowOutputType::DEVOTIONAL]);
-        $context = new \App\Support\TenantExecutionContext($this->church->id, $this->user->id);
+        $context = new TenantExecutionContext($this->church->id, $this->user->id);
 
         (new GenerateFaithFlowOutputJob($context, $output->id))->handle(app(TenantContext::class));
 
@@ -94,7 +97,7 @@ class FaithFlowJobsTest extends TestCase
             'content' => 'Old text.',
             'generated_content' => 'Old text.',
         ]);
-        $context = new \App\Support\TenantExecutionContext($this->church->id, $this->user->id);
+        $context = new TenantExecutionContext($this->church->id, $this->user->id);
 
         (new RegenerateFaithFlowOutputJob($context, $output->id))->handle(app(TenantContext::class));
 
@@ -116,10 +119,23 @@ class FaithFlowJobsTest extends TestCase
         // Context claims this->church, but the output actually belongs to
         // $otherChurch — the tenant-scoped findOrFail() inside execute()
         // must not find it.
-        $context = new \App\Support\TenantExecutionContext($this->church->id, $this->user->id);
+        $context = new TenantExecutionContext($this->church->id, $this->user->id);
 
-        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        $this->expectException(ModelNotFoundException::class);
 
         (new GenerateFaithFlowOutputJob($context, $output->id))->handle(app(TenantContext::class));
+    }
+
+    public function test_job_revalidates_faithflow_capability_at_execution_time(): void
+    {
+        $run = FaithFlowRun::factory()->forChurch($this->church)->create();
+        $context = new TenantExecutionContext($this->church->id, $this->user->id);
+
+        $membership = $this->user->memberships()->firstOrFail();
+        $membership->roles()->delete();
+
+        $this->expectException(AuthorizationException::class);
+
+        (new AnalyzeFaithFlowSourceJob($context, $run->id))->handle(app(TenantContext::class));
     }
 }

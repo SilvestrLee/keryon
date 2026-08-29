@@ -32,5 +32,18 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="AI_ANTHROPIC_APPROVAL_STATUS" value="approved"/>
+        <env name="AI_ANTHROPIC_LEGAL_ENTITY" value="test-provider-entity"/>
+        <env name="AI_ANTHROPIC_REGION" value="test-region"/>
+        <env name="AI_ANTHROPIC_STORAGE_REGION" value="test-storage-region"/>
+        <env name="AI_ANTHROPIC_RETENTION" value="test-bounded"/>
+        <env name="AI_ANTHROPIC_SAFETY_RETENTION" value="test-bounded-safety"/>
+        <env name="AI_ANTHROPIC_TRAINING_POLICY" value="test-disabled"/>
+        <env name="AI_ANTHROPIC_DELETION_MECHANISM" value="test-contract"/>
+        <env name="AI_ANTHROPIC_CONTRACT_STATUS" value="accepted"/>
+        <env name="AI_ANTHROPIC_DPA_STATUS" value="accepted"/>
+        <env name="AI_ANTHROPIC_REVIEWED_AT" value="2026-08-29"/>
+        <env name="AI_ANTHROPIC_EVIDENCE_REFERENCE" value="test-fixture-only"/>
+        <env name="AI_ANTHROPIC_ACCOUNT_CONFIGURATION_VERIFIED_AT" value="2026-08-29"/>
     </php>
 </phpunit>

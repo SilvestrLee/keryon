@@ -89,6 +89,18 @@
                             <p class="mt-2 text-sm" style="color: var(--ff-danger)" role="alert">{{ $message }}</p>
                         @enderror
 
+                        <label class="mt-4 flex items-start gap-3 text-sm" style="color: var(--ff-text-muted)">
+                            <input
+                                type="checkbox"
+                                wire:model="confirmsNoCareData"
+                                class="mt-0.5 rounded border-gray-300 text-primary-600 focus:ring-primary-600"
+                            />
+                            <span>I confirm this source does not contain prayer requests, Care notes, pastoral follow-up, or other Care information. Care data must not be sent to AI.</span>
+                        </label>
+                        @error('confirmsNoCareData')
+                            <p class="mt-2 text-sm" style="color: var(--ff-danger)" role="alert">{{ $message }}</p>
+                        @enderror
+
                         <div class="mt-4 flex flex-col-reverse items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <p class="text-sm" style="color: var(--ff-text-muted)">
                                 Nothing is generated or published automatically — you choose what happens next.

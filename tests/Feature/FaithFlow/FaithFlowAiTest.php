@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\FaithFlow;
 
+use App\Enums\ChurchRole;
 use App\Enums\FaithFlowOutputType;
 use App\FaithFlow\Ai\AnalysisResult;
 use App\FaithFlow\Ai\CanonicalAnalysisAgent;
@@ -9,6 +10,10 @@ use App\FaithFlow\Ai\GenerationResult;
 use App\FaithFlow\Ai\StructuredOutputGenerationAgent;
 use App\FaithFlow\Ai\TextOutputGenerationAgent;
 use App\FaithFlow\FaithFlowAi;
+use App\Models\Church;
+use App\Models\FaithFlowRun;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -22,6 +27,21 @@ use Tests\TestCase;
  */
 class FaithFlowAiTest extends TestCase
 {
+    use RefreshDatabase;
+
+    private FaithFlowRun $run;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $church = Church::factory()->create();
+        $this->actingAs(User::factory()->forChurch($church, [ChurchRole::COMMUNICATIONS])->create());
+        $this->run = FaithFlowRun::factory()->forChurch($church)->create([
+            'source_text' => 'Sunday sermon notes about hope.',
+        ]);
+    }
+
     public function test_faithflow_ai_resolves_from_the_container(): void
     {
         $this->assertInstanceOf(FaithFlowAi::class, app(FaithFlowAi::class));
@@ -38,7 +58,7 @@ class FaithFlowAiTest extends TestCase
             ['summary' => 'A faithful, source-grounded summary.'],
         ]);
 
-        $result = app(FaithFlowAi::class)->analyze('Sunday sermon notes about hope.');
+        $result = app(FaithFlowAi::class)->analyze($this->run);
 
         $this->assertInstanceOf(AnalysisResult::class, $result);
         $this->assertSame(['summary' => 'A faithful, source-grounded summary.'], $result->data);
@@ -53,7 +73,7 @@ class FaithFlowAiTest extends TestCase
             'A generated devotional.',
         ]);
 
-        $result = app(FaithFlowAi::class)->generateText(FaithFlowOutputType::DEVOTIONAL, ['principal_message' => 'Placeholder analysis.']);
+        $result = app(FaithFlowAi::class)->generateText(FaithFlowOutputType::DEVOTIONAL, ['principal_message' => 'Placeholder analysis.'], $this->run);
 
         $this->assertInstanceOf(GenerationResult::class, $result);
         $this->assertSame('A generated devotional.', $result->data);
@@ -65,7 +85,7 @@ class FaithFlowAiTest extends TestCase
             ['prayer_points' => ['Pray for peace.']],
         ]);
 
-        $result = app(FaithFlowAi::class)->generateStructured(FaithFlowOutputType::PRAYER_POINTS, ['principal_message' => 'Placeholder analysis.']);
+        $result = app(FaithFlowAi::class)->generateStructured(FaithFlowOutputType::PRAYER_POINTS, ['principal_message' => 'Placeholder analysis.'], $this->run);
 
         $this->assertInstanceOf(GenerationResult::class, $result);
         $this->assertSame(['prayer_points' => ['Pray for peace.']], $result->data);
@@ -80,7 +100,7 @@ class FaithFlowAiTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Simulated provider failure.');
 
-        app(FaithFlowAi::class)->analyze('Sunday sermon notes.');
+        app(FaithFlowAi::class)->analyze($this->run);
     }
 
     public function test_no_prompt_is_sent_when_the_agent_is_never_invoked(): void
@@ -96,6 +116,6 @@ class FaithFlowAiTest extends TestCase
 
         $this->expectException(RuntimeException::class);
 
-        app(FaithFlowAi::class)->generateStructured(FaithFlowOutputType::PRAYER_POINTS, []);
+        app(FaithFlowAi::class)->generateStructured(FaithFlowOutputType::PRAYER_POINTS, [], $this->run);
     }
 }

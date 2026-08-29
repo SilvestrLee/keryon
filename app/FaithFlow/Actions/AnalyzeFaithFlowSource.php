@@ -3,12 +3,13 @@
 namespace App\FaithFlow\Actions;
 
 use App\Enums\FaithFlowRunStatus;
+use App\FaithFlow\Ai\CanonicalAnalysisAgent;
 use App\FaithFlow\Analysis\CanonicalAnalysis;
 use App\FaithFlow\Analysis\Exceptions\MalformedCanonicalAnalysisException;
-use App\FaithFlow\Ai\CanonicalAnalysisAgent;
 use App\FaithFlow\FaithFlowAi;
 use App\Models\FaithFlowRun;
 use App\Models\FaithFlowUsage;
+use App\Trust\Ai\AiProcessingDeniedException;
 use LogicException;
 use Throwable;
 
@@ -57,7 +58,7 @@ class AnalyzeFaithFlowSource
             $result = null;
 
             try {
-                $result = $this->ai->analyze($run->source_text);
+                $result = $this->ai->analyze($run);
                 $analysis = CanonicalAnalysis::fromProviderResponse($result->data, $run->source_text);
             } catch (Throwable $e) {
                 $this->recordUsage($run, $startedAt, 'failed', $this->errorCategoryFor($e), $result);
@@ -66,7 +67,7 @@ class AnalyzeFaithFlowSource
                     'analysis_attempts' => $run->analysis_attempts + 1,
                 ])->save();
 
-                if ($attempt < self::MAX_ATTEMPTS) {
+                if (! $e instanceof AiProcessingDeniedException && $attempt < self::MAX_ATTEMPTS) {
                     continue;
                 }
 
@@ -98,9 +99,11 @@ class AnalyzeFaithFlowSource
 
     private function errorCategoryFor(Throwable $e): string
     {
-        return $e instanceof MalformedCanonicalAnalysisException
-            ? 'malformed_response'
-            : 'provider_failure';
+        return match (true) {
+            $e instanceof AiProcessingDeniedException => 'processing_denied',
+            $e instanceof MalformedCanonicalAnalysisException => 'malformed_response',
+            default => 'provider_failure',
+        };
     }
 
     /**
@@ -137,8 +140,10 @@ class AnalyzeFaithFlowSource
 
     private function safeMessage(Throwable $e): string
     {
-        return $e instanceof MalformedCanonicalAnalysisException
-            ? $e->getMessage()
-            : 'The AI provider could not complete this analysis.';
+        return match (true) {
+            $e instanceof AiProcessingDeniedException => $e->getMessage(),
+            $e instanceof MalformedCanonicalAnalysisException => $e->getMessage(),
+            default => 'The AI provider could not complete this analysis.',
+        };
     }
 }

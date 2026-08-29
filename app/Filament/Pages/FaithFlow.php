@@ -16,6 +16,7 @@ use App\Models\ContentItem;
 use App\Models\FaithFlowOutput;
 use App\Models\FaithFlowRun;
 use App\Support\TenantContext;
+use App\Trust\Ai\KnownCareContentGuard;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -70,6 +71,8 @@ class FaithFlow extends Page
     public ?CampaignCommunication $campaignCommunication = null;
 
     public string $sourceText = '';
+
+    public bool $confirmsNoCareData = false;
 
     /** @var array<int, string> */
     public array $selectedOutputTypes = [];
@@ -186,9 +189,16 @@ class FaithFlow extends Page
 
         $validated = $this->validate([
             'sourceText' => ['required', 'string', 'min:100', 'max:60000'],
+            'confirmsNoCareData' => ['accepted'],
         ], [], [
             'sourceText' => 'source text',
+            'confirmsNoCareData' => 'Care-data confirmation',
         ]);
+
+        app(KnownCareContentGuard::class)->assertEligible(
+            $validated['sourceText'],
+            app(TenantContext::class)->currentChurchId(),
+        );
 
         $this->currentRun = new FaithFlowRun([
             'source_text' => $validated['sourceText'],

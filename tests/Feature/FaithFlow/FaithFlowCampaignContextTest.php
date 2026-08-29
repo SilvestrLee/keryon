@@ -70,6 +70,7 @@ class FaithFlowCampaignContextTest extends TestCase
             ->assertSee('Creating for Campaign')
             ->assertSee('Community invitation')
             ->set('sourceText', $source)
+            ->set('confirmsNoCareData', true)
             ->call('createSource');
 
         $run = FaithFlowRun::query()->sole();

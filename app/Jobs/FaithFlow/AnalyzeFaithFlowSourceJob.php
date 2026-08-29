@@ -3,6 +3,7 @@
 namespace App\Jobs\FaithFlow;
 
 use App\FaithFlow\Actions\AnalyzeFaithFlowSource;
+use App\Jobs\FaithFlow\Concerns\AuthorizesFaithFlowExecution;
 use App\Jobs\TenantAwareJob;
 use App\Models\FaithFlowRun;
 use App\Support\TenantExecutionContext;
@@ -18,6 +19,8 @@ use App\Support\TenantExecutionContext;
  */
 class AnalyzeFaithFlowSourceJob extends TenantAwareJob
 {
+    use AuthorizesFaithFlowExecution;
+
     public function __construct(
         TenantExecutionContext $context,
         public readonly int $runId,
@@ -27,6 +30,8 @@ class AnalyzeFaithFlowSourceJob extends TenantAwareJob
 
     protected function execute(): void
     {
+        $this->authorizeFaithFlowExecution();
+
         $run = FaithFlowRun::query()->findOrFail($this->runId);
 
         app(AnalyzeFaithFlowSource::class)->handle($run);

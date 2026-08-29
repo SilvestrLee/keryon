@@ -49,6 +49,7 @@ class FaithFlowSourceFlowTest extends TestCase
     {
         Livewire::test(FaithFlow::class)
             ->set('sourceText', $this->longSourceText())
+            ->set('confirmsNoCareData', true)
             ->call('createSource');
 
         $this->assertDatabaseHas('faithflow_runs', [
@@ -63,6 +64,7 @@ class FaithFlowSourceFlowTest extends TestCase
 
         Livewire::test(FaithFlow::class)
             ->set('sourceText', $this->longSourceText())
+            ->set('confirmsNoCareData', true)
             ->call('createSource');
 
         Queue::assertNothingPushed();
@@ -75,6 +77,16 @@ class FaithFlowSourceFlowTest extends TestCase
             ->set('sourceText', 'Too short.')
             ->call('createSource')
             ->assertHasErrors(['sourceText']);
+
+        $this->assertSame(0, FaithFlowRun::query()->count());
+    }
+
+    public function test_source_requires_explicit_confirmation_that_it_contains_no_care_data(): void
+    {
+        Livewire::test(FaithFlow::class)
+            ->set('sourceText', $this->longSourceText())
+            ->call('createSource')
+            ->assertHasErrors(['confirmsNoCareData']);
 
         $this->assertSame(0, FaithFlowRun::query()->count());
     }

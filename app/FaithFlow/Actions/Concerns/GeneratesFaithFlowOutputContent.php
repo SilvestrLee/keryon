@@ -11,6 +11,7 @@ use App\FaithFlow\Ai\TextOutputGenerationAgent;
 use App\FaithFlow\FaithFlowAi;
 use App\Models\FaithFlowOutput;
 use App\Models\FaithFlowUsage;
+use App\Trust\Ai\AiProcessingDeniedException;
 use Throwable;
 
 /**
@@ -47,14 +48,14 @@ trait GeneratesFaithFlowOutputContent
 
             try {
                 $result = $output->output_type->resultShape() === FaithFlowOutputResultShape::TEXT
-                    ? $ai->generateText($output->output_type, $canonicalAnalysis)
-                    : $ai->generateStructured($output->output_type, $canonicalAnalysis);
+                    ? $ai->generateText($output->output_type, $canonicalAnalysis, $output->run)
+                    : $ai->generateStructured($output->output_type, $canonicalAnalysis, $output->run);
 
                 $rendered = $this->validateAndRender($output->output_type, $result->data, $canonicalAnalysis);
             } catch (Throwable $e) {
                 $this->recordUsage($output, $startedAt, 'failed', $this->errorCategoryFor($e), $result, $operation);
 
-                if ($attempt < self::MAX_ATTEMPTS) {
+                if (! $e instanceof AiProcessingDeniedException && $attempt < self::MAX_ATTEMPTS) {
                     continue;
                 }
 
@@ -209,16 +210,20 @@ trait GeneratesFaithFlowOutputContent
 
     private function errorCategoryFor(Throwable $e): string
     {
-        return $e instanceof MalformedGeneratedOutputException
-            ? 'malformed_response'
-            : 'provider_failure';
+        return match (true) {
+            $e instanceof AiProcessingDeniedException => 'processing_denied',
+            $e instanceof MalformedGeneratedOutputException => 'malformed_response',
+            default => 'provider_failure',
+        };
     }
 
     private function safeMessage(Throwable $e): string
     {
-        return $e instanceof MalformedGeneratedOutputException
-            ? $e->getMessage()
-            : 'The AI provider could not complete this generation.';
+        return match (true) {
+            $e instanceof AiProcessingDeniedException => $e->getMessage(),
+            $e instanceof MalformedGeneratedOutputException => $e->getMessage(),
+            default => 'The AI provider could not complete this generation.',
+        };
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Jobs\FaithFlow;
 
 use App\FaithFlow\Actions\RegenerateFaithFlowOutput;
+use App\Jobs\FaithFlow\Concerns\AuthorizesFaithFlowExecution;
 use App\Jobs\TenantAwareJob;
 use App\Models\FaithFlowOutput;
 use App\Support\TenantExecutionContext;
@@ -16,6 +17,8 @@ use App\Support\TenantExecutionContext;
  */
 class RegenerateFaithFlowOutputJob extends TenantAwareJob
 {
+    use AuthorizesFaithFlowExecution;
+
     public function __construct(
         TenantExecutionContext $context,
         public readonly int $outputId,
@@ -25,6 +28,8 @@ class RegenerateFaithFlowOutputJob extends TenantAwareJob
 
     protected function execute(): void
     {
+        $this->authorizeFaithFlowExecution();
+
         $output = FaithFlowOutput::query()->findOrFail($this->outputId);
 
         app(RegenerateFaithFlowOutput::class)->handle($output);
