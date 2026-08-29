@@ -5,8 +5,8 @@ namespace App\Design\Rendering;
 use App\Design\Rendering\Exceptions\DesignRendererException;
 use App\Enums\DesignOutputFormat;
 use JsonException;
-use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessTimedOutException;
+use Symfony\Component\Process\Process;
 
 class PlaywrightDesignRenderer implements DesignRenderer
 {
