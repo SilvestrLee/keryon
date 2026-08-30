@@ -135,4 +135,9 @@ class Church extends Model
     {
         return $this->hasOne(ChurchActivation::class);
     }
+
+    public function onboardingState(): HasOne
+    {
+        return $this->hasOne(ChurchOnboardingState::class);
+    }
 }

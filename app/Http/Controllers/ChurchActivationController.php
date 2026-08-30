@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ChurchActivationStatus;
+use App\Filament\Pages\GuidedChurchSetup;
 use App\Models\ChurchActivation;
 use App\Onboarding\AcceptChurchPrimaryActivation;
 use App\Onboarding\ChurchActivationTokenService;
@@ -38,6 +39,8 @@ class ChurchActivationController extends Controller
 
         if ($request->user()->activeMemberships()->count() === 1) {
             $select->execute($request->user(), $result->church->id);
+
+            return redirect(GuidedChurchSetup::getUrl());
         }
 
         return redirect('/admin');
