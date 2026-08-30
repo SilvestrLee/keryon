@@ -3,6 +3,7 @@
 @import './faithflow.css';
 @import './design-studio.css';
 @import './design-marketplace.css';
+@import './church-dashboard.css';
 
 @source '../../../../app/Filament/**/*';
 @source '../../../../resources/views/filament/**/*';

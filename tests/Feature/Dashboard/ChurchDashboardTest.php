@@ -59,4 +59,28 @@ class ChurchDashboardTest extends TestCase
             ->assertSee('all caught up')
             ->assertDontSee('urgent');
     }
+
+    public function test_dashboard_presents_operational_sections_before_optional_setup(): void
+    {
+        $this->dashboardActor([ChurchRole::COMMUNICATIONS]);
+
+        Livewire::test(ChurchDashboard::class)
+            ->assertSeeInOrder([
+                'Needs your attention',
+                'What&#039;s happening',
+                'Continue your work',
+                'Set up when you are ready',
+            ], escape: false)
+            ->assertSee('Optional');
+    }
+
+    public function test_long_church_identity_is_rendered_without_truncating_domain_truth(): void
+    {
+        $name = 'Keryon Community Church With A Deliberately Long Workspace Identity';
+        $this->dashboardActor([ChurchRole::ADMINISTRATOR], churchAttributes: ['name' => $name]);
+
+        Livewire::test(ChurchDashboard::class)
+            ->assertSee($name)
+            ->assertSeeHtml('data-dashboard-church="'.$name.'"');
+    }
 }
