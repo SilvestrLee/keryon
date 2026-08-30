@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ChurchActivationController;
 use App\Http\Controllers\PrivateMediaController;
 use App\Http\Controllers\PublicMediaRenditionController;
 use Illuminate\Support\Facades\Route;
@@ -11,6 +12,11 @@ Route::get('/media/{rendition}', PublicMediaRenditionController::class)
 Route::get('/app/media/{asset}', PrivateMediaController::class)
     ->whereUuid('asset')
     ->name('media.private');
+
+Route::middleware('auth')->group(function (): void {
+    Route::get('/church-activation/{token}', [ChurchActivationController::class, 'show'])->name('church-activation.show');
+    Route::post('/church-activation/{token}', [ChurchActivationController::class, 'accept'])->name('church-activation.accept');
+});
 
 Route::get('/', function () {
     return view('site.home');

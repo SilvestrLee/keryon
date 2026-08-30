@@ -19,7 +19,9 @@ class Church extends Model
         'phone',
         'website',
         'timezone',
+        'operating_country_code',
         'is_active',
+        'activated_at',
         // K-CHURCHWEB-001B §22 — a physical address is an institutional
         // fact about the church, true whether or not a website exists;
         // it does not belong on Website Contact content. See the
@@ -31,6 +33,7 @@ class Church extends Model
     {
         return [
             'is_active' => 'boolean',
+            'activated_at' => 'datetime',
         ];
     }
 
@@ -126,5 +129,10 @@ class Church extends Model
     public function currentSubscription(): BelongsTo
     {
         return $this->belongsTo(Subscription::class, 'current_subscription_id');
+    }
+
+    public function activation(): HasOne
+    {
+        return $this->hasOne(ChurchActivation::class);
     }
 }
