@@ -2,8 +2,8 @@
 
 namespace App\Providers;
 
-use App\Commercial\Entitlements\CurrentProductEntitlementSource;
 use App\Commercial\Entitlements\ProductEntitlementSource;
+use App\Commercial\Entitlements\SubscriptionEntitlementSource;
 use App\Design\Rendering\DesignRenderer;
 use App\Design\Rendering\PlaywrightDesignRenderer;
 use App\FaithFlow\FaithFlowAi;
@@ -37,7 +37,7 @@ class AppServiceProvider extends ServiceProvider
         // once per request from a first-party Website host.
         $this->app->scoped(PublicWebsiteContext::class);
         $this->app->singleton(ThemeRegistry::class);
-        $this->app->bind(ProductEntitlementSource::class, CurrentProductEntitlementSource::class);
+        $this->app->bind(ProductEntitlementSource::class, SubscriptionEntitlementSource::class);
 
         // FaithFlow's own provider boundary — see K-FAITHFLOW-001B §17/§47.
         // Stateless, so a plain singleton (not scoped) is correct.

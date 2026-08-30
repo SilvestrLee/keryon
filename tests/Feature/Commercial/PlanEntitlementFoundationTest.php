@@ -164,7 +164,7 @@ class PlanEntitlementFoundationTest extends TestCase
         $this->assertTrue($allowed->allows());
         $this->assertSame(EntitlementDecisionReason::ALLOWED, $allowed->reason);
         $this->assertSame($version->id, $allowed->planVersionId);
-        $this->assertSame('current_product_default', $allowed->source);
+        $this->assertSame('transitional_current_product', $allowed->source);
         $this->assertTrue($allowed->value?->booleanValue());
         $this->assertFalse($disabled->allows());
         $this->assertSame(EntitlementDecisionReason::ENTITLEMENT_DISABLED, $disabled->reason);

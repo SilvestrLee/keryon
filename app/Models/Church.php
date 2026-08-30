@@ -117,4 +117,14 @@ class Church extends Model
     {
         return $this->belongsTo(ChurchOrganizationAssignment::class, 'current_organization_assignment_id');
     }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    public function currentSubscription(): BelongsTo
+    {
+        return $this->belongsTo(Subscription::class, 'current_subscription_id');
+    }
 }

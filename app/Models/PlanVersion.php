@@ -56,4 +56,9 @@ class PlanVersion extends Model
     {
         return $this->hasMany(Price::class);
     }
+
+    public function subscriptionItems(): HasMany
+    {
+        return $this->hasMany(SubscriptionItem::class);
+    }
 }
