@@ -51,4 +51,9 @@ class PlanVersion extends Model
     {
         return $this->hasMany(PlanVersionEntitlement::class);
     }
+
+    public function prices(): HasMany
+    {
+        return $this->hasMany(Price::class);
+    }
 }
