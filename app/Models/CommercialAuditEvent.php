@@ -9,7 +9,7 @@ class CommercialAuditEvent extends Model
 {
     public $timestamps = false;
 
-    protected $fillable = ['event_type', 'church_id', 'billing_account_id', 'subscription_id', 'actor_user_id', 'previous_state', 'new_state', 'occurred_at'];
+    protected $fillable = ['event_type', 'church_id', 'billing_account_id', 'subscription_id', 'invoice_id', 'payment_id', 'actor_user_id', 'previous_state', 'new_state', 'occurred_at'];
 
     protected function casts(): array
     {
