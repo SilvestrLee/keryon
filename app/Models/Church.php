@@ -140,4 +140,9 @@ class Church extends Model
     {
         return $this->hasOne(ChurchOnboardingState::class);
     }
+
+    public function staffInvitations(): HasMany
+    {
+        return $this->hasMany(ChurchStaffInvitation::class);
+    }
 }

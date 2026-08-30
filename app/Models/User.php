@@ -50,6 +50,11 @@ class User extends Authenticatable
         return $this->organizationMemberships()->active();
     }
 
+    public function churchStaffInvitations(): HasMany
+    {
+        return $this->hasMany(ChurchStaffInvitation::class, 'prospective_user_id');
+    }
+
     /**
      * Get the attributes that should be cast.
      *

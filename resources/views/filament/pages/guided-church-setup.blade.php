@@ -176,7 +176,7 @@
                     </form>
                     <div class="grid gap-5 md:grid-cols-[1.2fr_0.8fr]">
                         <div class="rounded-2xl border border-gray-200 bg-white p-6"><x-filament::icon icon="heroicon-o-globe-alt" class="h-7 w-7 text-amber-700" /><h3 class="mt-4 font-semibold text-gray-950">Set up your Website when ready</h3><p class="mt-2 text-sm leading-6 text-gray-600">Keryon can power your Church Website. Opening Website does not publish or create public copy.</p><a href="{{ $websiteUrl }}" class="mt-5 inline-flex text-sm font-semibold text-amber-800 hover:text-amber-900">Open Website</a></div>
-                        <div class="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-6"><x-filament::icon icon="heroicon-o-user-plus" class="h-7 w-7 text-gray-500" /><h3 class="mt-4 font-semibold text-gray-900">Invite your team</h3><p class="mt-2 text-sm leading-6 text-gray-600">Church staff invitations are coming in a dedicated access milestone.</p></div>
+                        <a href="{{ \App\Filament\Pages\ChurchStaffAccess::getUrl() }}" class="block rounded-2xl border border-gray-300 bg-gray-50 p-6 transition hover:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-600"><x-filament::icon icon="heroicon-o-user-plus" class="h-7 w-7 text-gray-500" /><h3 class="mt-4 font-semibold text-gray-900">Invite your team</h3><p class="mt-2 text-sm leading-6 text-gray-600">Set deliberate Church roles and keep Care access explicit.</p></a>
                     </div>
                 </section>
             @elseif ($step === App\Enums\ChurchOnboardingStep::COMPLETE)

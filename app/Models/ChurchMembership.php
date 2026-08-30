@@ -29,6 +29,9 @@ class ChurchMembership extends Model
         'status',
         'is_primary',
         'joined_at',
+        'activated_at',
+        'suspended_at',
+        'removed_at',
     ];
 
     protected function casts(): array
@@ -37,6 +40,9 @@ class ChurchMembership extends Model
             'status' => MembershipStatus::class,
             'is_primary' => 'boolean',
             'joined_at' => 'datetime',
+            'activated_at' => 'datetime',
+            'suspended_at' => 'datetime',
+            'removed_at' => 'datetime',
         ];
     }
 
@@ -132,13 +138,22 @@ class ChurchMembership extends Model
      */
     public static function createPrimary(Church $church, User $user, array $roles = []): self
     {
+        if (! collect($roles)->contains(fn (ChurchRole|string $role) => ($role instanceof ChurchRole ? $role : ChurchRole::tryFrom($role)) === ChurchRole::ADMINISTRATOR)) {
+            $roles[] = ChurchRole::ADMINISTRATOR;
+        }
+
         return DB::transaction(function () use ($church, $user, $roles) {
+            Church::query()->lockForUpdate()->findOrFail($church->id);
+            if (static::query()->where('church_id', $church->id)->active()->primary()->exists()) {
+                throw new InvalidArgumentException('This Church already has an active Primary Administrator.');
+            }
             $membership = static::create([
                 'church_id' => $church->id,
                 'user_id' => $user->id,
                 'status' => MembershipStatus::ACTIVE,
                 'is_primary' => true,
                 'joined_at' => now(),
+                'activated_at' => now(),
             ]);
 
             $membership->assignRoles($roles);
@@ -205,6 +220,9 @@ class ChurchMembership extends Model
         }
 
         DB::transaction(function () use ($from, $to): void {
+            if (! $to->hasRole(ChurchRole::ADMINISTRATOR)) {
+                $to->assignRoles([ChurchRole::ADMINISTRATOR]);
+            }
             $from->is_primary = false;
             $from->save();
 
