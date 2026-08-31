@@ -31,6 +31,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(fn () => view('components.keryon-logo'))
             ->brandLogoHeight('2.25rem')
             ->login()
+            ->passwordReset()
             ->colors([
                 'primary' => Color::Amber,
             ])

@@ -1,0 +1,4 @@
+@extends('mail.layout')
+@section('content')
+<p style="color:#b46f00;font-size:12px;font-weight:700;text-transform:uppercase">Church activation</p><h1 style="font-size:26px;line-height:1.2">Become Primary Administrator for {{ $messageData->churchName }}</h1><p style="line-height:1.6">You have been invited to activate this Church workspace and become its Primary Administrator. This responsibility governs the Church's Keryon workspace.</p><p><a href="{{ $messageData->url }}" style="display:inline-block;background:#d99421;color:#142f38;font-weight:700;padding:14px 20px;border-radius:8px;text-decoration:none">Activate Church workspace</a></p><p style="font-size:13px;color:#65777d">This secure link expires {{ \Illuminate\Support\Carbon::parse($messageData->expiresAt)->toDayDateTimeString() }} and is single-use. Link tracking is disabled.</p>
+@endsection

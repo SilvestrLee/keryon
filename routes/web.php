@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\ChurchActivationController;
 use App\Http\Controllers\ChurchStaffInvitationController;
+use App\Http\Controllers\InvitationLandingController;
 use App\Http\Controllers\PrivateMediaController;
 use App\Http\Controllers\PublicMediaRenditionController;
+use App\Http\Middleware\SecureInvitationResponse;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/media/{rendition}', PublicMediaRenditionController::class)
@@ -13,6 +15,14 @@ Route::get('/media/{rendition}', PublicMediaRenditionController::class)
 Route::get('/app/media/{asset}', PrivateMediaController::class)
     ->whereUuid('asset')
     ->name('media.private');
+
+Route::middleware([SecureInvitationResponse::class])->group(function (): void {
+    Route::get('/invitation/continue/{continuation}', [InvitationLandingController::class, 'show'])->name('invitations.continue');
+    Route::post('/invitation/continue/{continuation}/identity', [InvitationLandingController::class, 'establish'])->name('invitations.establish');
+    Route::get('/invitation/continue/{continuation}/review', [InvitationLandingController::class, 'review'])->middleware('auth')->name('invitations.review');
+    Route::post('/invitation/continue/{continuation}/accept', [InvitationLandingController::class, 'accept'])->middleware('auth')->name('invitations.accept');
+    Route::get('/invitation/{type}/{token}', [InvitationLandingController::class, 'land'])->whereIn('type', ['activation', 'staff'])->name('invitations.landing');
+});
 
 Route::middleware('auth')->group(function (): void {
     Route::get('/church-activation/{token}', [ChurchActivationController::class, 'show'])->name('church-activation.show');

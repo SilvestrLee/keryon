@@ -6,6 +6,7 @@ use App\Enums\ChurchStaffInvitationStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class ChurchStaffInvitation extends Model
 {
@@ -45,6 +46,11 @@ class ChurchStaffInvitation extends Model
     public function roles(): HasMany
     {
         return $this->hasMany(ChurchStaffInvitationRole::class, 'invitation_id');
+    }
+
+    public function latestDeliveryAttempt(): HasOne
+    {
+        return $this->hasOne(InvitationDeliveryAttempt::class)->latestOfMany();
     }
 
     public function replacementOf(): BelongsTo

@@ -14,6 +14,7 @@ use App\Enums\Capability;
 use App\Enums\ChurchRole;
 use App\Enums\ChurchStaffInvitationStatus;
 use App\Enums\MembershipStatus;
+use App\InvitationDelivery\RequestChurchStaffInvitationDelivery;
 use App\Models\ChurchMembership;
 use App\Models\ChurchStaffInvitation;
 use App\Support\TenantContext;
@@ -58,25 +59,28 @@ class ChurchStaffAccess extends Page
         }
     }
 
-    public function invite(InviteChurchStaff $action): void
+    public function invite(InviteChurchStaff $action, RequestChurchStaffInvitationDelivery $delivery): void
     {
         abort_unless($this->canPrepareLocalInvitation(), 403);
         Gate::authorize('create', [ChurchStaffInvitation::class, $this->actor()->church]);
         $data = $this->validate(['inviteEmail' => ['required', 'email', 'max:255'], 'inviteRoles' => ['required', 'array', 'min:1'], 'inviteRoles.*' => ['required', 'in:'.implode(',', array_column(ChurchRole::cases(), 'value'))]]);
-        $this->run(function () use ($action, $data): void {
+        $this->run(function () use ($action, $delivery, $data): void {
             $result = $action->execute($this->actor(), $data['inviteEmail'], $data['inviteRoles'], (string) Str::uuid());
-            $this->deliveryUrl = $result->route();
+            if ($result->rawToken !== null) {
+                $delivery->execute($result->invitation, $result->rawToken);
+            }
             $this->reset(['inviteEmail', 'inviteRoles']);
-        }, 'Staff invitation prepared');
+        }, 'Staff invitation queued');
     }
 
-    public function resend(int $id, ResendChurchStaffInvitation $action): void
+    public function resend(int $id, ResendChurchStaffInvitation $action, RequestChurchStaffInvitationDelivery $delivery): void
     {
         $invite = ChurchStaffInvitation::findOrFail($id);
         Gate::authorize('update', $invite);
-        $this->run(function () use ($action, $invite): void {
-            $this->deliveryUrl = $action->execute($this->actor(), $invite)->route();
-        }, 'Invitation link rotated');
+        $this->run(function () use ($action, $delivery, $invite): void {
+            $result = $action->execute($this->actor(), $invite);
+            $delivery->execute($result->invitation, $result->rawToken, true);
+        }, 'Invitation rotated and queued');
     }
 
     public function revoke(int $id, RevokeChurchStaffInvitation $action): void
@@ -127,7 +131,7 @@ class ChurchStaffAccess extends Page
 
     public function pendingInvitations()
     {
-        return ChurchStaffInvitation::query()->where('church_id', $this->actor()->church_id)->where('status', ChurchStaffInvitationStatus::PENDING)->with('roles')->latest()->get();
+        return ChurchStaffInvitation::query()->where('church_id', $this->actor()->church_id)->where('status', ChurchStaffInvitationStatus::PENDING)->with(['roles', 'latestDeliveryAttempt'])->latest()->get();
     }
 
     public function canManage(): bool

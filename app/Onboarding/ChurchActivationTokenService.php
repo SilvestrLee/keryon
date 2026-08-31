@@ -3,6 +3,8 @@
 namespace App\Onboarding;
 
 use App\Enums\ChurchActivationStatus;
+use App\Enums\InvitationDeliverySubjectType;
+use App\InvitationDelivery\SupersedeInvitationDeliveries;
 use App\Models\ChurchActivation;
 use Carbon\CarbonImmutable;
 use DomainException;
@@ -39,6 +41,7 @@ class ChurchActivationTokenService
                 throw new DomainException('This activation can no longer be revoked.');
             }
             $locked->forceFill(['status' => ChurchActivationStatus::REVOKED, 'token_hash' => null, 'token_expires_at' => null, 'revoked_at' => now()])->save();
+            SupersedeInvitationDeliveries::for(InvitationDeliverySubjectType::CHURCH_ACTIVATION, $locked->id);
 
             return $locked;
         });

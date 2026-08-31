@@ -4,6 +4,7 @@ namespace App\ChurchStaff;
 
 use App\Enums\ChurchAccessAuditEventType;
 use App\Enums\ChurchStaffInvitationStatus;
+use App\InvitationDelivery\InvitationDeliveryRateLimiter;
 use App\Models\ChurchMembership;
 use App\Models\ChurchStaffInvitation;
 use DomainException;
@@ -14,6 +15,7 @@ final class ResendChurchStaffInvitation
     public function execute(ChurchMembership $actor, ChurchStaffInvitation $invitation): ChurchStaffInvitationResult
     {
         ChurchStaffAuthorizer::manage($actor, $invitation->church_id);
+        app(InvitationDeliveryRateLimiter::class)->ensureSendAllowed('church_staff_invitation:'.$invitation->id, $invitation->church_id, $invitation->email_normalized);
 
         return DB::transaction(function () use ($actor, $invitation): ChurchStaffInvitationResult {
             $locked = ChurchStaffInvitation::query()->lockForUpdate()->findOrFail($invitation->id);

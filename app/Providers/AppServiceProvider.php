@@ -7,6 +7,8 @@ use App\Commercial\Entitlements\SubscriptionEntitlementSource;
 use App\Design\Rendering\DesignRenderer;
 use App\Design\Rendering\PlaywrightDesignRenderer;
 use App\FaithFlow\FaithFlowAi;
+use App\InvitationDelivery\InvitationDeliveryTransport;
+use App\InvitationDelivery\LocalInvitationDeliveryTransport;
 use App\Marketplace\Delivery\FilesystemMarketplaceDelivery;
 use App\Marketplace\Delivery\MarketplaceDeliveryMechanism;
 use App\Marketplace\Entitlements\DefaultMarketplaceEntitlement;
@@ -45,6 +47,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(DesignRenderer::class, PlaywrightDesignRenderer::class);
         $this->app->bind(MarketplaceEntitlement::class, DefaultMarketplaceEntitlement::class);
         $this->app->bind(MarketplaceDeliveryMechanism::class, FilesystemMarketplaceDelivery::class);
+        $this->app->bind(InvitationDeliveryTransport::class, LocalInvitationDeliveryTransport::class);
     }
 
     /**
