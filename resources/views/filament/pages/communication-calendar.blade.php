@@ -25,7 +25,20 @@
         </section>
 
         <section class="kc-agenda" aria-labelledby="calendar-period-heading">
-            <div class="kc-agenda-heading"><div><h2 id="calendar-period-heading">{{ $period === 'today' ? 'Today' : 'This week' }}</h2><p>{{ $periodLabel }} · {{ $timezone }}</p></div><span>{{ collect($groups)->flatten(1)->count() }} planned</span></div>
+            @php
+                $visibleEntries = collect($groups)->flatten(1);
+                $attentionCount = $visibleEntries->whereIn('outcomeKey', ['due', 'overdue'])->count();
+                $readyCount = $visibleEntries->where('outcomeKey', 'ready')->count();
+                $publishedCount = $visibleEntries->where('outcomeKey', 'published')->count();
+            @endphp
+            <div class="kc-agenda-heading"><div><h2 id="calendar-period-heading">{{ $period === 'today' ? 'Today' : 'This week' }}</h2><p>{{ $periodLabel }} · {{ $timezone }}</p></div><span>{{ $visibleEntries->count() }} planned</span></div>
+            @if ($visibleEntries->isNotEmpty())
+                <div class="kc-outcome-summary" aria-label="Calendar outcome summary">
+                    <span><strong>{{ $attentionCount }}</strong> need attention now</span>
+                    <span><strong>{{ $readyCount }}</strong> ready, not executed</span>
+                    <span><strong>{{ $publishedCount }}</strong> published</span>
+                </div>
+            @endif
 
             @forelse ($groups as $date => $entries)
                 @php $day = \Carbon\CarbonImmutable::parse($date, $timezone); @endphp
@@ -35,8 +48,8 @@
                         @foreach ($entries as $entry)
                             <article class="kc-calendar-entry" data-preparation="{{ $entry->preparationKey }}">
                                 <time datetime="{{ $entry->targetAt->toIso8601String() }}">{{ $entry->targetAt->format('H:i') }}</time>
-                                <div class="kc-entry-main"><p class="kc-entry-channel">{{ $entry->channel->label() }}</p><h3>{{ $entry->title }}</h3><span>{{ $entry->campaignTitle }}@if ($entry->contentStatus) · {{ $entry->contentStatus }}@endif</span>@if ($entry->targetPassed)<p class="kc-outcome-note">Target time passed. Outcome not recorded.</p>@endif</div>
-                                <span class="kc-state kc-state--{{ str_replace('_', '-', $entry->preparationKey) }}">{{ $entry->preparationLabel }}</span>
+                                <div class="kc-entry-main"><p class="kc-entry-channel">{{ $entry->channel->label() }}</p><h3>{{ $entry->title }}</h3><span>{{ $entry->campaignTitle }}@if ($entry->contentStatus) · {{ $entry->contentStatus }}@endif</span>@if ($entry->outcomeKey === 'overdue')<p class="kc-outcome-note">Target time passed. Outcome not recorded. No attributable execution was recorded.</p>@elseif ($entry->outcomeKey === 'published')<p class="kc-outcome-note">Published {{ $entry->executedAt?->setTimezone($timezone)->format('j M, H:i') }} from this Website draft lineage.</p>@elseif ($entry->outcomeKey === 'superseded')<p class="kc-outcome-note">A later Website handoff replaced this working lineage before publication.</p>@endif</div>
+                                <div class="kc-entry-states"><span class="kc-state kc-state--{{ str_replace('_', '-', $entry->preparationKey) }}">{{ $entry->preparationLabel }}</span><span class="kc-state kc-state--outcome-{{ $entry->outcomeKey }}">{{ $entry->outcomeLabel }}</span></div>
                                 <div class="kc-entry-actions">
                                     @foreach ($entry->actions as $action)
                                         <a href="{{ $action->destination }}" wire:navigate>{{ $action->label }}<x-filament::icon icon="heroicon-o-arrow-right" aria-hidden="true" /></a>

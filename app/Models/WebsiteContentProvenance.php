@@ -6,6 +6,7 @@ use App\Enums\WebsiteDraftDestination;
 use App\Models\Concerns\BelongsToChurch;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class WebsiteContentProvenance extends Model
 {
@@ -50,5 +51,10 @@ class WebsiteContentProvenance extends Model
     public function actor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'applied_by');
+    }
+
+    public function publicationAttributions(): HasMany
+    {
+        return $this->hasMany(WebsitePublicationProvenance::class);
     }
 }

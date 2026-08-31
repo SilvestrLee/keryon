@@ -148,6 +148,9 @@
     font-size: .8rem;
     font-weight: 700;
 }
+.kc-outcome-summary { display: grid; gap: 1px; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 1rem 0 1.5rem; overflow: hidden; border: 1px solid var(--kc-line); border-radius: .8rem; background: var(--kc-line); }
+.kc-outcome-summary span { background: #fff; color: var(--kc-muted); font-size: .75rem; padding: .8rem 1rem; }
+.kc-outcome-summary strong { color: var(--kc-ink); font-size: 1rem; margin-right: .25rem; }
 
 .kc-section-heading > a {
     align-items: center;
@@ -352,6 +355,11 @@
 .kc-entry-main h3 { font-size: .95rem; font-weight: 700; margin: 0; }
 .kc-entry-main > span { color: var(--kc-muted); font-size: .73rem; }
 .kc-outcome-note { color: #8d4c1d; font-size: .72rem; font-weight: 650; margin: .35rem 0 0; }
+.kc-entry-states { align-items: flex-end; display: flex; flex-direction: column; gap: .35rem; }
+.kc-state--outcome-overdue { background: #fff1ed; color: #a2371b; }
+.kc-state--outcome-published { background: #e8f7ef; color: #17683e; }
+.kc-state--outcome-due { background: #fff5d9; color: #835b05; }
+.kc-state--outcome-superseded, .kc-state--outcome-cancelled { background: #f1f2f4; color: #555d68; }
 .kc-calendar-empty { background: var(--kc-soft); border-radius: 1rem; min-height: 9rem; padding: 1.5rem; }
 .kc-calendar-empty > a { color: var(--kc-amber-dark); font-size: .8rem; font-weight: 700; margin-left: auto; text-decoration: none; }
 
@@ -405,6 +413,8 @@
     .kc-day > header { align-items: end; display: flex; justify-content: space-between; padding-top: 0; }
     .kc-calendar-entry { align-items: start; grid-template-columns: 3rem minmax(0, 1fr); padding: 1rem 0; }
     .kc-calendar-entry .kc-state { grid-column: 2; }
+    .kc-entry-states { align-items: flex-start; grid-column: 2; }
+    .kc-outcome-summary { grid-template-columns: 1fr; }
     .kc-entry-actions { align-items: flex-start; grid-column: 2; }
     .kc-calendar-empty { align-items: start; flex-wrap: wrap; }
     .kc-calendar-empty > a { margin-left: 3.75rem; }

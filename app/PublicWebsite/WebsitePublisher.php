@@ -10,7 +10,9 @@ use App\Models\Church;
 use App\Models\ChurchMembership;
 use App\Models\MediaAsset;
 use App\Models\MediaPublicReference;
+use App\Models\WebsiteContentProvenance;
 use App\Models\WebsitePublication;
+use App\Models\WebsitePublicationProvenance;
 use App\Models\WebsiteSettings;
 use App\Support\TenantContext;
 use App\Trust\Publishing\PublicationTrustContext;
@@ -72,6 +74,8 @@ class WebsitePublisher
                 'published_at' => now(),
             ]);
 
+            $this->attributeCurrentWebsiteLineage($publication, $church->id);
+
             foreach ($prepared as $usage => $rendition) {
                 $this->renditions->reference($rendition, $church->id, $publication->id, $usage);
             }
@@ -88,6 +92,29 @@ class WebsitePublisher
 
             return $publication;
         });
+    }
+
+    private function attributeCurrentWebsiteLineage(WebsitePublication $publication, int $churchId): void
+    {
+        $provenanceIds = WebsiteContentProvenance::query()
+            ->whereNotExists(function ($query): void {
+                $query->selectRaw('1')
+                    ->from('website_content_provenances as newer')
+                    ->whereColumn('newer.church_id', 'website_content_provenances.church_id')
+                    ->whereColumn('newer.destination', 'website_content_provenances.destination')
+                    ->whereColumn('newer.website_record_id', 'website_content_provenances.website_record_id')
+                    ->whereColumn('newer.id', '>', 'website_content_provenances.id');
+            })
+            ->lockForUpdate()
+            ->pluck('id');
+
+        foreach ($provenanceIds as $provenanceId) {
+            WebsitePublicationProvenance::query()->firstOrCreate([
+                'church_id' => $churchId,
+                'website_publication_id' => $publication->id,
+                'website_content_provenance_id' => $provenanceId,
+            ]);
+        }
     }
 
     public function unpublish(): void

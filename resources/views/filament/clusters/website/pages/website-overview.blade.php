@@ -80,8 +80,13 @@
                     @foreach ($recentProvenance as $source)
                         <article class="rounded-xl bg-white p-4">
                             <p class="text-sm font-semibold text-gray-900">{{ $source->contentItem?->title ?? 'Removed Content source' }}</p>
-                            <p class="mt-1 text-xs text-gray-500">{{ $source->destination->label() }}@if($source->campaign) · {{ $source->campaign->title }}@endif</p>
+                            <p class="mt-1 text-xs text-gray-500">{{ $source->destination->label() }}@if($source->campaign) · {{ $source->campaign->title }}@endif @if($source->campaignCommunication) · {{ $source->campaignCommunication->title }}@endif</p>
                             <p class="mt-2 text-xs text-gray-500">Applied by {{ $source->actor?->name ?? 'a former staff member' }} on {{ $source->applied_at->format('j M Y, H:i') }}</p>
+                            @if ($publishedAttribution = $source->publicationAttributions->sortByDesc(fn ($item) => $item->publication?->published_at)->first())
+                                <p class="mt-2 text-xs font-semibold text-emerald-700">Included in publication #{{ $publishedAttribution->website_publication_id }} on {{ $publishedAttribution->publication->published_at->format('j M Y, H:i') }}</p>
+                            @else
+                                <p class="mt-2 text-xs font-semibold text-amber-800">Not yet included in a Website publication.</p>
+                            @endif
                             @if ($source->contentItem?->status === \App\Enums\ContentStatus::APPROVED && $source->contentItem->approved_at?->gt($source->source_approved_at))
                                 <p class="mt-2 text-xs font-semibold text-amber-800">A newer approved source version is available.</p>
                             @endif

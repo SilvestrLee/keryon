@@ -56,4 +56,9 @@ class WebsitePublication extends Model
         return $this->hasMany(MediaPublicReference::class, 'consumer_id')
             ->where('consumer_type', MediaPublicConsumer::WebsitePublication->value);
     }
+
+    public function provenanceAttributions(): HasMany
+    {
+        return $this->hasMany(WebsitePublicationProvenance::class);
+    }
 }

@@ -38,7 +38,7 @@ final class CommunicationCalendarQuery
         bool $canManageWebsite = false,
     ): array {
         $query = $church->campaignCommunications()
-            ->with(['campaign:id,title,status,starts_on,ends_on', 'contentItem:id,title,status,deleted_at'])
+            ->with($this->calendarRelations())
             ->whereBetween('target_at', [
                 CarbonImmutable::instance($startsAt)->utc(),
                 CarbonImmutable::instance($endsAt)->utc(),
@@ -78,7 +78,7 @@ final class CommunicationCalendarQuery
         int $limit = 12,
     ): array {
         $query = $church->campaignCommunications()
-            ->with(['campaign:id,title,status,starts_on,ends_on', 'contentItem:id,title,status,deleted_at'])
+            ->with($this->calendarRelations())
             ->whereNull('target_at')
             ->whereNull('cancelled_at')
             ->orderBy('created_at', 'desc')
@@ -107,12 +107,26 @@ final class CommunicationCalendarQuery
         }
     }
 
+    /** @return array<string, mixed> */
+    private function calendarRelations(): array
+    {
+        return [
+            'campaign:id,title,status,starts_on,ends_on',
+            'contentItem:id,title,content_type,status,deleted_at',
+            'websiteContentProvenances:id,church_id,campaign_communication_id,destination,website_record_id,applied_at',
+            'websiteContentProvenances.publicationAttributions:id,church_id,website_content_provenance_id,website_publication_id',
+            'websiteContentProvenances.publicationAttributions.publication:id,church_id,published_at',
+            'supersededWebsiteContentProvenances:id,church_id,campaign_communication_id',
+        ];
+    }
+
     private function entry(CampaignCommunication $communication, string $timezone, bool $canManageContent, bool $canUseFaithFlow, bool $canViewDesigns, bool $canManageDesigns, bool $canUseWebsite, bool $canManageWebsite): CommunicationCalendarEntry
     {
         $targetAt = $communication->target_at === null
             ? null
             : CarbonImmutable::instance($communication->target_at)->setTimezone($timezone);
         $actions = [];
+        [$outcomeKey, $outcomeLabel, $publicationId, $executedAt] = $this->outcome($communication, $targetAt);
 
         if ($communication->contentItem !== null) {
             $actions[] = new CommunicationAction(
@@ -150,6 +164,9 @@ final class CommunicationCalendarQuery
             $actions[] = $canHandoff
                 ? new CommunicationAction('website.apply', 'Apply to Website draft', 'Prepare Website-owned content without publishing it.', WebsiteDraftHandoff::getUrl(['content' => $communication->content_item_id, 'communication' => $communication->id]), 'Apply to Website draft', 'Website')
                 : new CommunicationAction('website.continue', 'Continue in Website', 'Prepare Website-owned content without implying publication.', WebsiteOverview::getUrl(), 'Continue in Website', 'Website');
+            if ($publicationId !== null) {
+                $actions[] = new CommunicationAction('website.publication', 'View publication evidence', 'Open the Website publication history and attributable execution context.', WebsiteOverview::getUrl().'#website-publication-status', 'View publication', 'Website');
+            }
         }
 
         return new CommunicationCalendarEntry(
@@ -164,8 +181,52 @@ final class CommunicationCalendarQuery
             $this->readinessLabel($communication->readiness()),
             $communication->contentItem?->status?->label(),
             $targetAt !== null && $targetAt->isPast(),
+            $outcomeKey,
+            $outcomeLabel,
+            $publicationId,
+            $executedAt,
             $actions,
         );
+    }
+
+    /** @return array{string, string, int|null, CarbonImmutable|null} */
+    private function outcome(CampaignCommunication $communication, ?CarbonImmutable $targetAt): array
+    {
+        if ($communication->cancelled_at !== null) {
+            return ['cancelled', 'Cancelled', null, null];
+        }
+
+        if ($communication->channel === CommunicationChannel::WEBSITE) {
+            $attribution = $communication->websiteContentProvenances
+                ->flatMap->publicationAttributions
+                ->sortByDesc(fn ($item) => $item->publication?->published_at)
+                ->first(fn ($item) => $item->publication !== null);
+
+            if ($attribution?->publication !== null) {
+                return [
+                    'published',
+                    'Published / completed',
+                    $attribution->publication->id,
+                    CarbonImmutable::instance($attribution->publication->published_at),
+                ];
+            }
+
+            if ($communication->supersededWebsiteContentProvenances->isNotEmpty()) {
+                return ['superseded', 'Superseded', null, null];
+            }
+        }
+
+        if ($targetAt?->isPast()) {
+            return ['overdue', 'Overdue / not executed', null, null];
+        }
+        if ($targetAt?->isToday()) {
+            return ['due', 'Due', null, null];
+        }
+        if ($communication->readiness() === CampaignCommunication::READINESS_PREPARED) {
+            return ['ready', 'Ready', null, null];
+        }
+
+        return ['planned', 'Planned', null, null];
     }
 
     public function readinessLabel(string $readiness): string

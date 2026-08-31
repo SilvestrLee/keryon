@@ -20,6 +20,10 @@ final readonly class CommunicationCalendarEntry
         public string $preparationLabel,
         public ?string $contentStatus,
         public bool $targetPassed,
+        public string $outcomeKey,
+        public string $outcomeLabel,
+        public ?int $websitePublicationId,
+        public ?CarbonImmutable $executedAt,
         public array $actions,
     ) {}
 

@@ -127,7 +127,9 @@ class CommunicationCalendarTest extends TestCase
 
         // Includes the bounded Website handoff eligibility/provenance route
         // discovery added by K-COMMS-001C; still independent of row count.
-        $this->assertLessThanOrEqual(22, count($queries));
+        // Publication lineage adds two bounded eager-load queries, regardless
+        // of how many Calendar rows are rendered.
+        $this->assertLessThanOrEqual(24, count($queries));
     }
 
     private function actor(): Church

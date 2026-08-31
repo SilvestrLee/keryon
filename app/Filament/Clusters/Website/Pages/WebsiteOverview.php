@@ -159,7 +159,13 @@ class WebsiteOverview extends Page
             'canPublish' => $membership?->hasCapability(Capability::WebsitePublish) ?? false,
             'publicationStatus' => $publicationStatus,
             'recentProvenance' => WebsiteContentProvenance::query()
-                ->with(['contentItem:id,title,status,approved_at', 'campaign:id,title', 'actor:id,name'])
+                ->with([
+                    'contentItem:id,title,status,approved_at',
+                    'campaign:id,title',
+                    'campaignCommunication:id,title',
+                    'actor:id,name',
+                    'publicationAttributions.publication:id,published_at',
+                ])
                 ->latest('applied_at')->limit(5)->get(),
         ];
     }

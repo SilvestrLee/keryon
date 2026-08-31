@@ -80,6 +80,24 @@ class CampaignCommunication extends Model
         return $this->hasMany(Design::class);
     }
 
+    public function websiteContentProvenances(): HasMany
+    {
+        return $this->hasMany(WebsiteContentProvenance::class);
+    }
+
+    public function supersededWebsiteContentProvenances(): HasMany
+    {
+        return $this->hasMany(WebsiteContentProvenance::class)
+            ->whereExists(function ($query): void {
+                $query->selectRaw('1')
+                    ->from('website_content_provenances as newer')
+                    ->whereColumn('newer.church_id', 'website_content_provenances.church_id')
+                    ->whereColumn('newer.destination', 'website_content_provenances.destination')
+                    ->whereColumn('newer.website_record_id', 'website_content_provenances.website_record_id')
+                    ->whereColumn('newer.id', '>', 'website_content_provenances.id');
+            });
+    }
+
     public function readiness(): string
     {
         if ($this->cancelled_at !== null) {
