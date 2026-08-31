@@ -4,6 +4,7 @@
 @import './design-studio.css';
 @import './design-marketplace.css';
 @import './church-dashboard.css';
+@import './communications-hub.css';
 
 @source '../../../../app/Filament/**/*';
 @source '../../../../resources/views/filament/**/*';

@@ -59,6 +59,8 @@ class FaithFlow extends Page
 
     protected static ?string $navigationLabel = 'FaithFlow';
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Communications';
+
     protected static ?string $title = 'FaithFlow';
 
     protected static ?string $slug = 'faithflow/{run?}';

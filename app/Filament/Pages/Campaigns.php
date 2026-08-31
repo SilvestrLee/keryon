@@ -23,6 +23,8 @@ class Campaigns extends Page
 
     protected static ?string $navigationLabel = 'Campaigns';
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Communications';
+
     protected static ?string $title = 'Campaigns';
 
     protected static ?string $slug = 'campaigns';

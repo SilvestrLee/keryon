@@ -33,6 +33,8 @@ class ContentItemResource extends Resource
 
     protected static ?string $navigationLabel = 'Content Studio';
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Communications';
+
     protected static ?string $modelLabel = 'Content';
 
     protected static ?string $pluralModelLabel = 'Content';
