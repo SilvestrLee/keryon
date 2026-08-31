@@ -68,6 +68,7 @@ class ChurchDashboardTest extends TestCase
             ->assertSeeInOrder([
                 'Needs your attention',
                 'What&#039;s happening',
+                'Operational trends',
                 'Continue your work',
                 'Set up when you are ready',
             ], escape: false)

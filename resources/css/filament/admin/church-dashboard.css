@@ -62,6 +62,47 @@
 .kd-summary dd { font-size: 1.5rem; font-weight: 700; letter-spacing: -.03em; line-height: 1; }
 .kd-summary dt { color: var(--kd-muted); font-size: .7rem; line-height: 1.25; margin-top: .32rem; }
 
+.kd-trends { border-top: 1px solid var(--kd-line); padding-top: 2.8rem; }
+.kd-chart-grid { display: grid; gap: 1.1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.kd-chart { background: var(--kd-paper); border: 1px solid var(--kd-line); border-radius: 1rem; min-width: 0; padding: 1.25rem; }
+.kd-chart:first-child { grid-column: 1 / -1; }
+.kd-chart__header { align-items: start; display: flex; gap: 1rem; justify-content: space-between; }
+.kd-chart__header h3 { font-size: 1rem; font-weight: 700; letter-spacing: -.015em; margin-top: .2rem; }
+.kd-chart__header p:not(.kd-chart__range) { color: var(--kd-muted); font-size: .76rem; line-height: 1.45; margin-top: .28rem; max-width: 32rem; }
+.kd-chart__range { color: var(--kd-amber-dark); font-size: .66rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.kd-chart__header > a, .kd-chart__empty > a { align-items: center; color: var(--kd-amber-dark); display: inline-flex; flex: 0 0 auto; font-size: .72rem; font-weight: 700; gap: .35rem; min-height: 2.75rem; white-space: nowrap; }
+.kd-chart__header > a svg, .kd-chart__empty > a svg { height: .9rem; width: .9rem; }
+.kd-chart__header > a:focus-visible, .kd-chart__empty > a:focus-visible, .kd-chart__data summary:focus-visible, .kd-chart__point:focus { outline: 2px solid var(--kd-amber-dark); outline-offset: 3px; }
+.kd-chart__summary { display: flex; flex-wrap: wrap; gap: 1.1rem; margin-top: 1.15rem; }
+.kd-chart__summary span { color: var(--kd-muted); font-size: .68rem; }
+.kd-chart__summary strong { color: var(--kd-ink); display: block; font-size: 1.35rem; letter-spacing: -.03em; line-height: 1; margin-bottom: .22rem; }
+.kd-chart__plot { margin-top: .8rem; min-height: 12.5rem; }
+.kd-chart__plot svg { display: block; height: 11rem; overflow: visible; width: 100%; }
+.kd-chart__grid line { stroke: #e9edec; stroke-width: 1; }
+.kd-chart__line { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.25; }
+.kd-chart__line--1, .kd-chart__point--1 { stroke: var(--kd-amber); }
+.kd-chart__line--2, .kd-chart__point--2 { stroke: var(--kd-ink); }
+.kd-chart__point { fill: var(--kd-paper); stroke-width: 2; }
+.kd-chart__point:focus { fill: var(--kd-amber-pale); }
+.kd-chart__axis { color: var(--kd-muted); display: flex; font-size: .62rem; justify-content: space-between; margin: .3rem 2% 0; }
+.kd-chart__legend { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: .55rem; }
+.kd-chart__legend span { align-items: center; color: var(--kd-muted); display: inline-flex; font-size: .68rem; gap: .4rem; }
+.kd-chart__legend-mark { background: var(--kd-amber); border-radius: 999px; height: .4rem; width: .4rem; }
+.kd-chart__legend-mark--2 { background: var(--kd-ink); }
+.kd-chart__early { background: var(--kd-amber-pale); border-radius: .55rem; color: #715322; font-size: .7rem; line-height: 1.45; margin-top: 1rem; padding: .7rem .8rem; }
+.kd-chart__data { border-top: 1px solid var(--kd-line); margin-top: 1rem; padding-top: .75rem; }
+.kd-chart__data summary { color: var(--kd-muted); cursor: pointer; font-size: .68rem; font-weight: 700; min-height: 2.25rem; padding-top: .45rem; width: max-content; }
+.kd-chart__data-grid { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: .7rem; max-height: 15rem; overflow: auto; }
+.kd-chart__data h4 { font-size: .72rem; font-weight: 700; margin-bottom: .35rem; }
+.kd-chart__data dl > div { display: flex; font-size: .66rem; justify-content: space-between; padding: .2rem 0; }
+.kd-chart__data dt { color: var(--kd-muted); }
+.kd-chart__data dd { font-weight: 700; }
+.kd-chart__empty { align-items: center; background: #f7f8f7; display: grid; gap: .85rem; grid-template-columns: 2.5rem minmax(0, 1fr) auto; margin-top: 1.15rem; min-height: 10.5rem; padding: 1.15rem; }
+.kd-chart__empty > span { align-items: center; background: var(--kd-amber-pale); border-radius: .7rem; color: var(--kd-amber-dark); display: flex; height: 2.5rem; justify-content: center; width: 2.5rem; }
+.kd-chart__empty > span svg { height: 1.15rem; width: 1.15rem; }
+.kd-chart__empty h4 { font-size: .84rem; font-weight: 700; }
+.kd-chart__empty p { color: var(--kd-muted); font-size: .72rem; line-height: 1.45; margin-top: .25rem; }
+
 .kd-shortcuts { border-top: 1px solid var(--kd-line); }
 .kd-shortcut { align-items: center; display: grid; gap: .8rem; grid-template-columns: 2.3rem minmax(0, 1fr) auto; min-height: 4.7rem; padding: .75rem .2rem; }
 .kd-shortcut + .kd-shortcut { border-top: 1px solid var(--kd-line); }
@@ -85,7 +126,7 @@
 .kd-guidance__action { align-items: center; color: var(--kd-amber-dark); display: flex; flex: 0 0 auto; font-size: .72rem; font-weight: 700; gap: .35rem; white-space: nowrap; }
 .kd-guidance__action svg { height: .9rem; width: .9rem; }
 
-@media (max-width: 900px) { .kd-operational-grid { gap: 0; grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .kd-operational-grid { gap: 0; grid-template-columns: 1fr; } .kd-chart-grid { grid-template-columns: 1fr; } .kd-chart:first-child { grid-column: auto; } }
 @media (max-width: 640px) {
     .kd-dashboard { padding-bottom: 1.5rem; }
     .kd-context { align-items: start; gap: .9rem; grid-template-columns: 2.6rem minmax(0, 1fr); padding: 1.4rem 0 1.25rem; }
@@ -107,5 +148,14 @@
     .kd-guidance__items { grid-template-columns: 1fr; }
     .kd-guidance__item { align-items: start; display: block; }
     .kd-guidance__action { margin-top: .8rem; min-height: 2.75rem; }
+    .kd-trends { padding-top: 2rem; }
+    .kd-chart { padding: 1rem; }
+    .kd-chart__header { display: block; }
+    .kd-chart__header > a { margin-top: .45rem; }
+    .kd-chart__plot { min-height: 11rem; }
+    .kd-chart__plot svg { height: 9.5rem; }
+    .kd-chart__data-grid { grid-template-columns: 1fr; }
+    .kd-chart__empty { align-items: start; grid-template-columns: 2.4rem minmax(0, 1fr); }
+    .kd-chart__empty > a { grid-column: 2; justify-self: start; }
 }
 @media (prefers-reduced-motion: reduce) { .kd-dashboard * { scroll-behavior: auto !important; transition-duration: 0s !important; } }

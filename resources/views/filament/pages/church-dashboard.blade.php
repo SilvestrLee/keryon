@@ -48,9 +48,8 @@
             @endif
         </section>
 
-        <div class="kd-operational-grid">
-            @if (count($snapshot->summaries))
-                <section class="kd-section kd-happening" aria-labelledby="operational-summary-heading">
+        @if (count($snapshot->summaries))
+            <section class="kd-section kd-happening" aria-labelledby="operational-summary-heading">
                     <div class="kd-section__heading kd-section__heading--compact"><div><p class="kd-section__index" aria-hidden="true">02</p><h2 id="operational-summary-heading">What's happening</h2></div></div>
                     <div class="kd-summary-list">
                         @foreach ($snapshot->summaries as $key => $metrics)
@@ -60,12 +59,26 @@
                             </article>
                         @endforeach
                     </div>
-                </section>
-            @endif
+            </section>
+        @endif
 
-            @if (count($snapshot->shortcuts))
-                <aside class="kd-section kd-work" aria-labelledby="workspace-shortcuts-heading">
-                    <div class="kd-section__heading kd-section__heading--compact"><div><p class="kd-section__index" aria-hidden="true">03</p><h2 id="workspace-shortcuts-heading">Continue your work</h2></div></div>
+        @if (count($snapshot->charts))
+            <section class="kd-section kd-trends" aria-labelledby="operational-trends-heading">
+                <div class="kd-section__heading">
+                    <div><p class="kd-section__index" aria-hidden="true">03</p><h2 id="operational-trends-heading">Operational trends</h2></div>
+                    <p>Recent activity recorded through your Church workspace.</p>
+                </div>
+                <div class="kd-chart-grid">
+                    @foreach ($snapshot->charts as $chart)
+                        @include('filament.pages.partials.dashboard-chart', ['chart' => $chart])
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
+        @if (count($snapshot->shortcuts))
+            <aside class="kd-section kd-work" aria-labelledby="workspace-shortcuts-heading">
+                    <div class="kd-section__heading kd-section__heading--compact"><div><p class="kd-section__index" aria-hidden="true">04</p><h2 id="workspace-shortcuts-heading">Continue your work</h2></div></div>
                     <nav class="kd-shortcuts" aria-label="Church workspace shortcuts">
                         @foreach ($snapshot->shortcuts as $shortcut)
                             <a href="{{ $shortcut['destination'] }}" class="kd-shortcut" wire:navigate>
@@ -75,9 +88,8 @@
                             </a>
                         @endforeach
                     </nav>
-                </aside>
-            @endif
-        </div>
+            </aside>
+        @endif
 
         @if (count($snapshot->guidance))
             <section class="kd-section kd-guidance" aria-labelledby="setup-guidance-heading">

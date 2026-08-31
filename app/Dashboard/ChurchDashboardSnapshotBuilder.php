@@ -3,6 +3,11 @@
 namespace App\Dashboard;
 
 use App\Commercial\Entitlements\EntitlementResolver;
+use App\Dashboard\Charts\CampaignActivityChartQuery;
+use App\Dashboard\Charts\CommunicationsActivityChartQuery;
+use App\Dashboard\Charts\CongregationTrendChartQuery;
+use App\Dashboard\Charts\FaithFlowUsageChartQuery;
+use App\Dashboard\Charts\WebsitePublicationChartQuery;
 use App\Enums\Capability;
 use App\Enums\ChurchOnboardingStatus;
 use App\Enums\EntitlementKey;
@@ -34,6 +39,11 @@ final class ChurchDashboardSnapshotBuilder
         private readonly DashboardOperationalQuery $queries,
         private readonly EntitlementResolver $entitlementResolver,
         private readonly WebsitePublicationStatus $websiteStatus,
+        private readonly CommunicationsActivityChartQuery $communicationsChart,
+        private readonly CongregationTrendChartQuery $congregationChart,
+        private readonly CampaignActivityChartQuery $campaignChart,
+        private readonly WebsitePublicationChartQuery $websiteChart,
+        private readonly FaithFlowUsageChartQuery $faithFlowChart,
     ) {}
 
     public function build(): DashboardSnapshot
@@ -55,6 +65,7 @@ final class ChurchDashboardSnapshotBuilder
         $guidance = [];
         $summaries = [];
         $shortcuts = [];
+        $charts = [];
 
         if ($has(Capability::ContentManage)) {
             $content = $this->queries->content();
@@ -140,10 +151,28 @@ final class ChurchDashboardSnapshotBuilder
             $shortcuts[] = $this->shortcut('Website', 'Manage your public Church presence.', WebsiteOverview::getUrl());
         }
 
+        // Capability and entitlement decisions happen before each chart query.
+        // The initial dashboard intentionally caps composition at four charts.
+        if ($has(Capability::ContentView)) {
+            $charts[] = $this->communicationsChart->for($church);
+        }
+        if ($has(Capability::CongregationManage)) {
+            $charts[] = $this->congregationChart->for($church);
+        }
+        if ($has(Capability::CampaignsView)) {
+            $charts[] = $this->campaignChart->for($church);
+        }
+        if ($has(Capability::WebsiteContentView) && $this->entitled($church, EntitlementKey::WebsiteEnabled)) {
+            $charts[] = $this->websiteChart->for($church);
+        }
+        if (count($charts) < 4 && $has(Capability::FaithflowUse) && $this->entitled($church, EntitlementKey::FaithFlowEnabled)) {
+            $charts[] = $this->faithFlowChart->for($church);
+        }
+
         usort($actions, fn (DashboardAction $a, DashboardAction $b): int => $a->priority <=> $b->priority);
         usort($guidance, fn (DashboardAction $a, DashboardAction $b): int => $a->priority <=> $b->priority);
 
-        return new DashboardSnapshot($church->name, $actions, $guidance, $summaries, $shortcuts, $this->trial($church, $membership, $has(Capability::ChurchManage)));
+        return new DashboardSnapshot($church->name, $actions, $guidance, $summaries, $shortcuts, $this->trial($church, $membership, $has(Capability::ChurchManage)), $charts);
     }
 
     private function entitled(Church $church, EntitlementKey $key): bool
