@@ -77,8 +77,9 @@ class CommunicationCalendar extends Page
         $canViewDesigns = $membership->hasCapability(Capability::DesignsView) && $entitlements->allows($church, EntitlementKey::DesignEnabled);
         $canManageDesigns = $membership->hasCapability(Capability::DesignsManage) && $canViewDesigns;
         $canUseWebsite = $membership->hasCapability(Capability::WebsiteContentView) && $entitlements->allows($church, EntitlementKey::WebsiteEnabled);
-        $entries = $query->between($church, $start, $end, $timezone, $channel, $campaignId, $preparation, canManageContent: $membership->hasCapability(Capability::ContentManage), canUseFaithFlow: $canUseFaithFlow, canViewDesigns: $canViewDesigns, canManageDesigns: $canManageDesigns, canUseWebsite: $canUseWebsite);
-        $unplaced = $query->unplaced($church, $timezone, $channel, $campaignId, $preparation, $membership->hasCapability(Capability::ContentManage), $canUseFaithFlow, $canViewDesigns, $canManageDesigns, $canUseWebsite);
+        $canManageWebsite = $membership->hasCapability(Capability::WebsiteContentManage) && $canUseWebsite;
+        $entries = $query->between($church, $start, $end, $timezone, $channel, $campaignId, $preparation, canManageContent: $membership->hasCapability(Capability::ContentManage), canUseFaithFlow: $canUseFaithFlow, canViewDesigns: $canViewDesigns, canManageDesigns: $canManageDesigns, canUseWebsite: $canUseWebsite, canManageWebsite: $canManageWebsite);
+        $unplaced = $query->unplaced($church, $timezone, $channel, $campaignId, $preparation, $membership->hasCapability(Capability::ContentManage), $canUseFaithFlow, $canViewDesigns, $canManageDesigns, $canUseWebsite, $canManageWebsite);
 
         return [
             'churchName' => $church->name,

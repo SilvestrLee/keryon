@@ -72,6 +72,25 @@
             </div>
         </div>
 
+        @if ($recentProvenance->isNotEmpty())
+            <section class="rounded-2xl bg-gray-50 p-5" aria-labelledby="website-sources-heading">
+                <h2 id="website-sources-heading" class="text-base font-semibold text-[#132E35]">Recent communication sources</h2>
+                <p class="mt-1 text-sm text-gray-600">Lineage for working Website content. Publication remains a separate action.</p>
+                <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                    @foreach ($recentProvenance as $source)
+                        <article class="rounded-xl bg-white p-4">
+                            <p class="text-sm font-semibold text-gray-900">{{ $source->contentItem?->title ?? 'Removed Content source' }}</p>
+                            <p class="mt-1 text-xs text-gray-500">{{ $source->destination->label() }}@if($source->campaign) · {{ $source->campaign->title }}@endif</p>
+                            <p class="mt-2 text-xs text-gray-500">Applied by {{ $source->actor?->name ?? 'a former staff member' }} on {{ $source->applied_at->format('j M Y, H:i') }}</p>
+                            @if ($source->contentItem?->status === \App\Enums\ContentStatus::APPROVED && $source->contentItem->approved_at?->gt($source->source_approved_at))
+                                <p class="mt-2 text-xs font-semibold text-amber-800">A newer approved source version is available.</p>
+                            @endif
+                        </article>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
         <div class="grid gap-4 sm:grid-cols-3">
             <a
                 href="{{ \App\Filament\Clusters\Website\Pages\EditChurchInformation::getUrl() }}"

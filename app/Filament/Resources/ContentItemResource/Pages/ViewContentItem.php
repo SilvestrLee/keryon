@@ -2,10 +2,16 @@
 
 namespace App\Filament\Resources\ContentItemResource\Pages;
 
+use App\Commercial\Entitlements\EntitlementResolver;
+use App\Enums\Capability;
 use App\Enums\ContentStatus;
 use App\Enums\ContentType;
+use App\Enums\EntitlementKey;
+use App\Filament\Pages\WebsiteDraftHandoff;
 use App\Filament\Resources\ContentItemResource;
 use App\Models\ContentItem;
+use App\Support\TenantContext;
+use App\Website\Drafts\AvailableWebsiteDraftDestinations;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Textarea;
@@ -85,6 +91,22 @@ class ViewContentItem extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('useOnWebsite')
+                ->label('Use on Website')
+                ->icon('heroicon-o-globe-alt')
+                ->visible(function (ContentItem $record): bool {
+                    $tenant = app(TenantContext::class);
+                    $membership = $tenant->currentMembership();
+                    $church = $tenant->currentChurch();
+
+                    return $record->status === ContentStatus::APPROVED
+                        && app(AvailableWebsiteDraftDestinations::class)->for($record->content_type) !== []
+                        && ($membership?->hasCapability(Capability::WebsiteContentManage) ?? false)
+                        && $church !== null
+                        && app(EntitlementResolver::class)->allows($church, EntitlementKey::WebsiteEnabled);
+                })
+                ->url(fn (ContentItem $record): string => WebsiteDraftHandoff::getUrl(['content' => $record->id])),
+
             Action::make('submitForReview')
                 ->label('Submit for Review')
                 ->color('primary')

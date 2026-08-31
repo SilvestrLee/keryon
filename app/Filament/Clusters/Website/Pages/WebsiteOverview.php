@@ -9,6 +9,7 @@ use App\Filament\Clusters\Website\Resources\WebsiteMinistryResource;
 use App\Models\ChurchBrandProfile;
 use App\Models\WebsiteAboutContent;
 use App\Models\WebsiteContactContent;
+use App\Models\WebsiteContentProvenance;
 use App\Models\WebsiteHomeContent;
 use App\Models\WebsiteLeadershipProfile;
 use App\Models\WebsiteMinistry;
@@ -157,6 +158,9 @@ class WebsiteOverview extends Page
             'canManageTheme' => $canManageTheme,
             'canPublish' => $membership?->hasCapability(Capability::WebsitePublish) ?? false,
             'publicationStatus' => $publicationStatus,
+            'recentProvenance' => WebsiteContentProvenance::query()
+                ->with(['contentItem:id,title,status,approved_at', 'campaign:id,title', 'actor:id,name'])
+                ->latest('applied_at')->limit(5)->get(),
         ];
     }
 }

@@ -125,7 +125,9 @@ class CommunicationCalendarTest extends TestCase
 
         Livewire::test(CommunicationCalendar::class)->assertSuccessful();
 
-        $this->assertLessThanOrEqual(21, count($queries));
+        // Includes the bounded Website handoff eligibility/provenance route
+        // discovery added by K-COMMS-001C; still independent of row count.
+        $this->assertLessThanOrEqual(22, count($queries));
     }
 
     private function actor(): Church

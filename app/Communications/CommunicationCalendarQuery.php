@@ -3,13 +3,16 @@
 namespace App\Communications;
 
 use App\Enums\CommunicationChannel;
+use App\Enums\ContentStatus;
 use App\Filament\Clusters\Website\Pages\WebsiteOverview;
 use App\Filament\Pages\CampaignWorkspace;
 use App\Filament\Pages\DesignStudio;
 use App\Filament\Pages\FaithFlow;
+use App\Filament\Pages\WebsiteDraftHandoff;
 use App\Filament\Resources\ContentItemResource;
 use App\Models\CampaignCommunication;
 use App\Models\Church;
+use App\Website\Drafts\AvailableWebsiteDraftDestinations;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 
@@ -32,6 +35,7 @@ final class CommunicationCalendarQuery
         bool $canViewDesigns = false,
         bool $canManageDesigns = false,
         bool $canUseWebsite = false,
+        bool $canManageWebsite = false,
     ): array {
         $query = $church->campaignCommunications()
             ->with(['campaign:id,title,status,starts_on,ends_on', 'contentItem:id,title,status,deleted_at'])
@@ -52,7 +56,7 @@ final class CommunicationCalendarQuery
         }
 
         return $query->get()
-            ->map(fn (CampaignCommunication $communication): CommunicationCalendarEntry => $this->entry($communication, $timezone, $canManageContent, $canUseFaithFlow, $canViewDesigns, $canManageDesigns, $canUseWebsite))
+            ->map(fn (CampaignCommunication $communication): CommunicationCalendarEntry => $this->entry($communication, $timezone, $canManageContent, $canUseFaithFlow, $canViewDesigns, $canManageDesigns, $canUseWebsite, $canManageWebsite))
             ->when($preparation !== null, fn ($entries) => $entries->where('preparationKey', $preparation))
             ->values()
             ->all();
@@ -70,6 +74,7 @@ final class CommunicationCalendarQuery
         bool $canViewDesigns = false,
         bool $canManageDesigns = false,
         bool $canUseWebsite = false,
+        bool $canManageWebsite = false,
         int $limit = 12,
     ): array {
         $query = $church->campaignCommunications()
@@ -86,7 +91,7 @@ final class CommunicationCalendarQuery
         $this->filters($query, $channel, $campaignId);
 
         return $query->limit($limit)->get()
-            ->map(fn (CampaignCommunication $communication): CommunicationCalendarEntry => $this->entry($communication, $timezone, $canManageContent, $canUseFaithFlow, $canViewDesigns, $canManageDesigns, $canUseWebsite))
+            ->map(fn (CampaignCommunication $communication): CommunicationCalendarEntry => $this->entry($communication, $timezone, $canManageContent, $canUseFaithFlow, $canViewDesigns, $canManageDesigns, $canUseWebsite, $canManageWebsite))
             ->when($preparation !== null, fn ($entries) => $entries->where('preparationKey', $preparation))
             ->values()
             ->all();
@@ -102,7 +107,7 @@ final class CommunicationCalendarQuery
         }
     }
 
-    private function entry(CampaignCommunication $communication, string $timezone, bool $canManageContent, bool $canUseFaithFlow, bool $canViewDesigns, bool $canManageDesigns, bool $canUseWebsite): CommunicationCalendarEntry
+    private function entry(CampaignCommunication $communication, string $timezone, bool $canManageContent, bool $canUseFaithFlow, bool $canViewDesigns, bool $canManageDesigns, bool $canUseWebsite, bool $canManageWebsite): CommunicationCalendarEntry
     {
         $targetAt = $communication->target_at === null
             ? null
@@ -139,7 +144,12 @@ final class CommunicationCalendarQuery
         }
 
         if ($canUseWebsite && $communication->channel === CommunicationChannel::WEBSITE) {
-            $actions[] = new CommunicationAction('website.continue', 'Continue in Website', 'Prepare Website-owned content without implying publication.', WebsiteOverview::getUrl(), 'Continue in Website', 'Website');
+            $canHandoff = $canManageWebsite
+                && $communication->contentItem?->status === ContentStatus::APPROVED
+                && app(AvailableWebsiteDraftDestinations::class)->for($communication->contentItem->content_type) !== [];
+            $actions[] = $canHandoff
+                ? new CommunicationAction('website.apply', 'Apply to Website draft', 'Prepare Website-owned content without publishing it.', WebsiteDraftHandoff::getUrl(['content' => $communication->content_item_id, 'communication' => $communication->id]), 'Apply to Website draft', 'Website')
+                : new CommunicationAction('website.continue', 'Continue in Website', 'Prepare Website-owned content without implying publication.', WebsiteOverview::getUrl(), 'Continue in Website', 'Website');
         }
 
         return new CommunicationCalendarEntry(
