@@ -6,6 +6,7 @@ use App\Enums\OrganizationStatus;
 use App\Filament\Organization\Concerns\InteractsWithOrganizationWorkspace;
 use App\Models\OrganizationMembership;
 use App\Support\OrganizationContext;
+use App\Support\TenantContext;
 use Filament\Pages\Page;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -43,7 +44,9 @@ class SelectOrganization extends Page
         $membership = $this->memberships()->firstWhere('organization_id', $organizationId);
         abort_unless($membership !== null, 403);
 
-        session(['active_organization_id' => $membership->organization_id]);
+        session()->forget('active_church_id');
+        session(['active_organization_id' => $membership->organization_id, 'active_workspace_type' => 'organization']);
+        app(TenantContext::class)->forgetResolved();
         app(OrganizationContext::class)->forgetResolved();
 
         $this->redirect(OrganizationOverview::getUrl(panel: 'organization'), navigate: true);

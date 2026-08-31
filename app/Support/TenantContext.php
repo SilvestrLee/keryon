@@ -134,8 +134,8 @@ class TenantContext
      * override before propagating.
      *
      * @throws UntrustedTenantExecutionException if the Church is missing/
-     *         inactive, or (when the context has an actor) that actor no
-     *         longer has an active membership at this Church.
+     *                                           inactive, or (when the context has an actor) that actor no
+     *                                           longer has an active membership at this Church.
      */
     public function runFor(TenantExecutionContext $context, Closure $callback): mixed
     {
@@ -207,6 +207,10 @@ class TenantContext
     protected function resolve(): ?ChurchMembership
     {
         if (! Auth::check()) {
+            return null;
+        }
+
+        if (session('active_workspace_type') === 'organization') {
             return null;
         }
 

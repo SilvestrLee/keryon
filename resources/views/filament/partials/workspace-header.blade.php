@@ -1,0 +1,1 @@
+<livewire:keryon-workspace-header />

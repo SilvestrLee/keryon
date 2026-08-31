@@ -21,6 +21,22 @@
     display: none !important;
 }
 
+.ks-selection-page { background: #f4f6f6; color: #132e35; min-height: 100dvh; }
+.ks-selection { margin: 0 auto; max-width: 50rem; padding: clamp(2rem, 7vw, 5rem) 1rem; }
+.ks-selection header > svg { height: auto; width: 8rem; }
+.ks-selection header > p { color: #a46716; font-size: .72rem; font-weight: 700; letter-spacing: .1em; margin-top: 3rem; text-transform: uppercase; }
+.ks-selection h1 { font-size: clamp(2rem, 6vw, 3.5rem); font-weight: 700; letter-spacing: -.04em; line-height: 1; margin-top: .5rem; }
+.ks-selection header > span { color: #68737a; display: block; margin-top: .8rem; }
+.ks-selection__groups { display: grid; gap: 1rem; margin-top: 2.5rem; }
+.ks-selection__groups section { background: #fff; border: 1px solid #dde2e4; border-radius: 1rem; padding: .65rem; }
+.ks-selection__groups h2 { color: #68737a; font-size: .68rem; font-weight: 700; letter-spacing: .08em; padding: .55rem .65rem; text-transform: uppercase; }
+.ks-selection__groups button { align-items: center; border-radius: .7rem; display: flex; justify-content: space-between; min-height: 4rem; padding: .7rem; text-align: left; width: 100%; }
+.ks-selection__groups button:hover { background: #f4f6f6; }
+.ks-selection__groups button:focus-visible { outline: 2px solid #e09f3e; outline-offset: 2px; }
+.ks-selection__groups button > span:first-child { display: grid; }
+.ks-selection__groups strong { font-size: .9rem; }
+.ks-selection__groups small { color: #68737a; font-size: .7rem; margin-top: .2rem; }
+
 @keyframes fade-in-up {
     from {
         opacity: 0;

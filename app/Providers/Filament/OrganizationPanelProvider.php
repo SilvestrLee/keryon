@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Organization\Pages\OrganizationOverview;
+use App\Http\Middleware\ApplyUserLocale;
 use App\Http\Middleware\AuthenticateOrganizationWorkspace;
 use App\Http\Middleware\EnsureOrganizationAccess;
 use App\Http\Middleware\ResolveOrganizationContext;
@@ -12,6 +13,7 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -33,6 +35,7 @@ class OrganizationPanelProvider extends PanelProvider
             ->brandLogoHeight('2.25rem')
             ->login()
             ->colors(['primary' => Color::Amber])
+            ->renderHook(PanelsRenderHook::GLOBAL_SEARCH_BEFORE, fn () => view('filament.partials.workspace-header'))
             ->discoverPages(
                 in: app_path('Filament/Organization/Pages'),
                 for: 'App\\Filament\\Organization\\Pages',
@@ -43,6 +46,7 @@ class OrganizationPanelProvider extends PanelProvider
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
+                ApplyUserLocale::class,
                 AuthenticateSession::class,
                 ShareErrorsFromSession::class,
                 PreventRequestForgery::class,

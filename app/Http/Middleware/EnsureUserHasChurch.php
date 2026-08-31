@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Enums\ChurchActivationStatus;
 use App\Models\ChurchActivation;
+use App\Support\OrganizationContext;
 use App\Support\TenantContext;
 use Closure;
 use Illuminate\Http\Request;
@@ -18,6 +19,10 @@ class EnsureUserHasChurch
 {
     public function handle(Request $request, Closure $next): Response
     {
+        session()->forget('active_organization_id');
+        session(['active_workspace_type' => 'church']);
+        app(OrganizationContext::class)->forgetResolved();
+        app(TenantContext::class)->forgetResolved();
         if (! auth()->check()) {
             return $next($request);
         }
@@ -42,13 +47,6 @@ class EnsureUserHasChurch
             return redirect('/admin/setup');
         }
 
-        // Active memberships exist but TenantContext could not resolve
-        // one of them (e.g. more than one active membership with no
-        // valid session selection). Do not send this user into "create a
-        // new church" — that would be actively wrong. A church-selection
-        // screen is future scope (Blueprint v1.4.1 §5); no such user
-        // exists in current data, so this fails closed rather than
-        // guessing. See K-IDENTITY-001A §17/§44.
-        abort(403, 'Unable to determine your active church. Contact support.');
+        return redirect()->route('workspaces.select');
     }
 }

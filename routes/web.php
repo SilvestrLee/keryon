@@ -5,6 +5,9 @@ use App\Http\Controllers\ChurchStaffInvitationController;
 use App\Http\Controllers\InvitationLandingController;
 use App\Http\Controllers\PrivateMediaController;
 use App\Http\Controllers\PublicMediaRenditionController;
+use App\Http\Controllers\SelectLocaleController;
+use App\Http\Controllers\SwitchWorkspaceController;
+use App\Http\Controllers\WorkspaceSelectionController;
 use App\Http\Middleware\SecureInvitationResponse;
 use Illuminate\Support\Facades\Route;
 
@@ -25,6 +28,12 @@ Route::middleware([SecureInvitationResponse::class])->group(function (): void {
 });
 
 Route::middleware('auth')->group(function (): void {
+    Route::get('/workspaces', WorkspaceSelectionController::class)->name('workspaces.select');
+    Route::post('/workspace/switch/{type}/{workspace}', SwitchWorkspaceController::class)
+        ->whereIn('type', ['church', 'organization'])
+        ->whereNumber('workspace')
+        ->name('workspace.switch');
+    Route::post('/account/locale', SelectLocaleController::class)->name('account.locale');
     Route::get('/church-activation/{token}', [ChurchActivationController::class, 'show'])->name('church-activation.show');
     Route::post('/church-activation/{token}', [ChurchActivationController::class, 'accept'])->name('church-activation.accept');
     Route::get('/church-staff-invitation/accepted/{invitation}', [ChurchStaffInvitationController::class, 'accepted'])->name('church-staff-invitations.accepted');

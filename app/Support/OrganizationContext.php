@@ -56,6 +56,10 @@ class OrganizationContext
             return null;
         }
 
+        if (session('active_workspace_type') === 'church') {
+            return null;
+        }
+
         $memberships = Auth::user()->activeOrganizationMemberships()
             ->with('organization')
             ->get()

@@ -78,7 +78,7 @@ class OrganizationWorkspaceTest extends TestCase
         $this->get('/organization/organization-overview')->assertForbidden();
     }
 
-    public function test_multiple_organization_selection_is_validated_and_preserves_church_session(): void
+    public function test_multiple_organization_selection_is_validated_and_clears_church_session(): void
     {
         $user = User::factory()->create();
         $first = $this->hierarchy->createOrganization('First Organization', 'first');
@@ -109,7 +109,7 @@ class OrganizationWorkspaceTest extends TestCase
             ->assertRedirect(OrganizationOverviewRoute::url());
 
         $this->assertSame($second->id, session('active_organization_id'));
-        $this->assertSame(9876, session('active_church_id'));
+        $this->assertFalse(session()->has('active_church_id'));
         app(OrganizationContext::class)->forgetResolved();
         $this->assertSame($second->id, app(OrganizationContext::class)->currentOrganizationId());
     }
