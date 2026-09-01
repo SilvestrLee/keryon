@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\Website\Resources;
 
 use App\Filament\Clusters\Website;
 use App\Filament\Clusters\Website\Resources\WebsiteMinistryResource\Pages\ListWebsiteMinistries;
+use App\Filament\Clusters\Website\WebsiteNavigation;
 use App\Filament\Support\MediaSelectField;
 use App\Models\WebsiteMinistry;
 use Filament\Actions\ActionGroup;
@@ -31,6 +32,8 @@ class WebsiteMinistryResource extends Resource
     protected static ?string $cluster = Website::class;
 
     protected static ?string $navigationLabel = 'Ministries';
+
+    protected static string|\UnitEnum|null $navigationGroup = WebsiteNavigation::CONTENT;
 
     protected static ?int $navigationSort = 4;
 

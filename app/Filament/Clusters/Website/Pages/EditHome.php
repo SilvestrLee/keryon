@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\Website\Pages;
 
 use App\Filament\Clusters\Website;
 use App\Filament\Clusters\Website\Concerns\ManagesSingletonRecord;
+use App\Filament\Clusters\Website\WebsiteNavigation;
 use App\Filament\Support\MediaSelectField;
 use App\Models\WebsiteHomeContent;
 use Filament\Forms\Components\Textarea;
@@ -30,6 +31,8 @@ class EditHome extends Page implements HasForms
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-home';
 
     protected static ?string $navigationLabel = 'Home';
+
+    protected static string|\UnitEnum|null $navigationGroup = WebsiteNavigation::CONTENT;
 
     protected static ?string $title = 'Home';
 

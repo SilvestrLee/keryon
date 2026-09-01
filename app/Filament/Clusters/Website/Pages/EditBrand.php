@@ -2,11 +2,12 @@
 
 namespace App\Filament\Clusters\Website\Pages;
 
+use App\Enums\BrandFontChoice;
 use App\Filament\Clusters\Website;
 use App\Filament\Clusters\Website\Concerns\ManagesSingletonRecord;
+use App\Filament\Clusters\Website\WebsiteNavigation;
 use App\Filament\Support\MediaSelectField;
 use App\Models\ChurchBrandProfile;
-use App\Enums\BrandFontChoice;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Contracts\HasForms;
@@ -30,6 +31,8 @@ class EditBrand extends Page implements HasForms
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-swatch';
 
     protected static ?string $navigationLabel = 'Brand';
+
+    protected static string|\UnitEnum|null $navigationGroup = WebsiteNavigation::SITE_IDENTITY;
 
     protected static ?string $title = 'Brand';
 

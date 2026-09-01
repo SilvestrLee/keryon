@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\Website\Pages;
 
 use App\Enums\WebsiteTheme;
 use App\Filament\Clusters\Website;
+use App\Filament\Clusters\Website\WebsiteNavigation;
 use App\Models\WebsiteSettings;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Textarea;
@@ -37,6 +38,8 @@ class EditTheme extends Page implements HasForms
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-paint-brush';
 
     protected static ?string $navigationLabel = 'Theme';
+
+    protected static string|\UnitEnum|null $navigationGroup = WebsiteNavigation::CONFIGURATION;
 
     protected static ?string $title = 'Theme';
 

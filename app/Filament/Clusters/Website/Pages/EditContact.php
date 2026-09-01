@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\Website\Pages;
 
 use App\Filament\Clusters\Website;
 use App\Filament\Clusters\Website\Concerns\ManagesSingletonRecord;
+use App\Filament\Clusters\Website\WebsiteNavigation;
 use App\Models\WebsiteContactContent;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -28,6 +29,8 @@ class EditContact extends Page implements HasForms
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-envelope';
 
     protected static ?string $navigationLabel = 'Contact';
+
+    protected static string|\UnitEnum|null $navigationGroup = WebsiteNavigation::CONTENT;
 
     protected static ?string $title = 'Contact';
 

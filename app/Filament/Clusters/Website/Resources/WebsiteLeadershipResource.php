@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\Website\Resources;
 use App\Enums\LeadershipCategory;
 use App\Filament\Clusters\Website;
 use App\Filament\Clusters\Website\Resources\WebsiteLeadershipResource\Pages\ListWebsiteLeadershipProfiles;
+use App\Filament\Clusters\Website\WebsiteNavigation;
 use App\Filament\Support\MediaSelectField;
 use App\Models\WebsiteLeadershipProfile;
 use Filament\Actions\ActionGroup;
@@ -36,6 +37,8 @@ class WebsiteLeadershipResource extends Resource
     protected static ?string $cluster = Website::class;
 
     protected static ?string $navigationLabel = 'Leadership';
+
+    protected static string|\UnitEnum|null $navigationGroup = WebsiteNavigation::CONTENT;
 
     protected static ?int $navigationSort = 3;
 

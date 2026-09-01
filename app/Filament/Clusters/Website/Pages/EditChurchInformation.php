@@ -6,14 +6,15 @@ use App\Enums\Capability;
 use App\Enums\DayOfWeek;
 use App\Enums\SocialPlatform;
 use App\Filament\Clusters\Website;
+use App\Filament\Clusters\Website\WebsiteNavigation;
 use App\Models\Church;
 use App\Support\TenantContext;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
@@ -36,6 +37,8 @@ class EditChurchInformation extends Page implements HasForms
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-library';
 
     protected static ?string $navigationLabel = 'Church Information';
+
+    protected static string|\UnitEnum|null $navigationGroup = WebsiteNavigation::SITE_IDENTITY;
 
     protected static ?string $title = 'Church Information';
 

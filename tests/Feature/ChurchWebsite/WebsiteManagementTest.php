@@ -70,7 +70,7 @@ class WebsiteManagementTest extends TestCase
             ->assertActionHidden('unpublish')
             ->callAction('publish')
             ->assertNotified('Your church Website is live.')
-            ->assertSee('Published')
+            ->assertSee('Live')
             ->assertActionVisible('unpublish');
     }
 

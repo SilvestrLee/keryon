@@ -18,7 +18,7 @@ use App\Models\WebsiteSettings;
 use App\PublicWebsite\WebsitePublicationStatus;
 use App\PublicWebsite\WebsitePublisher;
 use App\Support\TenantContext;
-use App\Website\ChurchPublicUrlResolver;
+use App\Website\WebsiteDomainSummaryBuilder;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -43,6 +43,11 @@ class WebsiteOverview extends Page
     protected static ?int $navigationSort = 0;
 
     protected string $view = 'filament.clusters.website.pages.website-overview';
+
+    public function getSubheading(): ?string
+    {
+        return "Manage your Church's public presence.";
+    }
 
     public static function canAccess(): bool
     {
@@ -109,6 +114,9 @@ class WebsiteOverview extends Page
         $contact = WebsiteContactContent::query()->first();
         $settings = WebsiteSettings::query()->first();
         $brand = ChurchBrandProfile::query()->first();
+        $leadershipCount = WebsiteLeadershipProfile::query()->count();
+        $ministryCount = WebsiteMinistry::query()->count();
+        $domainSummary = $church ? app(WebsiteDomainSummaryBuilder::class)->for($church) : null;
 
         return [
             'pages' => [
@@ -129,16 +137,16 @@ class WebsiteOverview extends Page
                 [
                     'label' => 'Leadership',
                     'description' => 'Pastors, ministers, elders, and team profiles.',
-                    'started' => WebsiteLeadershipProfile::query()->exists(),
-                    'count' => WebsiteLeadershipProfile::query()->count(),
+                    'started' => $leadershipCount > 0,
+                    'count' => $leadershipCount,
                     'url' => WebsiteLeadershipResource::getUrl(),
                     'icon' => 'heroicon-o-user-group',
                 ],
                 [
                     'label' => 'Ministries',
                     'description' => 'The ministries your church website shows to visitors.',
-                    'started' => WebsiteMinistry::query()->exists(),
-                    'count' => WebsiteMinistry::query()->count(),
+                    'started' => $ministryCount > 0,
+                    'count' => $ministryCount,
                     'url' => WebsiteMinistryResource::getUrl(),
                     'icon' => 'heroicon-o-heart',
                 ],
@@ -150,9 +158,9 @@ class WebsiteOverview extends Page
                     'icon' => 'heroicon-o-envelope',
                 ],
             ],
-            'churchInformationConfigured' => filled(app(TenantContext::class)->currentChurch()?->address)
-                || app(TenantContext::class)->currentChurch()?->serviceTimes()->exists()
-                || app(TenantContext::class)->currentChurch()?->socialLinks()->exists(),
+            'churchInformationConfigured' => filled($church?->address)
+                || $church?->serviceTimes()->exists()
+                || $church?->socialLinks()->exists(),
             'brandConfigured' => filled($brand?->primary_logo_media_id) || filled($brand?->primary_color),
             'theme' => $settings?->theme,
             'canManageContent' => $canManageContent,
@@ -160,7 +168,15 @@ class WebsiteOverview extends Page
             'canManageTheme' => $canManageTheme,
             'canPublish' => $membership?->hasCapability(Capability::WebsitePublish) ?? false,
             'publicationStatus' => $publicationStatus,
-            'publicWebsiteUrl' => $church ? app(ChurchPublicUrlResolver::class)->resolve($church) : null,
+            'domainSummary' => $domainSummary,
+            'isEmptyWebsite' => ! filled($home?->hero_heading)
+                && ! filled($about?->church_story)
+                && ! filled($contact?->office_hours)
+                && ! filled($contact?->map_embed_url)
+                && $leadershipCount === 0
+                && $ministryCount === 0
+                && ! filled($brand?->primary_logo_media_id)
+                && ! filled($brand?->primary_color),
             'canManageDomains' => $membership?->is_primary && ($membership?->hasCapability(Capability::WebsiteDomainManage) ?? false),
             'domainsUrl' => ManageDomains::getUrl(),
             'recentProvenance' => WebsiteContentProvenance::query()

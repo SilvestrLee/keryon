@@ -10,6 +10,7 @@ use App\Domain\ReleaseChurchDomain;
 use App\Domain\RequestChurchCustomDomain;
 use App\Enums\Capability;
 use App\Filament\Clusters\Website;
+use App\Filament\Clusters\Website\WebsiteNavigation;
 use App\Jobs\VerifyChurchDomain;
 use App\Models\Church;
 use App\Models\ChurchDomain;
@@ -29,6 +30,8 @@ class ManageDomains extends Page
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-link';
 
     protected static ?string $navigationLabel = 'Domains';
+
+    protected static string|\UnitEnum|null $navigationGroup = WebsiteNavigation::CONFIGURATION;
 
     protected static ?string $title = 'Domains';
 
