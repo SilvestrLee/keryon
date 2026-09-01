@@ -27,7 +27,7 @@ class PublicMedia
         }
 
         return [
-            'url' => route('media.public', ['rendition' => $rendition->uuid]),
+            'url' => config('public-website.asset_origin').'/media/'.$rendition->uuid,
             'alt' => $alt ?? MediaAsset::withoutGlobalScopes()->withTrashed()->find($rendition->media_asset_id)?->alt_text ?? '',
             'width' => $rendition->width,
             'height' => $rendition->height,

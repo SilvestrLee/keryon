@@ -10,9 +10,12 @@ class PublicWebsiteContext
 {
     private ?Church $church = null;
 
-    public function resolve(Church $church): void
+    private ?ResolvedPublicWebsiteHost $host = null;
+
+    public function resolve(Church $church, ?ResolvedPublicWebsiteHost $host = null): void
     {
         $this->church = $church;
+        $this->host = $host;
     }
 
     public function church(): Church
@@ -28,5 +31,10 @@ class PublicWebsiteContext
     public function isResolved(): bool
     {
         return $this->church !== null;
+    }
+
+    public function resolvedHost(): ?ResolvedPublicWebsiteHost
+    {
+        return $this->host;
     }
 }

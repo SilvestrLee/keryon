@@ -93,7 +93,7 @@ class PrivateMediaFoundationTest extends TestCase
         Storage::disk('media-public')->assertExists($rendition->path);
         $this->get(route('media.public', $rendition->uuid))->assertOk()->assertHeader('Cache-Control', 'immutable, max-age=86400, public');
         $this->get('http://private-media.keryon.app/')->assertOk()
-            ->assertSee(route('media.public', $rendition->uuid))
+            ->assertSee(config('public-website.asset_origin').'/media/'.$rendition->uuid)
             ->assertDontSee($asset->path)
             ->assertDontSee($asset->uuid);
     }

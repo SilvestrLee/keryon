@@ -32,7 +32,7 @@
         <section class="pw-section">
             <div class="pw-shell pw-invitation">
                 <div><h2>Meet our leadership</h2><div class="pw-prose">{!! nl2br(e($content->leadership_introduction)) !!}</div></div>
-                <a class="pw-button pw-button-dark" href="{{ route('church-website.leadership', ['church' => $church->slug]) }}">Our leaders</a>
+                <a class="pw-button pw-button-dark" href="{{ $preview ? route('website.preview', ['page' => 'leadership']) : '/leadership' }}">Our leaders</a>
             </div>
         </section>
     @endif

@@ -16,17 +16,24 @@ class RejectUnsupportedKeryonHost
     {
         $baseDomain = strtolower((string) config('public-website.base_domain'));
         $host = strtolower($request->getHost());
-        $reservedHosts = array_map(
-            fn (string $label): string => "{$label}.{$baseDomain}",
-            config('public-website.reserved_subdomains', []),
-        );
+        $marketingHosts = array_map('strtolower', config('public-website.marketing_hosts', []));
+        $applicationHosts = array_map('strtolower', config('public-website.application_hosts', []));
+        $localHosts = array_map('strtolower', config('public-website.local_hosts', []));
 
-        if (
-            $host !== $baseDomain
-            && str_ends_with($host, ".{$baseDomain}")
-            && ! in_array($host, $reservedHosts, true)
+        if ($host === 'www.'.$baseDomain) {
+            return redirect()->away(
+                config('public-website.scheme').'://'.$baseDomain.$request->getRequestUri(),
+                308,
+            );
+        }
+
+        if ($host === 'central.'.$baseDomain) {
+            abort(404);
+        }
+
+        if (! in_array($host, [...$marketingHosts, ...$applicationHosts, ...$localHosts], true)
             && ! $request->routeIs('church-website.*')
-        ) {
+            && ! $request->routeIs('custom-church-website.*')) {
             abort(404);
         }
 

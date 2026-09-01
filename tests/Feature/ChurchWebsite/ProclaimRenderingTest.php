@@ -106,7 +106,7 @@ class ProclaimRenderingTest extends TestCase
             ->assertSee('aria-label="Primary navigation"', false)
             ->assertSee('<h1>A home for faith, hope, and generous community</h1>', false)
             ->assertSee('alt="The congregation worshipping together"', false)
-            ->assertSee(route('media.public', ['rendition' => $hero->renditions()->first()->uuid]))
+            ->assertSee(config('public-website.asset_origin').'/media/'.$hero->renditions()->first()->uuid)
             ->assertSee('--church-accent: #234E3D', false)
             ->assertSee('Romans 15:7');
     }

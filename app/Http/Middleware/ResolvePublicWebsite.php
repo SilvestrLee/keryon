@@ -3,7 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\PublicWebsite\PublicWebsiteContext;
-use App\PublicWebsite\PublicWebsiteResolver;
+use App\PublicWebsite\PublicWebsiteHostResolver;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -11,18 +11,17 @@ use Symfony\Component\HttpFoundation\Response;
 class ResolvePublicWebsite
 {
     public function __construct(
-        private readonly PublicWebsiteResolver $resolver,
+        private readonly PublicWebsiteHostResolver $resolver,
         private readonly PublicWebsiteContext $context,
     ) {}
 
     public function handle(Request $request, Closure $next): Response
     {
-        $slug = $request->route('church');
-        $church = is_string($slug) ? $this->resolver->resolve($slug) : null;
+        $resolved = $this->resolver->resolve($request->getHost());
 
-        abort_if($church === null, 404);
+        abort_if($resolved === null, 404);
 
-        $this->context->resolve($church);
+        $this->context->resolve($resolved->church, $resolved);
 
         return $next($request);
     }

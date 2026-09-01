@@ -6,7 +6,7 @@ use Illuminate\Support\Str;
 
 class WebsiteSeo
 {
-    public function __construct(private readonly PublicWebsiteUrl $urls) {}
+    public function __construct(private readonly CanonicalChurchWebsiteUrl $urls) {}
 
     /** @param array<string, mixed> $data */
     public function forPage(string $page, array $data, bool $preview): array

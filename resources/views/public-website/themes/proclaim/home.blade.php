@@ -56,7 +56,7 @@
                         </article>
                     @endforeach
                 </div>
-                <a class="pw-text-link" href="{{ route('church-website.contact', ['church' => $church->slug]) }}">Plan your visit</a>
+                <a class="pw-text-link" href="{{ $preview ? route('website.preview', ['page' => 'contact']) : '/contact' }}">Plan your visit</a>
             </div>
         </section>
     @endif

@@ -27,7 +27,7 @@
 
     <header class="pw-header">
         <div class="pw-shell pw-nav-shell">
-            <a class="pw-brand" href="{{ $preview ? route('website.preview') : route('church-website.home', ['church' => $church->slug]) }}" aria-label="{{ $church->name }} home">
+            <a class="pw-brand" href="{{ $preview ? route('website.preview') : '/' }}" aria-label="{{ $church->name }} home">
                 @if ($logo)
                     <img src="{{ $logo['url'] }}" alt="{{ $logo['alt'] }}" width="{{ $logo['width'] ?: 240 }}" height="{{ $logo['height'] ?: 72 }}">
                 @else
@@ -37,7 +37,7 @@
 
             <nav class="pw-desktop-nav" aria-label="Primary navigation">
                 @foreach (['home' => 'Home', 'about' => 'About', 'leadership' => 'Leadership', 'ministries' => 'Ministries', 'contact' => 'Contact'] as $route => $label)
-                    <a href="{{ $preview ? route('website.preview', ['page' => $route === 'home' ? null : $route]) : route("church-website.{$route}", ['church' => $church->slug]) }}" @class(['is-current' => $page === $route]) @if($page === $route) aria-current="page" @endif>{{ $label }}</a>
+                    <a href="{{ $preview ? route('website.preview', ['page' => $route === 'home' ? null : $route]) : ($route === 'home' ? '/' : '/'.$route) }}" @class(['is-current' => $page === $route]) @if($page === $route) aria-current="page" @endif>{{ $label }}</a>
                 @endforeach
             </nav>
 
@@ -50,7 +50,7 @@
         <nav id="mobile-navigation" class="pw-mobile-nav" x-cloak x-show="menuOpen" x-transition.opacity.duration.200ms aria-label="Mobile navigation">
             <div class="pw-shell">
                 @foreach (['home' => 'Home', 'about' => 'About', 'leadership' => 'Leadership', 'ministries' => 'Ministries', 'contact' => 'Contact'] as $route => $label)
-                    <a href="{{ $preview ? route('website.preview', ['page' => $route === 'home' ? null : $route]) : route("church-website.{$route}", ['church' => $church->slug]) }}" @class(['is-current' => $page === $route]) @if($page === $route) aria-current="page" @endif>{{ $label }}</a>
+                    <a href="{{ $preview ? route('website.preview', ['page' => $route === 'home' ? null : $route]) : ($route === 'home' ? '/' : '/'.$route) }}" @class(['is-current' => $page === $route]) @if($page === $route) aria-current="page" @endif>{{ $label }}</a>
                 @endforeach
             </div>
         </nav>
@@ -94,7 +94,7 @@
                 <h2>Explore</h2>
                 <nav aria-label="Footer navigation">
                     @foreach (['about' => 'About', 'leadership' => 'Leadership', 'ministries' => 'Ministries', 'contact' => 'Contact'] as $footerRoute => $footerLabel)
-                        <a href="{{ $preview ? route('website.preview', ['page' => $footerRoute]) : route("church-website.{$footerRoute}", ['church' => $church->slug]) }}">{{ $footerLabel }}</a>
+                        <a href="{{ $preview ? route('website.preview', ['page' => $footerRoute]) : '/'.$footerRoute }}">{{ $footerLabel }}</a>
                     @endforeach
                 </nav>
             </div>

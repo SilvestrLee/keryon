@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\WebsitePublication;
+use App\PublicWebsite\CanonicalChurchWebsiteUrl;
 use App\PublicWebsite\PublicWebsiteContent;
 use App\PublicWebsite\PublicWebsiteContext;
-use App\PublicWebsite\PublicWebsiteUrl;
 use App\PublicWebsite\Themes\ThemeRegistry;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 
 class PublicWebsiteController extends Controller
@@ -16,37 +17,40 @@ class PublicWebsiteController extends Controller
         private readonly PublicWebsiteContext $context,
         private readonly PublicWebsiteContent $content,
         private readonly ThemeRegistry $themes,
-        private readonly PublicWebsiteUrl $urls,
+        private readonly CanonicalChurchWebsiteUrl $urls,
     ) {}
 
-    public function home(): View
+    public function home(): View|RedirectResponse
     {
         return $this->render('home');
     }
 
-    public function about(): View
+    public function about(): View|RedirectResponse
     {
         return $this->render('about');
     }
 
-    public function leadership(): View
+    public function leadership(): View|RedirectResponse
     {
         return $this->render('leadership');
     }
 
-    public function ministries(): View
+    public function ministries(): View|RedirectResponse
     {
         return $this->render('ministries');
     }
 
-    public function contact(): View
+    public function contact(): View|RedirectResponse
     {
         return $this->render('contact');
     }
 
-    public function sitemap(): Response
+    public function sitemap(): Response|RedirectResponse
     {
         $publication = $this->publication();
+        if ($redirect = $this->aliasRedirect()) {
+            return $redirect;
+        }
         $church = $this->context->church();
         $urls = collect(['home', 'about', 'leadership', 'ministries', 'contact'])
             ->map(fn (string $page): string => $this->urls->page($church, $page));
@@ -56,22 +60,42 @@ class PublicWebsiteController extends Controller
             ->header('Content-Type', 'application/xml; charset=UTF-8');
     }
 
-    public function robots(): Response
+    public function robots(): Response|RedirectResponse
     {
         $this->publication();
+        if ($redirect = $this->aliasRedirect()) {
+            return $redirect;
+        }
 
         return response("User-agent: *\nAllow: /\nSitemap: ".$this->urls->page($this->context->church())."/sitemap.xml\n")
             ->header('Content-Type', 'text/plain; charset=UTF-8');
     }
 
-    private function render(string $page): View
+    private function render(string $page): View|RedirectResponse
     {
         $publication = $this->publication();
+        if ($redirect = $this->aliasRedirect()) {
+            return $redirect;
+        }
         $theme = $this->themes->resolve($publication->theme);
 
         abort_if($theme === null, 404);
 
         return $theme->renderPublished($page, $publication);
+    }
+
+    private function aliasRedirect(): ?RedirectResponse
+    {
+        if (! ($this->context->resolvedHost()?->isAlias() ?? false)) {
+            return null;
+        }
+
+        $url = $this->urls->path($this->context->church(), request()->getPathInfo());
+        if (request()->getQueryString()) {
+            $url .= '?'.request()->getQueryString();
+        }
+
+        return redirect()->away($url, 308);
     }
 
     private function publication(): WebsitePublication
