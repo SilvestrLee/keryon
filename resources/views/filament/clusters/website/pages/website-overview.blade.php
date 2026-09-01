@@ -42,6 +42,28 @@
             @endif
         </section>
 
+        <section class="rounded-2xl border border-gray-200 bg-white p-5" aria-labelledby="website-address-heading">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div class="min-w-0">
+                    <h2 id="website-address-heading" class="text-base font-semibold text-gray-950">Official website address</h2>
+                    @if ($publicWebsiteUrl)
+                        <p class="mt-2 break-all text-sm font-semibold text-gray-900">{{ $publicWebsiteUrl }}</p>
+                        <p class="mt-1 text-xs leading-5 text-gray-500">Keryon uses this address for public links and Website metadata.</p>
+                    @else
+                        <p class="mt-2 text-sm text-gray-600">Your Website address will become available after the first publication.</p>
+                    @endif
+                </div>
+                <div class="flex shrink-0 flex-wrap gap-2">
+                    @if ($publicWebsiteUrl)
+                        <a href="{{ $publicWebsiteUrl }}" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-10 items-center rounded-xl border border-gray-300 px-4 text-sm font-semibold text-gray-800 hover:border-amber-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700">Visit website</a>
+                    @endif
+                    @if ($canManageDomains)
+                        <a href="{{ $domainsUrl }}" wire:navigate class="inline-flex min-h-10 items-center rounded-xl bg-amber-800 px-4 text-sm font-semibold text-white hover:bg-amber-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700 focus-visible:ring-offset-2">Manage domains</a>
+                    @endif
+                </div>
+            </div>
+        </section>
+
         <div>
             <h2 class="text-base font-semibold" style="color: #132E35">Pages</h2>
             <p class="mt-1 text-sm text-gray-500">What your church website says, organized the way visitors see it.</p>

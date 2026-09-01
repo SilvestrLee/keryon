@@ -18,6 +18,7 @@ use App\Models\WebsiteSettings;
 use App\PublicWebsite\WebsitePublicationStatus;
 use App\PublicWebsite\WebsitePublisher;
 use App\Support\TenantContext;
+use App\Website\ChurchPublicUrlResolver;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -101,6 +102,7 @@ class WebsiteOverview extends Page
         $canManageBrand = $membership?->hasCapability(Capability::ChurchIdentityManage) ?? false;
         $canManageTheme = $membership?->hasCapability(Capability::WebsiteThemeManage) ?? false;
         $publicationStatus = app(WebsitePublicationStatus::class)->current();
+        $church = app(TenantContext::class)->currentChurch();
 
         $home = WebsiteHomeContent::query()->first();
         $about = WebsiteAboutContent::query()->first();
@@ -158,6 +160,9 @@ class WebsiteOverview extends Page
             'canManageTheme' => $canManageTheme,
             'canPublish' => $membership?->hasCapability(Capability::WebsitePublish) ?? false,
             'publicationStatus' => $publicationStatus,
+            'publicWebsiteUrl' => $church ? app(ChurchPublicUrlResolver::class)->resolve($church) : null,
+            'canManageDomains' => $membership?->is_primary && ($membership?->hasCapability(Capability::WebsiteDomainManage) ?? false),
+            'domainsUrl' => ManageDomains::getUrl(),
             'recentProvenance' => WebsiteContentProvenance::query()
                 ->with([
                     'contentItem:id,title,status,approved_at',
