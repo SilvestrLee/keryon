@@ -5,6 +5,7 @@ namespace App\Filament\Central\Pages;
 use App\Enums\PlatformCapability;
 use App\Filament\Central\Concerns\InteractsWithPlatformWorkspace;
 use App\Platform\Read\PlatformChurchQuery;
+use App\Support\PlatformContext;
 use Filament\Pages\Page;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\WithPagination;
@@ -52,5 +53,12 @@ class Churches extends Page
     public function detailUrl($r): string
     {
         return ChurchDetail::getUrl(['record' => $r->id]);
+    }
+
+    public function collectionAction(): ?array
+    {
+        return app(PlatformContext::class)->hasCapability(PlatformCapability::PlatformChurchProvision)
+            ? ['label' => 'Provision Church', 'url' => ProvisionChurch::getUrl(panel: 'central')]
+            : null;
     }
 }

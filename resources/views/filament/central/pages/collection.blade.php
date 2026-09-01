@@ -1,6 +1,6 @@
 <x-filament-panels::page>
     <main class="central central-read">
-        <header class="central-page-head"><div><p class="central-eyebrow">Platform read plane</p><h1>{{ $this->getTitle() }}</h1><p>Allowlisted operational records. This surface is read-only.</p></div></header>
+        <header class="central-page-head"><div><p class="central-eyebrow">Platform read plane</p><h1>{{ $this->getTitle() }}</h1><p>Allowlisted operational records. This surface is read-only.</p></div>@if(method_exists($this,'collectionAction') && $this->collectionAction())<a class="central-button" href="{{ $this->collectionAction()['url'] }}">{{ $this->collectionAction()['label'] }}</a>@endif</header>
         <section class="central-section" aria-label="{{ $this->getTitle() }} filters">
             <div class="central-filters">
                 @if(property_exists($this, 'search'))<label>Search<input type="search" wire:model.live.debounce.350ms="search" placeholder="Name, identifier, or exact email"></label>@endif

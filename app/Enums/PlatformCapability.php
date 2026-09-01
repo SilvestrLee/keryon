@@ -29,4 +29,8 @@ enum PlatformCapability: string
     case PlatformStaffView = 'platform.staff.view';
     case PlatformStaffManage = 'platform.staff.manage';
     case PlatformAuditView = 'platform.audit.view';
+    case PlatformChurchProvision = 'platform.operation.church.provision';
+    case PlatformActivationResend = 'platform.operation.activation.resend';
+    case PlatformActivationRevoke = 'platform.operation.activation.revoke';
+    case PlatformDomainRetry = 'platform.operation.domain.retry';
 }

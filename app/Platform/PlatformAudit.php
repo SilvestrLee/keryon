@@ -13,6 +13,9 @@ final class PlatformAudit
 {
     private const ALLOWED_STATE_KEYS = [
         PlatformAuditTargetType::PLATFORM_MEMBERSHIP->value => ['user_id', 'role', 'status'],
+        PlatformAuditTargetType::CHURCH->value => ['church_id', 'activation_id', 'activation_status', 'created', 'actor_role', 'capability', 'result'],
+        PlatformAuditTargetType::CHURCH_ACTIVATION->value => ['status', 'token_generation', 'delivery_attempt_id', 'actor_role', 'capability', 'result'],
+        PlatformAuditTargetType::CHURCH_DOMAIN->value => ['status', 'tls_status', 'retry_requested', 'actor_role', 'capability', 'result'],
     ];
 
     /** @param array<string, scalar|null>|null $previous @param array<string, scalar|null>|null $new */

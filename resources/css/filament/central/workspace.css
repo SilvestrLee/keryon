@@ -84,6 +84,23 @@
 .central-provider dt { color: var(--central-muted); font-size: .67rem; }
 .central-provider dd { font-size: .75rem; font-weight: 700; margin-top: .2rem; }
 .central-provider ul { color: #8d352b; font-size: .75rem; list-style: disc; margin-left: 1rem; }
+.central-button--danger { background: #8f3128; }
+.central-operation, .central-operation-form { background: white; border: 1px solid var(--central-line); border-radius: 1rem; display: grid; gap: 1.25rem; padding: 1.25rem; }
+.central-operation h2, .central-operation-form h2 { color: var(--central-ink); font-size: 1.2rem; margin: 0; }
+.central-operation h3 { color: var(--central-ink); font-size: 1rem; margin: 0; }
+.central-operation p, .central-operation-form section > p { color: var(--central-muted); font-size: .8rem; line-height: 1.55; margin: .35rem 0 0; }
+.central-operation-form > section { display: grid; gap: 1rem; }
+.central-operation-form > section + section { border-top: 1px solid var(--central-line); padding-top: 1.25rem; }
+.central-operation-fields { display: grid; gap: 1rem; grid-template-columns: repeat(2,minmax(0,1fr)); }
+.central-operation-fields label, .central-operation-confirm label { color: var(--central-ink); display: grid; font-size: .73rem; font-weight: 750; gap: .4rem; }
+.central-operation-fields label small { color: var(--central-muted); font-weight: 500; }
+.central-operation-fields input, .central-operation-fields select, .central-operation-fields textarea, .central-operation-confirm input, .central-operation-confirm select, .central-operation-confirm textarea { background: white; border: 1px solid #c7d0d2; border-radius: .6rem; color: var(--central-ink); min-height: 2.65rem; padding: .65rem .75rem; width: 100%; }
+.central-operation-fields input:focus, .central-operation-fields select:focus, .central-operation-fields textarea:focus, .central-operation-confirm input:focus, .central-operation-confirm select:focus, .central-operation-confirm textarea:focus { border-color: #a56b18; box-shadow: 0 0 0 3px rgba(224,159,62,.2); outline: none; }
+.central-operation-fields label > span, .central-operation-confirm label > span, .central-operation-error { color: #942e25; font-size: .72rem; }
+.central-operation-buttons, .central-operation-submit, .central-operation-confirm > div { align-items: center; display: flex; flex-wrap: wrap; gap: .65rem; }
+.central-operation-submit { justify-content: flex-end; }
+.central-operation-submit a { font-size: .76rem; font-weight: 750; }
+.central-operation-confirm { background: var(--central-soft); border-radius: .8rem; display: grid; gap: .85rem; max-width: 42rem; padding: 1rem; }
 
 @media (max-width: 767px) {
     .central { gap: 1.25rem; }
@@ -98,4 +115,7 @@
     .central-attention__item { border-left: 0; border-top: 1px solid var(--central-line); }
     .central-attention__item:first-child { border-top: 0; }
     .central-provider dl { gap: .75rem; grid-template-columns: 1fr; }
+    .central-operation-fields { grid-template-columns: 1fr; }
+    .central-operation-submit { align-items: stretch; flex-direction: column-reverse; }
+    .central-operation-submit .central-button, .central-operation-submit a { text-align: center; width: 100%; }
 }

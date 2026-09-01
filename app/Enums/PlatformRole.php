@@ -24,12 +24,15 @@ enum PlatformRole: string
                 PlatformCapability::DomainsView, PlatformCapability::DomainsManage,
                 PlatformCapability::DeliveriesView, PlatformCapability::DeliveriesManage,
                 PlatformCapability::ProvidersView, PlatformCapability::PlatformAuditView,
+                PlatformCapability::PlatformChurchProvision, PlatformCapability::PlatformActivationResend,
+                PlatformCapability::PlatformActivationRevoke, PlatformCapability::PlatformDomainRetry,
             ],
             self::SUPPORT => [
                 PlatformCapability::PlatformHomeView, PlatformCapability::ChurchesView,
                 PlatformCapability::ActivationsView, PlatformCapability::OrganizationsView,
                 PlatformCapability::AssignmentsView, PlatformCapability::DomainsView,
                 PlatformCapability::DeliveriesView, PlatformCapability::ProvidersView,
+                PlatformCapability::PlatformActivationResend, PlatformCapability::PlatformDomainRetry,
             ],
             self::COMMERCIAL => [
                 PlatformCapability::PlatformHomeView, PlatformCapability::ChurchesView,

@@ -3,13 +3,18 @@
 namespace App\Filament\Central\Pages;
 
 use App\Enums\PlatformCapability;
+use App\Filament\Central\Concerns\InteractsWithGovernedOperation;
 use App\Filament\Central\Concerns\InteractsWithPlatformWorkspace;
+use App\Platform\Operations\PlatformRetryDomain;
 use App\Platform\Read\PlatformDomainQuery;
+use App\Support\PlatformContext;
+use DomainException;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 
 class DomainDetail extends Page
 {
-    use InteractsWithPlatformWorkspace;
+    use InteractsWithGovernedOperation, InteractsWithPlatformWorkspace;
 
     protected string $view = 'filament.central.pages.detail';
 
@@ -37,5 +42,28 @@ class DomainDetail extends Page
         }
 
         return $s;
+    }
+
+    public function canRetry(): bool
+    {
+        return ! in_array($this->item()->status, ['disabled', 'released'], true) && app(PlatformContext::class)->hasCapability(PlatformCapability::PlatformDomainRetry);
+    }
+
+    public function operationView(): string
+    {
+        return 'filament.central.pages.partials.domain-actions';
+    }
+
+    public function runOperation(PlatformRetryDomain $retry): void
+    {
+        abort_unless($this->operation === 'retry' && $this->canRetry(), 403);
+        $reason = $this->authorizeOperation();
+        try {
+            $result = $retry->execute($this->record, $reason, $this->reasonNote, $this->correlationId);
+            Notification::make()->success()->title($result->message)->send();
+            $this->cancelOperation();
+        } catch (DomainException $exception) {
+            $this->addError('operation', $exception->getMessage());
+        }
     }
 }
