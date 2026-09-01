@@ -18,6 +18,8 @@ class PlatformAudit extends Page
 
     protected static ?string $navigationLabel = 'Audit';
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Platform';
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-check';
 
     protected static ?int $navigationSort = 30;

@@ -26,6 +26,8 @@ class PlatformStaff extends Page
 
     protected static ?string $navigationLabel = 'Platform Staff';
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Platform';
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-shield-check';
 
     protected static ?int $navigationSort = 20;
