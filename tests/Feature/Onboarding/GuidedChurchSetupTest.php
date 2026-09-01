@@ -62,7 +62,8 @@ class GuidedChurchSetupTest extends TestCase
     public function test_identity_step_updates_only_editable_fields_and_preserves_commercial_identity(): void
     {
         [$church] = $this->churchUser();
-        $church->update(['operating_country_code' => 'NG', 'slug' => 'stable-church']);
+        $stableSlug = $church->slug;
+        $church->update(['operating_country_code' => 'NG']);
         $payer = BillingAccount::query()->create(['name' => 'Payer', 'owner_type' => BillingAccountOwnerType::CHURCH, 'church_id' => $church->id, 'status' => 'active']);
         app(ChurchOnboardingService::class)->start($church, auth()->user());
 
@@ -78,7 +79,7 @@ class GuidedChurchSetupTest extends TestCase
         $fresh = $church->fresh();
         $this->assertSame('Updated Church', $fresh->name);
         $this->assertSame('NG', $fresh->operating_country_code);
-        $this->assertSame('stable-church', $fresh->slug);
+        $this->assertSame($stableSlug, $fresh->slug);
         $this->assertSame($payer->id, BillingAccount::query()->first()->id);
         $this->assertSame(ChurchOnboardingStep::BRAND, ChurchOnboardingState::query()->first()->current_step);
     }

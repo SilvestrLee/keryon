@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use DomainException;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -37,6 +38,24 @@ class Church extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::updating(function (self $church): void {
+            if (! $church->isDirty('slug')) {
+                return;
+            }
+
+            $hasStablePublicIdentity = $church->activated_at !== null
+                || WebsitePublication::withoutGlobalScope('church_tenant')
+                    ->where('church_id', $church->getKey())
+                    ->exists();
+
+            if ($hasStablePublicIdentity) {
+                throw new DomainException('An activated Church slug is stable public infrastructure identity and cannot be changed.');
+            }
+        });
+    }
+
     /**
      * Legacy identity relationship — users.church_id is a deprecated
      * compatibility bridge during the K-IDENTITY-001 transition.
@@ -51,6 +70,11 @@ class Church extends Model
     public function memberships(): HasMany
     {
         return $this->hasMany(ChurchMembership::class);
+    }
+
+    public function domains(): HasMany
+    {
+        return $this->hasMany(ChurchDomain::class);
     }
 
     public function congregationMembers(): HasMany

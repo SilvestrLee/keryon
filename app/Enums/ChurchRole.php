@@ -41,10 +41,8 @@ enum ChurchRole: string
      * ownership logic of its own. See Keryon Blueprint v1.4.1 §9 and
      * K-AUTH-001B §11-§14 for the approved matrix this encodes verbatim.
      *
-     * `Capability::WebsiteDomainManage` is deliberately never returned by
-     * any role here — it is reserved in the catalogue but intentionally
-     * unassigned pending future Primary-governance/K-DOMAIN-001 design.
-     * See K-AUTH-001B §16.
+     * `WebsiteDomainManage` belongs to Administrator, while the domain
+     * policy independently requires `is_primary`; both gates are required.
      *
      * `Capability::ChurchIdentityView/Manage` and `MediaView/Manage`
      * (K-CHURCHWEB-001B) are granted only to COMMUNICATIONS, matching
@@ -64,6 +62,7 @@ enum ChurchRole: string
                 Capability::CongregationManage,
                 Capability::StaffView,
                 Capability::StaffManage,
+                Capability::WebsiteDomainManage,
             ],
             self::COMMUNICATIONS => [
                 Capability::CongregationView,

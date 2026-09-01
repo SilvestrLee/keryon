@@ -51,7 +51,7 @@ class CapabilityMatrixTest extends TestCase
         $this->assertFalse($membership->hasCapability(Capability::WebsiteContentManage));
         $this->assertFalse($membership->hasCapability(Capability::WebsiteThemeManage));
         $this->assertFalse($membership->hasCapability(Capability::WebsitePublish));
-        $this->assertFalse($membership->hasCapability(Capability::WebsiteDomainManage));
+        $this->assertTrue($membership->hasCapability(Capability::WebsiteDomainManage));
     }
 
     public function test_communications_capability_set(): void
@@ -148,12 +148,6 @@ class CapabilityMatrixTest extends TestCase
         $membership = $this->membership([ChurchRole::ADMINISTRATOR, ChurchRole::COMMUNICATIONS, ChurchRole::CARE]);
 
         foreach (Capability::cases() as $capability) {
-            if ($capability === Capability::WebsiteDomainManage) {
-                $this->assertFalse($membership->hasCapability($capability), 'website.domain.manage must remain unassigned even with all three roles.');
-
-                continue;
-            }
-
             $this->assertTrue($membership->hasCapability($capability), "Expected {$capability->value} to be present in the full role union.");
         }
     }
@@ -190,6 +184,7 @@ class CapabilityMatrixTest extends TestCase
         $this->assertFalse($membership->hasCapability(Capability::ContentManage));
         $this->assertFalse($membership->hasCapability(Capability::FaithflowUse));
         $this->assertFalse($membership->hasCapability(Capability::WebsitePublish));
+        $this->assertTrue($membership->hasCapability(Capability::WebsiteDomainManage));
     }
 
     public function test_primary_plus_communications_still_has_no_care(): void
@@ -227,14 +222,15 @@ class CapabilityMatrixTest extends TestCase
         $this->assertTrue($communications->hasCapability(Capability::CampaignsManage));
         $this->assertTrue($administrator->hasCapability(Capability::StaffManage));
         $this->assertFalse($care->hasCapability(Capability::WebsitePublish));
+        $this->assertTrue($administrator->hasCapability(Capability::WebsiteDomainManage));
         $this->assertFalse($communications->hasCapability(Capability::WebsiteDomainManage));
         $this->assertFalse($primaryOnly->hasCapability(Capability::WebsiteDomainManage));
     }
 
-    public function test_website_domain_manage_is_never_role_granted(): void
+    public function test_website_domain_manage_is_granted_only_by_administrator_role(): void
     {
         $membership = $this->membership([ChurchRole::ADMINISTRATOR, ChurchRole::COMMUNICATIONS, ChurchRole::CARE], primary: true);
 
-        $this->assertFalse($membership->hasCapability(Capability::WebsiteDomainManage));
+        $this->assertTrue($membership->hasCapability(Capability::WebsiteDomainManage));
     }
 }

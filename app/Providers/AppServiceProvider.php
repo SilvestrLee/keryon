@@ -6,6 +6,12 @@ use App\Commercial\Entitlements\ProductEntitlementSource;
 use App\Commercial\Entitlements\SubscriptionEntitlementSource;
 use App\Design\Rendering\DesignRenderer;
 use App\Design\Rendering\PlaywrightDesignRenderer;
+use App\Domain\Dns\DnsResolver;
+use App\Domain\Dns\FakeDnsResolver;
+use App\Domain\Dns\UnavailableDnsResolver;
+use App\Domain\Provisioning\DomainProvisioner;
+use App\Domain\Provisioning\FakeDomainProvisioner;
+use App\Domain\Provisioning\UnavailableDomainProvisioner;
 use App\FaithFlow\FaithFlowAi;
 use App\InvitationDelivery\InvitationDeliveryTransport;
 use App\InvitationDelivery\LocalInvitationDeliveryTransport;
@@ -48,6 +54,20 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(MarketplaceEntitlement::class, DefaultMarketplaceEntitlement::class);
         $this->app->bind(MarketplaceDeliveryMechanism::class, FilesystemMarketplaceDelivery::class);
         $this->app->bind(InvitationDeliveryTransport::class, LocalInvitationDeliveryTransport::class);
+        $this->app->bind(DnsResolver::class, function ($app): DnsResolver {
+            if (config('public-website.custom_domains.dns_resolver') === 'fake' && ! $app->environment('production')) {
+                return $app->make(FakeDnsResolver::class);
+            }
+
+            return $app->make(UnavailableDnsResolver::class);
+        });
+        $this->app->bind(DomainProvisioner::class, function ($app): DomainProvisioner {
+            if (config('public-website.custom_domains.provisioner') === 'fake' && ! $app->environment('production')) {
+                return $app->make(FakeDomainProvisioner::class);
+            }
+
+            return $app->make(UnavailableDomainProvisioner::class);
+        });
     }
 
     /**

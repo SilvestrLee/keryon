@@ -94,9 +94,9 @@ class ChurchMembership extends Model
      * The effective capability set for this membership — the union of every
      * responsibility role it holds, via ChurchRole::capabilities(). No role
      * precedence, no cancellation. Deliberately does not factor in
-     * is_primary — Primary Administrator is account governance, not a
-     * ministry responsibility, and must never implicitly grant a ministry
-     * capability. See Keryon Blueprint v1.4.1 §7/§10 and K-AUTH-001B §15/§17.
+     * is_primary — Primary remains account governance, not a role. Domain
+     * mutation separately requires both the Administrator-granted domain
+     * capability and `is_primary` in ChurchDomainPolicy.
      *
      * @return list<Capability>
      */
