@@ -1,96 +1,114 @@
-# K-SHELL-001 — GLOBAL WORKSPACE HEADER & NAVIGATION INFRASTRUCTURE REPORT
+# K-DOMAIN-001B — Provider-Neutral Custom Domain & Canonical Host Resolution Report
 
-1. **Executive result.** K-SHELL-001 is implemented and verified. Church and Organization panels now share one responsive Keryon header with governed workspace switching, capability-scoped database search, canonical public-Website access, and user-owned locale selection. Authority planes remain separate.
-2. **Starting HEAD.** `339ea3b232554b55c4f02cb7187c4d6aea65fd2e` (accepted K-COMMS-001D state).
-3. **Final HEAD.** The milestone commit containing this report (`HEAD`); its exact immutable SHA is recorded in the closeout handoff because embedding a commit's own SHA in its contents is self-referential.
-4. **Shared shell architecture.** `KeryonWorkspaceHeader` is a shared Livewire component rendered from one Filament partial in both panels. `WorkspaceType`, `WorkspaceRegistry`, `GlobalSearchService`, `ChurchPublicUrlResolver`, and `UserLocaleResolver` keep responsibilities bounded.
-5. **Church header implementation.** Shows current Church identity/type, switcher, Church-scoped search, public Website action when resolvable, language, and the existing Filament account affordance.
-6. **Organization header implementation.** Uses the same component and visual grammar while resolving Organization identity, Organization-only providers, and no Website action.
-7. **Future Central compatibility.** `WorkspaceType` includes a non-exposed `Central` type. Registry and switch routing expose only implemented Church/Organization destinations; no Central authority is fabricated.
-8. **Workspace switcher architecture.** `WorkspaceRegistry` returns immutable `WorkspaceOption` values from active direct memberships. POST switches are server-resolved by `SwitchWorkspaceController`.
-9. **Church workspace enumeration.** Active `ChurchMembership` plus active Church only; inactive, suspended, removed, or unrelated Churches are excluded.
-10. **Organization workspace enumeration.** Active `OrganizationMembership` plus active Organization only; hierarchy visibility is not used.
-11. **Multi-Church behavior.** All legitimate active memberships are grouped in the switcher. Unresolved multi-Church login redirects to the neutral `/workspaces` chooser for deliberate selection.
-12. **Multi-Organization behavior.** Multiple direct active memberships are listed and require explicit selection.
-13. **Church→Organization switch.** Revalidates the Organization membership, clears active Church state, marks the Organization authority plane, forgets both context singletons, and redirects to `/organization`.
-14. **Organization→Church switch.** Revalidates the Church membership, clears active Organization state, marks the Church plane, forgets both contexts, and redirects to `/admin`.
-15. **Context clearing/revalidation.** `active_workspace_type` is a session guardrail. `TenantContext` and `OrganizationContext` return null in the incompatible plane and middleware re-resolves DB truth.
-16. **Livewire behavior.** The shared component derives its plane from the active Filament panel on each request. Server-side context guards cover refresh and Livewire requests; stale membership fails closed.
-17. **Hierarchy-vs-membership separation.** Organization scope never creates a Church option. Tests prove a hierarchy-visible Church without ChurchMembership is absent.
-18. **Global search architecture.** Bounded, database-backed explicit providers are orchestrated by `GlobalSearchService`; no global index or external engine was added.
-19. **Search provider contract.** Providers declare eligibility for the current `WorkspaceType`, run an authorized bounded query, and return typed `SearchResult` values with canonical URLs.
-20. **Church search domains implemented.** Content, Campaigns, Congregation, staff/access, Website, and capability-gated Care.
-21. **Organization search domains implemented.** Organization Units and Churches as governance objects using SQL-bound `OrganizationScopeResolver` subqueries. No Church operational tables are searched.
-22. **Care search isolation.** `CareView` is checked before provider execution. Unauthorized searches issue no `prayer_requests` query; authorized results contain only title and status, never body text.
-23. **Entitlement behavior.** Website search and public Website resolution require Website product availability. Other providers retain their canonical capability checks.
-24. **Search result model/grouping.** Results carry type, title, optional safe description, and canonical URL; the UI groups by result type.
-25. **Query minimum/debounce.** Two-character minimum and 250 ms Livewire debounce.
-26. **Result limits.** Four per provider and twelve combined, centrally configured.
-27. **Keyboard/command-palette behavior.** `⌘K`/`Ctrl+K` opens search; focus moves into the dialog; Escape closes search and menus; controls remain native keyboard-operable.
-28. **Mobile search.** Search becomes a full-width fixed surface; the persistent field collapses to a labelled trigger.
-29. **Privacy/logging behavior.** Raw query text is not logged or persisted; no recent-search or analytics state was introduced.
-30. **ChurchPublicUrlResolver.** A dedicated resolver checks active Church, Website entitlement, and a current publication, then delegates URL construction to canonical `PublicWebsiteUrl`.
-31. **Current Keryon subdomain behavior.** Uses the existing first-party public Website route/host rules; no URL is assembled in Blade.
-32. **Custom-domain future seam.** Future verified-domain precedence can replace resolver internals without changing the header. No arbitrary domain field is trusted today.
-33. **Published/unpublished Website behavior.** Only a Church with `current_publication_id` produces an action. Unpublished Websites produce no broken destination.
-34. **Organization Website-action exclusion.** Organization header browser and feature proofs show zero Website actions.
-35. **New-tab/security behavior.** Public action uses `target="_blank"` and `rel="noopener noreferrer"`.
-36. **Localization architecture.** `UserLocaleResolver`, `ApplyUserLocale`, bounded config, POST controller, and `lang/en/shell.php` establish the shell seam.
-37. **User locale persistence.** Nullable `users.locale`; explicit preference persists to the User and session and survives workspace switches/login.
-38. **Supported production locales.** English only, because it is the only approved complete catalogue. No incomplete language is advertised.
-39. **Translation-resource architecture.** All new shared header, chooser, search, Website, and language strings resolve through `shell.php`; catalogue entries come from config.
-40. **Hard-coded translation debt.** Future localization should inventory Dashboard, Communications, Content Studio, Campaigns, Website Studio, Congregation, Staff, Care, Design, Media, FaithFlow, Organization governance, settings, validation, notifications, and legacy Filament labels.
-41. **Church/Website locale separation.** Locale writes only User/session state and never Content, Campaign, Website content, Church, or Organization.
-42. **Timezone preservation.** Locale selection does not write or alter Church/application timezone; tests assert the Church timezone remains unchanged.
-43. **Header visual architecture.** Context is left/central, search is prominent at desktop widths, and Website/language/account controls are compact on the right, using restrained ink/amber surfaces.
-44. **Wordmark/logo treatment.** Existing approved Keryon symbol/wordmark remains in the panel shell; no competing identity asset was introduced.
-45. **Desktop behavior.** At 1440×1000, full workspace identity, search field, Website, language, switcher, and account affordances fit without overflow.
-46. **Tablet behavior.** At 900×900, search deliberately collapses to a trigger while context/actions remain usable; no horizontal overflow.
-47. **Mobile behavior.** At 390×844, workspace and search stay in the top row; Website/language move into the compact actions menu; no horizontal overflow or squeezed controls.
-48. **Accessibility.** Labelled buttons, native menu controls, dialog semantics, `aria-live`, result types, current state text, visible focus rings, focus trap, Escape close, and keyboard shortcut are present. Browser proof found no trapped/overflowed surface.
-49. **Workspace-switch security.** Browser IDs are never trusted as authority: each switch re-queries an active direct membership and active workspace; manipulated IDs return 403.
-50. **Search security.** Provider eligibility checks membership context and capability before query execution; canonical scoped models/resolvers are retained.
-51. **Website URL security.** Only canonical first-party URL construction is used; no unverified custom/arbitrary URL can become the header target.
-52. **Locale input security.** Input is validated against configured locale keys; arbitrary/path-like locales are rejected.
-53. **Header query count.** Feature ceiling: base Church header render ≤10 queries, including both bounded membership lists and Website resolution.
-54. **Search query count.** Feature ceiling: Church search interaction ≤22 total queries; ineligible providers do not run.
-55. **N+1 proof.** Workspace relationships are eager-loaded; provider limits and labels are selected in bounded queries. Query-ceiling tests passed.
-56. **Migration(s).** `2026_08_31_140000_add_locale_to_users_table` only.
-57. **Indexes/defaults.** `locale` is nullable `varchar(12)`, default null, with no index because it is not queried as a lookup key.
-58. **MySQL proof.** Applied successfully on MySQL 8.0.30 as batch 33; inspected column: `varchar(12)`, nullable, no key, null default.
-59. **Exact files created.** `app/Enums/WorkspaceType.php`; controllers `SelectLocaleController.php`, `SwitchWorkspaceController.php`, `WorkspaceSelectionController.php`; `ApplyUserLocale.php`; `app/Livewire/KeryonWorkspaceHeader.php`; `app/Localization/UserLocaleResolver.php`; all 12 files under `app/Search/`; `app/Website/ChurchPublicUrlResolver.php`; both files under `app/Workspace/`; `config/keryon.php`; locale migration; `lang/en/shell.php`; `resources/css/filament/shell.css`; shared Filament/Livewire/chooser views; `tests/Feature/Shell/WorkspaceShellTest.php`.
-60. **Exact files modified.** `SelectOrganization.php`, `EnsureUserHasChurch.php`, `ResolveOrganizationContext.php`, `User.php`, both Filament panel providers, `OrganizationContext.php`, `TenantContext.php`, `resources/css/app.css`, both panel theme CSS files, `routes/web.php`, and `OrganizationWorkspaceTest.php`.
-61. **Packages.** None added or changed.
-62. **Shell focused tests.** 10 tests / 41 assertions in the dedicated shell class; final combined shell/context run 47 tests / 140 assertions.
-63. **Workspace switching tests.** Active-only enumeration, direct-membership separation, cross-plane clearing, manipulated IDs, and current identity pass.
-64. **Church search tests.** Capability gating, Church isolation, grouping, canonical navigation, wildcard-safe ORM binding, and bounded limits pass.
-65. **Organization search tests.** Unit/Church scope, no operational-table access, direct membership status, and SQL-bound scope pass.
-66. **Care isolation tests.** DB listener proves no Care table query without `CareView`; full Care regression passes.
-67. **Website URL tests.** Entitlement/current-publication requirements, null unavailable state, first-party resolution, Organization exclusion, and safe link attributes pass.
-68. **Locale tests.** Default/explicit persistence, unsupported rejection, user isolation, Church/content/timezone non-mutation, and cross-workspace preservation pass.
-69. **Identity/Tenancy regression.** Included in the 516-test focused regression and 1,017-test complete suite; green.
-70. **Authorization/Care regression.** Included; green with fail-closed membership/capability behavior.
-71. **Organization regression.** Included; updated accepted assertion confirms Organization selection clears stale Church session; green.
-72. **Dashboard regression.** Included; existing composition and Care isolation remain intact; green.
-73. **Communications regression.** Included; K-COMMS publication/outcome behavior remains green.
-74. **Website regression.** Included; Website publication, provenance, trust, and public runtime remain green.
-75. **Full-suite result.** PASS: 1,017 tests, 3,248 assertions, 66.757 seconds, `memory_limit=1G`.
-76. **Build.** PASS: Vite 8.1.3 production build; 7 modules transformed, completed in 5.80 seconds.
-77. **Pint.** PASS: scoped `./vendor/bin/pint --dirty`.
-78. **Diff checks.** PASS: `git diff --check` and `git diff --cached --check`.
-79. **Sensitive/privacy scan.** New search/shell paths contain no logging, raw SQL interpolation, global-scope bypass, prompt/body/private URL exposure, or query-history persistence. Care output is minimized.
-80. **Desktop browser proof.** PASS at 1440×1000 for Church switcher/search/Website/language/long names/narrow results and Organization header. Evidence: `/private/tmp/k-shell-001-desktop-workspaces.png`, `-desktop-search.png`, `-desktop-organization.png`.
-81. **Tablet browser proof.** PASS at 900×900 with deliberate compact search and zero horizontal overflow. Evidence: `/private/tmp/k-shell-001-tablet.png`.
-82. **Mobile browser proof.** PASS at 390×844 with usable switcher/search/actions/account and zero horizontal overflow. Evidence: `/private/tmp/k-shell-001-mobile.png`.
-83. **Keyboard accessibility proof.** Browser automation proved Meta/Ctrl+K opening, focused search, Escape closing, native focusable switch/language/Website controls, menu dismissal, and no focus trap. New-tab attributes were inspected.
-84. **Final Git status.** Milestone paths are clean and committed. Remaining status is only pre-existing modified `.gitignore`, `database/seeders/DatabaseSeeder.php`, `docs/06-Engineering/Local_Development.md`, plus pre-existing untracked `.agents/`, `.claude/skills/`, `AGENTS.md`, `skills-lock.json`, and `stubs/`.
-85. **Unrelated-state preservation.** All listed pre-existing state was left unstaged and unmodified by this milestone. Browser fixture records were removed and the local proof server stopped.
-86. **Commit hashes/subjects.** Final `HEAD` — `feat(shell): add global workspace header infrastructure`; exact immutable SHA is recorded in the closeout handoff.
-87. **Push confirmation.** No push performed.
-88. **Product Office decisions still required.** Approve additional production locale catalogues before exposure; define K-DOMAIN verified-custom-domain precedence; decide whether future search domains/actions or Organization public sites merit separate milestones.
-89. **Whether K-SHELL-001 can close.** Yes. Required architecture, security boundaries, responsive/browser proof, performance ceilings, migration verification, regression, build, and commit are complete.
-90. **Recommended next milestone.** K-DOMAIN for verified custom-domain lifecycle and canonical-domain precedence, followed by a separately approved localization-coverage milestone.
+## 1–18. Executive result and governance
 
-## Design-skill influence
+1. **Executive result:** COMPLETE. Keryon now has a provider-neutral, Church-scoped custom-domain lifecycle, deterministic DNS/TLS test seams, exact inbound host resolution, canonical URL selection, resilient first-party fallback, and immutable publication rendering. No production DNS/TLS provider was selected or invoked.
+2. **Starting HEAD:** `c0b2b638028bbeaa8181e9b45da2b26d06b1c497` (`feat(shell): add global workspace header infrastructure`).
+3. **Final implementation HEAD:** `924aa0e` (`feat(domains): add verified host and canonical resolution`). The report commit follows it; its exact hash is in the final handoff.
+4. **ChurchDomain schema:** custom claims only; UUID, Church, normalized/display hostname, independent domain/TLS status, hashed token, ownership/routing/TLS timestamps, primary flag, health/failure data, lifecycle timestamps, creator membership, timestamps.
+5. **Domain status enum:** `pending_verification`, `verified`, `active`, `degraded`, `disabled`, `released`.
+6. **TLS status enum:** `not_started`, `provisioning`, `ready`, `failed`.
+7. **Failure-code model:** bounded enum for invalid/platform/conflict/DNS/timeout/expiry/certificate/provider/disabled outcomes; raw provider errors are never persisted.
+8. **Hostname normalization:** trims, lowercases, removes one terminal dot, enforces ASCII FQDN/label lengths and interior-hyphen syntax, and requires at least two labels.
+9. **Platform-host protection:** one configured reserved-label/host seam rejects Keryon root, `www`, `app`, `central`, infrastructure labels, and first-party Church hosts from custom claims.
+10. **Global uniqueness:** `normalized_hostname` has a DB unique index; case/trailing-dot equivalents collapse before insertion.
+11. **Quarantine:** release preserves its unique row and records `released_at`. Quarantine is 30 days; there is no automatic reassignment. A later support path must require fresh claim and all proofs.
+12. **Alias limit:** transactional Church lock allows at most two non-released claims: one primary candidate and one companion.
+13. **One-primary invariant:** `makePrimary` locks the Church/domain rows and demotes/promotes in one retryable transaction. The Church row serializes concurrent switches.
+14. **Keryon-subdomain computation:** no domain row; `PublicWebsiteUrl` computes `{slug}.{base_domain}`.
+15. **Slug immutability:** activated Churches, and historical Churches with a WebsitePublication, reject slug mutation. Display-name edits and provisional provisioning remain valid.
+16. **Administrator capability:** `WebsiteDomainManage` is now in Administrator only.
+17. **Primary governance:** mutation additionally requires active same-Church TenantContext membership and `is_primary=true`.
+18. **Policy:** `ChurchDomainPolicy` applies the same fail-closed rule; Organization authority grants nothing.
 
-The repository's `design-taste-frontend` guidance led to an audit-first, restrained operational shell: one visual grammar, existing typography/amber tokens, minimal surfaces, responsive reduction instead of control compression, and no decorative redesign of Dashboard or Communications.
+## 19–33. Claims, verification, lifecycle and evidence
+
+19. **Claim service:** `RequestChurchCustomDomain` authorizes, normalizes, locks, checks limits/uniqueness/quarantine, generates a token, stores its hash, creates pending evidence, and returns the raw token once.
+20. **Token handling:** raw tokens are never columns, events, logs, or jobs. Regeneration replaces the hash, clears ownership proof, emits evidence, and returns a new token once.
+21. **DNS ownership:** TXT lookup uses `_keryon-verification.<hostname>` and constant-time SHA-256 comparison. Missing/mismatched evidence remains retryable.
+22. **DNS routing:** separate verification checks configured CNAME ingress or configured apex A/AAAA observations. No production IP is hard-coded.
+23. **DnsResolver:** narrow typed TXT/CNAME/address observations distinguish found, not found, timeout, mismatch, and unavailable.
+24. **Fake DNS:** deterministic in-memory fake; automated tests make no public DNS calls.
+25. **DomainProvisioner:** minimal provider-neutral request/check/deactivate contract, separate from DNS.
+26. **Fake safety:** fake adapters throw in production; production defaults bind unavailable adapters and fail closed.
+27. **TLS lifecycle:** provisioning/ready/failed are independent. Ready needs both DNS proofs; activation also needs an active Church and clean lifecycle state.
+28. **Activation eligibility:** active Church + both verification timestamps + TLS ready/timestamp + active domain + not degraded/disabled/released.
+29. **Lifecycle:** `ChurchDomainLifecycle` exclusively owns verified, TLS, activation, degradation, primary, disable, and release transitions under locks.
+30. **Evidence:** immutable `ChurchDomainEvent` records bounded Church/domain/actor/type/failure/correlation/time only—no content, DNS payload, secret, or token.
+31. **Job:** queued `VerifyChurchDomain` carries only domain ID/correlation, re-queries state, performs provider calls outside transactions, then applies typed transitions.
+32. **Retry/idempotency:** bounded timeout/backoff, `ShouldBeUnique`, locks, and unique `(domain,event,correlation)` evidence prevent duplication.
+33. **Failures:** counters increment safely; degradation requires ≥3 confirmed failures spanning ≥24h. No scheduler was added; later daily jittered checks can reuse this architecture.
+
+## 34–57. Runtime, canonical URLs and isolation
+
+34. **Host resolver:** exact first-party slug or exact indexed eligible custom hostname; no suffix/first-Church fallback.
+35. **First-party host:** active slug resolves exact Church and its current immutable publication.
+36. **Custom host:** only active, ownership/routing-verified, TLS-ready, non-disabled/released domain of an active Church resolves.
+37. **Alias:** healthy non-primary alias issues 308 to effective canonical, preserving path/query.
+38. **Unknown host:** arbitrary/unknown first-party hosts return 404 and never reach marketing.
+39. **Platform hosts:** explicit marketing root; `www` 308 to root; app/central/reserved hosts cannot resolve as Churches. No Central surface added.
+40. **PublicWebsiteContext:** receives public Church/host only; creates neither authentication nor TenantContext. Sequential-host tests prove isolation.
+41. **ChurchPublicUrlResolver:** same shell contract selects one eligible primary or fallback while preserving active Church, entitlement, settings, and publication gates.
+42. **Fallback:** Keryon host always serves the same publication and never redirects.
+43. **Canonical custom:** healthy eligible primary becomes shell/public canonical URL.
+44. **Degraded:** custom host fails closed and canonical immediately returns to first-party without content mutation.
+45. **WebsiteSeo:** canonical, OG URL, and JSON-LD use effective canonical—not arbitrary Host.
+46. **Sitemap:** absolute entries use effective canonical, including from fallback.
+47. **Robots:** sitemap reference uses effective canonical.
+48. **Internal links:** public page navigation is host-relative; authenticated preview routes remain unchanged.
+49. **Media:** renditions remain on configured Keryon-owned `asset_origin`; no private/customer-domain delivery dependency.
+50. **Entitlement:** existing Website availability rules remain; domain records are preserved.
+51. **Unpublished:** no current WebsitePublication is 404 on every host; no placeholder/publication side effect.
+52. **WebsitePublisher:** unchanged canonical boundary.
+53. **Trust:** PublicationTrustGate and public-reference health unchanged.
+54. **Communications:** provenance/outcomes untouched; only canonical link resolution can change.
+55. **Care:** zero Care models, queries, fields, or capability flow.
+56. **Organization:** OrganizationContext/scope/membership confer no domain authority.
+57. **Shell:** no Blade hostname logic/redesign. Go to Website follows the resolver; Organization header is unchanged.
+
+## 58–67. Performance, schema and files
+
+58. **Queries:** response tests enforce ≤4 DB queries for first-party, custom, and alias paths before asset delivery; canonical selection is bounded and N+1-free.
+59. **Indexes:** unique UUID/hostname; Church/status; status/last-check; Church/primary/status; release/hostname; event domain/time, Church/type/time, and idempotency.
+60. **Migrations:** `2026_09_01_090000_create_church_domains_table.php`; `2026_09_01_090010_create_church_domain_events_table.php`. Additive only.
+61. **SQLite:** full 1,036-test RefreshDatabase suite passes.
+62. **MySQL:** 8.0.30 applied both migrations without reset; InnoDB schema, defaults, unique index, FKs, and named indexes inspected.
+63. **Uniqueness:** normalization and service/DB tests cover equivalent and cross-Church collisions.
+64. **Concurrency:** Church-row serialization plus retries leaves one primary; no generated-column workaround.
+65. **Created:** `app/Domain/` (21 files); six domain enums plus `PublicWebsiteHostType`; job; two models; policy; three public-host/canonical classes; two migrations; three Domain test files.
+66. **Modified:** Church role/model/membership, provider, public controller/middleware/context/media/SEO, shell URL resolver, public config/routes, three Proclaim views, focused Authorization/ChurchWebsite/Onboarding/Trust tests.
+67. **Packages:** none.
+
+## 68–90. Verification and delivery
+
+68. **Security tests:** normalization, ASCII/IDN/punycode/scheme/path/port/wildcard/IP/local/platform rejection, collision, limit, quarantine, immutable evidence.
+69. **Authorization:** Primary Administrator allowed; non-Primary Administrator, capability-less Primary, Communications, Care, Organization-only, cross-Church, suspended, removed, manipulated actors denied.
+70. **Verification:** TXT match/mismatch/timeout, separate routing, TLS gate, token regeneration, fake determinism, duplicate job/evidence idempotency.
+71. **Routing:** marketing/platform, exact first-party/custom, ineligible 404, alias 308, fallback, sequential/authenticated context isolation.
+72. **Canonical/SEO:** first-party/custom/degraded, fallback custom canonical, canonical/OG/JSON-LD/sitemap/robots agreement, relative navigation.
+73. **Slug:** activated/historically published mutation denied, display name allowed, provisional allocation retained.
+74. **Website regression:** included in focused 249-test run and full suite; publication, preview, media, publisher, and unpublished boundaries pass.
+75. **Shell regression:** focused run passes; resolver and Organization exclusion preserved.
+76. **Communications regression:** all pass; attribution/outcome unchanged.
+77. **Authorization/Tenancy/Care regression:** all pass; Care remains excluded.
+78. **Organization regression:** all pass; hierarchy does not manufacture authority.
+79. **Full suite:** PASS—1,036 tests, 3,375 assertions, PHP memory limit 1G.
+80. **Build:** PASS—Vite 8.1.3, 7 modules transformed.
+81. **Pint:** PASS—scoped files.
+82. **Diff checks:** working and cached checks pass.
+83. **Sensitive scan:** only `verification_token_hash` persistence; no raw token/provider secret/DNS payload. New domain provider queries do not bypass tenancy; lifecycle unscopes only authoritative IDs under locks.
+84. **Browser first-party:** PASS at 1440×1000 and 390×844; HTTP 200, immutable heading, relative link, custom canonical.
+85. **Browser custom:** PASS at both sizes; HTTP 200, same immutable publication, custom canonical, relative navigation. Screenshots remained temporary.
+86. **Alias/fallback:** alias 308 Location `https://domain-proof.test/about?campaign=proof`; fallback HTTP 200/custom canonical. Isolated fixture deleted exactly.
+87. **Final status:** milestone committed; pre-existing unrelated `.gitignore`, seeder/docs and agent/skill artifacts remain unstaged. Exact status is in handoff.
+88. **Preservation:** no stash/reset/clean/pull/merge/rebase/broad add. Only explicit 001B paths/report staged.
+89. **Commits:** `6abd0c1 feat(domains): add governed custom-domain claims`; `924aa0e feat(domains): add verified host and canonical resolution`; report commit in handoff.
+90. **Push:** not performed.
+
+## 91–95. Remaining infrastructure and closure
+
+91. **Production ingress blockers:** approved DNS resolver, ingress/apex targets, TLS adapter/API/credentials, callbacks, and production proof remain. Production fails closed.
+92. **Wildcard blockers:** `*.keryon.app` DNS/TLS remain K-DOMAIN-001D deployment prerequisites.
+93. **Entitlement/grace:** lapsed-Website behavior remains a Product Office policy decision; records and current runtime semantics are preserved.
+94. **Can 001B close?** Yes. Model, governance, verification, routing, canonical/fallback, security, MySQL/SQLite, browser, build, and regressions are proven.
+95. **Is 001C ready?** Yes. UI can bind to real actions/lifecycle, safely show one-time instructions, retain Primary+Administrator governance, and never simulate production TLS readiness.
