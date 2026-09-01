@@ -19,10 +19,16 @@ use App\Marketplace\Delivery\FilesystemMarketplaceDelivery;
 use App\Marketplace\Delivery\MarketplaceDeliveryMechanism;
 use App\Marketplace\Entitlements\DefaultMarketplaceEntitlement;
 use App\Marketplace\Entitlements\MarketplaceEntitlement;
+use App\Models\PlatformAuditEvent;
+use App\Models\PlatformMembership;
+use App\Policies\PlatformAuditPolicy;
+use App\Policies\PlatformStaffPolicy;
 use App\PublicWebsite\PublicWebsiteContext;
 use App\PublicWebsite\Themes\ThemeRegistry;
 use App\Support\OrganizationContext;
+use App\Support\PlatformContext;
 use App\Support\TenantContext;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -39,6 +45,7 @@ class AppServiceProvider extends ServiceProvider
         // singleton() would not be. See K-IDENTITY-001B-R1 §4/§5.
         $this->app->scoped(TenantContext::class);
         $this->app->scoped(OrganizationContext::class);
+        $this->app->scoped(PlatformContext::class);
 
         // Public visitors have no membership and must never be projected
         // into TenantContext. This separate scoped boundary is resolved
@@ -75,6 +82,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Gate::policy(PlatformMembership::class, PlatformStaffPolicy::class);
+        Gate::policy(PlatformAuditEvent::class, PlatformAuditPolicy::class);
     }
 }
