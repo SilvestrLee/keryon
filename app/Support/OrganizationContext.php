@@ -56,7 +56,7 @@ class OrganizationContext
             return null;
         }
 
-        if (session('active_workspace_type') === 'church') {
+        if (in_array(session('active_workspace_type'), ['church', 'central'], true)) {
             return null;
         }
 

@@ -6,8 +6,10 @@ use App\Enums\OrganizationStatus;
 use App\Enums\WorkspaceType;
 use App\Models\ChurchMembership;
 use App\Models\OrganizationMembership;
+use App\Models\PlatformMembership;
 use App\Models\User;
 use App\Support\OrganizationContext;
+use App\Support\PlatformContext;
 use App\Support\TenantContext;
 use Illuminate\Support\Collection;
 
@@ -16,6 +18,7 @@ final readonly class WorkspaceRegistry
     public function __construct(
         private TenantContext $tenant,
         private OrganizationContext $organization,
+        private PlatformContext $platform,
     ) {}
 
     /** @return Collection<int, WorkspaceOption> */
@@ -49,6 +52,17 @@ final readonly class WorkspaceRegistry
                 $activeType === WorkspaceType::Organization && $this->organization->currentOrganizationId() === $membership->organization_id,
             ));
 
-        return $churches->concat($organizations)->values();
+        $central = PlatformMembership::query()
+            ->active()
+            ->where('user_id', $user->id)
+            ->get()
+            ->map(fn (PlatformMembership $membership) => new WorkspaceOption(
+                WorkspaceType::Central,
+                $membership->id,
+                'Keryon Central',
+                $activeType === WorkspaceType::Central && $this->platform->currentMembership()?->id === $membership->id,
+            ));
+
+        return $churches->concat($organizations)->concat($central)->values();
     }
 }

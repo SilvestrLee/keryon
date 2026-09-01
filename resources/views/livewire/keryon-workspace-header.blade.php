@@ -7,13 +7,13 @@
 >
     <div class="ks-workspace">
         <button type="button" class="ks-control ks-workspace__trigger" x-on:click="workspaceOpen = ! workspaceOpen" x-bind:aria-expanded="workspaceOpen" aria-haspopup="menu" aria-label="{{ __('shell.switch_workspace') }}">
-            <span class="ks-workspace__mark" aria-hidden="true">{{ mb_strtoupper(mb_substr($workspace?->name ?? 'K', 0, 1)) }}</span>
-            <span class="ks-workspace__identity"><strong>{{ $workspace?->name ?? __('shell.workspace') }}</strong><small>{{ $workspaceType->label() }}</small></span>
+            <span class="ks-workspace__mark" aria-hidden="true">{{ mb_strtoupper(mb_substr($workspaceName ?? 'K', 0, 1)) }}</span>
+            <span class="ks-workspace__identity"><strong>{{ $workspaceName ?? __('shell.workspace') }}</strong><small>{{ $workspaceType->label() }}</small></span>
             <x-filament::icon icon="heroicon-m-chevron-down" aria-hidden="true" />
         </button>
 
         <div class="ks-menu ks-workspace__menu" x-cloak x-show="workspaceOpen" x-transition.opacity x-on:click.outside="workspaceOpen = false" role="menu" aria-label="{{ __('shell.switch_workspace') }}">
-            @foreach ([\App\Enums\WorkspaceType::Church, \App\Enums\WorkspaceType::Organization] as $type)
+            @foreach ([\App\Enums\WorkspaceType::Church, \App\Enums\WorkspaceType::Organization, \App\Enums\WorkspaceType::Central] as $type)
                 @if (($workspaces[$type->value] ?? collect())->isNotEmpty())
                     <p class="ks-menu__heading">{{ $type->label() }}</p>
                     @foreach ($workspaces[$type->value] as $option)

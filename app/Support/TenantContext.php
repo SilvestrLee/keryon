@@ -210,7 +210,7 @@ class TenantContext
             return null;
         }
 
-        if (session('active_workspace_type') === 'organization') {
+        if (in_array(session('active_workspace_type'), ['organization', 'central'], true)) {
             return null;
         }
 

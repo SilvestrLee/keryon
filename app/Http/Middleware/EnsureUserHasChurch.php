@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Enums\ChurchActivationStatus;
 use App\Models\ChurchActivation;
 use App\Support\OrganizationContext;
+use App\Support\PlatformContext;
 use App\Support\TenantContext;
 use Closure;
 use Illuminate\Http\Request;
@@ -23,6 +24,7 @@ class EnsureUserHasChurch
         session(['active_workspace_type' => 'church']);
         app(OrganizationContext::class)->forgetResolved();
         app(TenantContext::class)->forgetResolved();
+        app(PlatformContext::class)->forgetResolved();
         if (! auth()->check()) {
             return $next($request);
         }

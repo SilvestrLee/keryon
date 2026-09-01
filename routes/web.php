@@ -30,7 +30,7 @@ Route::middleware([SecureInvitationResponse::class])->group(function (): void {
 Route::middleware('auth')->group(function (): void {
     Route::get('/workspaces', WorkspaceSelectionController::class)->name('workspaces.select');
     Route::post('/workspace/switch/{type}/{workspace}', SwitchWorkspaceController::class)
-        ->whereIn('type', ['church', 'organization'])
+        ->whereIn('type', ['church', 'organization', 'central'])
         ->whereNumber('workspace')
         ->name('workspace.switch');
     Route::post('/account/locale', SelectLocaleController::class)->name('account.locale');

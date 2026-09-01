@@ -4,6 +4,7 @@ return [
     'workspace' => 'Workspace',
     'church_workspace' => 'Church workspace',
     'organization_workspace' => 'Organization workspace',
+    'central_workspace' => 'Keryon Central',
     'switch_workspace' => 'Switch workspace',
     'search' => 'Search Keryon',
     'search_placeholder' => 'Search Keryon...',

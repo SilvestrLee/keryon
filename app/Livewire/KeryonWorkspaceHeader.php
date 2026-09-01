@@ -6,6 +6,7 @@ use App\Enums\WorkspaceType;
 use App\Localization\UserLocaleResolver;
 use App\Search\GlobalSearchService;
 use App\Support\OrganizationContext;
+use App\Support\PlatformContext;
 use App\Support\TenantContext;
 use App\Website\ChurchPublicUrlResolver;
 use App\Workspace\WorkspaceRegistry;
@@ -33,14 +34,17 @@ class KeryonWorkspaceHeader extends Component
     public function render(): View
     {
         $workspaceType = $this->workspaceType();
-        $workspace = $workspaceType === WorkspaceType::Church
-            ? app(TenantContext::class)->currentChurch()
-            : app(OrganizationContext::class)->currentOrganization();
+        $workspace = match ($workspaceType) {
+            WorkspaceType::Church => app(TenantContext::class)->currentChurch(),
+            WorkspaceType::Organization => app(OrganizationContext::class)->currentOrganization(),
+            WorkspaceType::Central => app(PlatformContext::class)->currentMembership(),
+        };
         $groups = app(GlobalSearchService::class)->search($workspaceType, $this->query);
 
         return view('livewire.keryon-workspace-header', [
             'workspaceType' => $workspaceType,
             'workspace' => $workspace,
+            'workspaceName' => $workspaceType === WorkspaceType::Central ? 'Keryon Central' : $workspace?->name,
             'workspaces' => app(WorkspaceRegistry::class)->for(auth()->user(), $workspaceType)->groupBy(fn ($option) => $option->type->value),
             'groups' => $groups,
             'resultCount' => $groups->flatten(1)->count(),
@@ -55,8 +59,10 @@ class KeryonWorkspaceHeader extends Component
 
     private function workspaceType(): WorkspaceType
     {
-        return Filament::getCurrentPanel()?->getId() === 'organization'
-            ? WorkspaceType::Organization
-            : WorkspaceType::Church;
+        return match (Filament::getCurrentPanel()?->getId()) {
+            'organization' => WorkspaceType::Organization,
+            'central' => WorkspaceType::Central,
+            default => WorkspaceType::Church,
+        };
     }
 }
