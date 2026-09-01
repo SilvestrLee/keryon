@@ -1,114 +1,113 @@
-# K-DOMAIN-001B — Provider-Neutral Custom Domain & Canonical Host Resolution Report
+# K-DOMAIN-001C — Church Domain Management Experience Report
 
-## 1–18. Executive result and governance
+## Result and authority
 
-1. **Executive result:** COMPLETE. Keryon now has a provider-neutral, Church-scoped custom-domain lifecycle, deterministic DNS/TLS test seams, exact inbound host resolution, canonical URL selection, resilient first-party fallback, and immutable publication rendering. No production DNS/TLS provider was selected or invoked.
-2. **Starting HEAD:** `c0b2b638028bbeaa8181e9b45da2b26d06b1c497` (`feat(shell): add global workspace header infrastructure`).
-3. **Final implementation HEAD:** `924aa0e` (`feat(domains): add verified host and canonical resolution`). The report commit follows it; its exact hash is in the final handoff.
-4. **ChurchDomain schema:** custom claims only; UUID, Church, normalized/display hostname, independent domain/TLS status, hashed token, ownership/routing/TLS timestamps, primary flag, health/failure data, lifecycle timestamps, creator membership, timestamps.
-5. **Domain status enum:** `pending_verification`, `verified`, `active`, `degraded`, `disabled`, `released`.
-6. **TLS status enum:** `not_started`, `provisioning`, `ready`, `failed`.
-7. **Failure-code model:** bounded enum for invalid/platform/conflict/DNS/timeout/expiry/certificate/provider/disabled outcomes; raw provider errors are never persisted.
-8. **Hostname normalization:** trims, lowercases, removes one terminal dot, enforces ASCII FQDN/label lengths and interior-hyphen syntax, and requires at least two labels.
-9. **Platform-host protection:** one configured reserved-label/host seam rejects Keryon root, `www`, `app`, `central`, infrastructure labels, and first-party Church hosts from custom claims.
-10. **Global uniqueness:** `normalized_hostname` has a DB unique index; case/trailing-dot equivalents collapse before insertion.
-11. **Quarantine:** release preserves its unique row and records `released_at`. Quarantine is 30 days; there is no automatic reassignment. A later support path must require fresh claim and all proofs.
-12. **Alias limit:** transactional Church lock allows at most two non-released claims: one primary candidate and one companion.
-13. **One-primary invariant:** `makePrimary` locks the Church/domain rows and demotes/promotes in one retryable transaction. The Church row serializes concurrent switches.
-14. **Keryon-subdomain computation:** no domain row; `PublicWebsiteUrl` computes `{slug}.{base_domain}`.
-15. **Slug immutability:** activated Churches, and historical Churches with a WebsitePublication, reject slug mutation. Display-name edits and provisional provisioning remain valid.
-16. **Administrator capability:** `WebsiteDomainManage` is now in Administrator only.
-17. **Primary governance:** mutation additionally requires active same-Church TenantContext membership and `is_primary=true`.
-18. **Policy:** `ChurchDomainPolicy` applies the same fail-closed rule; Organization authority grants nothing.
+1. **Executive result:** COMPLETE. Keryon now provides a production-quality, Church-facing Website → Domains experience over the canonical 001B lifecycle. It is truthful when production DNS/TLS infrastructure is unavailable and never simulates readiness.
+2. **Starting HEAD:** `810099462219e55d9553740e237cf50de5be7e93` (`docs(domains): record K-DOMAIN-001B verification`).
+3. **Final implementation HEAD:** `71241c5` (`feat(domains): add Church domain management experience`). The report commit follows; its exact hash is in the final handoff.
+4. **Page/location:** purpose-built Filament page `ManageDomains` in the existing Church Website cluster at `/admin/website/manage-domains`.
+5. **Navigation:** Domains appears as the final Website sub-navigation destination. No Organization or generic Settings destination was introduced.
+6. **Access governance:** read and mutation require current active same-Church membership, `WebsiteDomainManage`, and `is_primary`.
+7. **Primary Administrator:** Livewire and browser proof confirm access, claim, regenerate, verify, primary, disable, and release paths.
+8. **Non-Primary denial:** page access is hidden/denied; stale loaded-page action reauthorizes and fails closed.
+9. **Communications denial:** Communications alone cannot access or mutate domains.
+10. **Care denial:** Care alone cannot access or mutate domains.
+11. **Organization-only denial:** OrganizationMembership grants no page or action authority.
 
-## 19–33. Claims, verification, lifecycle and evidence
+## Addresses, claims, and setup
 
-19. **Claim service:** `RequestChurchCustomDomain` authorizes, normalizes, locks, checks limits/uniqueness/quarantine, generates a token, stores its hash, creates pending evidence, and returns the raw token once.
-20. **Token handling:** raw tokens are never columns, events, logs, or jobs. Regeneration replaces the hash, clears ownership proof, emits evidence, and returns a new token once.
-21. **DNS ownership:** TXT lookup uses `_keryon-verification.<hostname>` and constant-time SHA-256 comparison. Missing/mismatched evidence remains retryable.
-22. **DNS routing:** separate verification checks configured CNAME ingress or configured apex A/AAAA observations. No production IP is hard-coded.
-23. **DnsResolver:** narrow typed TXT/CNAME/address observations distinguish found, not found, timeout, mismatch, and unavailable.
-24. **Fake DNS:** deterministic in-memory fake; automated tests make no public DNS calls.
-25. **DomainProvisioner:** minimal provider-neutral request/check/deactivate contract, separate from DNS.
-26. **Fake safety:** fake adapters throw in production; production defaults bind unavailable adapters and fail closed.
-27. **TLS lifecycle:** provisioning/ready/failed are independent. Ready needs both DNS proofs; activation also needs an active Church and clean lifecycle state.
-28. **Activation eligibility:** active Church + both verification timestamps + TLS ready/timestamp + active domain + not degraded/disabled/released.
-29. **Lifecycle:** `ChurchDomainLifecycle` exclusively owns verified, TLS, activation, degradation, primary, disable, and release transitions under locks.
-30. **Evidence:** immutable `ChurchDomainEvent` records bounded Church/domain/actor/type/failure/correlation/time only—no content, DNS payload, secret, or token.
-31. **Job:** queued `VerifyChurchDomain` carries only domain ID/correlation, re-queries state, performs provider calls outside transactions, then applies typed transitions.
-32. **Retry/idempotency:** bounded timeout/backoff, `ShouldBeUnique`, locks, and unique `(domain,event,correlation)` evidence prevent duplication.
-33. **Failures:** counters increment safely; degradation requires ≥3 confirmed failures spanning ≥24h. No scheduler was added; later daily jittered checks can reuse this architecture.
+12. **Keryon address:** computed with `PublicWebsiteUrl`, prominent, copyable, and explicitly described as permanent fallback. No ChurchDomain row is created.
+13. **Official address:** supplied by `ChurchPublicUrlResolver`; healthy custom primary is shown, otherwise the Keryon address. The page does not calculate canonical state in Blade.
+14. **Empty state:** guided “Connect your domain” surface, no technical table or domain-purchase claim.
+15. **Claim flow:** focused hostname form invokes `RequestChurchCustomDomain`; server resolves Church/member/creator/state.
+16. **Normalization:** 001B `DomainNameNormalizer` remains authoritative; `WWW.GraceHall.org.` displays as `www.gracehall.org`.
+17. **Validation copy:** scheme/path/port, IDN, platform host, invalid labels, collision, and limit errors are translated into safe Church-friendly guidance.
+18. **Limit UX:** after two non-released claims, Add is removed and the one-primary-plus-one-companion limit is explained before another request.
+19. **One-time token:** raw value is displayed only in the current Livewire component immediately after claim/regeneration, with an accessible copy control.
+20. **Returning token:** reload has a null token, does not reconstruct it, and explains why it is unavailable.
+21. **Regeneration:** deliberate confirmation warns that the old TXT value stops working, then calls `RegenerateChurchDomainToken`.
+22. **DNS instructions:** exact TXT type/name/one-time value are shown; routing record is derived only from configured ingress expectations.
+23. **Provider-neutral:** guidance references the Church’s DNS provider generically and warns not to remove MX/SPF/DKIM/email records.
+24. **Verification action:** “Check connection” dispatches canonical `VerifyChurchDomain`; no DNS logic exists in page/view.
+25. **Async behavior:** queued dispatch returns a truthful “check started” notification; no blocking lookup or polling loop.
+26. **Propagation:** missing records are described as not visible yet, with propagation/retry guidance rather than terminal failure language.
+27. **Ownership:** displayed independently from routing and backed only by `ownership_verified_at`.
+28. **Routing:** displayed independently as Waiting for DNS or Connected from `routing_verified_at`.
+29. **HTTPS:** Not started, Setting up HTTPS, HTTPS ready, and Needs attention derive from the TLS enum.
+30. **Unavailable production adapter:** routing values/actions are withheld and the page says activation is unavailable in this environment. No fake terminology is customer-visible.
 
-## 34–57. Runtime, canonical URLs and isolation
+## Readiness, resilience, and lifecycle actions
 
-34. **Host resolver:** exact first-party slug or exact indexed eligible custom hostname; no suffix/first-Church fallback.
-35. **First-party host:** active slug resolves exact Church and its current immutable publication.
-36. **Custom host:** only active, ownership/routing-verified, TLS-ready, non-disabled/released domain of an active Church resolves.
-37. **Alias:** healthy non-primary alias issues 308 to effective canonical, preserving path/query.
-38. **Unknown host:** arbitrary/unknown first-party hosts return 404 and never reach marketing.
-39. **Platform hosts:** explicit marketing root; `www` 308 to root; app/central/reserved hosts cannot resolve as Churches. No Central surface added.
-40. **PublicWebsiteContext:** receives public Church/host only; creates neither authentication nor TenantContext. Sequential-host tests prove isolation.
-41. **ChurchPublicUrlResolver:** same shell contract selects one eligible primary or fallback while preserving active Church, entitlement, settings, and publication gates.
-42. **Fallback:** Keryon host always serves the same publication and never redirects.
-43. **Canonical custom:** healthy eligible primary becomes shell/public canonical URL.
-44. **Degraded:** custom host fails closed and canonical immediately returns to first-party without content mutation.
-45. **WebsiteSeo:** canonical, OG URL, and JSON-LD use effective canonical—not arbitrary Host.
-46. **Sitemap:** absolute entries use effective canonical, including from fallback.
-47. **Robots:** sitemap reference uses effective canonical.
-48. **Internal links:** public page navigation is host-relative; authenticated preview routes remain unchanged.
-49. **Media:** renditions remain on configured Keryon-owned `asset_origin`; no private/customer-domain delivery dependency.
-50. **Entitlement:** existing Website availability rules remain; domain records are preserved.
-51. **Unpublished:** no current WebsitePublication is 404 on every host; no placeholder/publication side effect.
-52. **WebsitePublisher:** unchanged canonical boundary.
-53. **Trust:** PublicationTrustGate and public-reference health unchanged.
-54. **Communications:** provenance/outcomes untouched; only canonical link resolution can change.
-55. **Care:** zero Care models, queries, fields, or capability flow.
-56. **Organization:** OrganizationContext/scope/membership confer no domain authority.
-57. **Shell:** no Blade hostname logic/redesign. Go to Website follows the resolver; Organization header is unchanged.
+31. **Readiness:** a five-part stored-state sequence shows Domain added, Ownership verified, Domain connected, HTTPS ready, Active. `ChurchDomain::isEligible()` remains authority.
+32. **Make Primary:** visible only for eligible non-primary domains; confirmation explains official-address change and permanent fallback; action calls `MakeChurchDomainPrimary`.
+33. **Primary success:** official card switches to custom URL while the permanent Keryon card remains visible.
+34. **Companion alias:** eligible non-primary hostname is labelled Companion domain and copy explains current one-plus-one product limit. Existing 308 runtime remains unchanged.
+35. **Apex:** model remains permissive; UI avoids universal CNAME promises and notes that root domains may require A/AAAA/ALIAS/flattening and confirmed production infrastructure.
+36. **Health:** Connected and last-checked data are restrained, textual, and use stored state only.
+37. **Degraded/fallback:** issue panel says content is safe and shows the resolver-backed Keryon fallback as official.
+38. **Failure messages:** DNS absent/mismatch/timeout, certificate pending/failed, and provider unavailable map through `ChurchDomainStatusPresenter`; raw exceptions never render.
+39. **Disable:** governed confirmation explains serving stops, content is unaffected, fallback remains, and history is preserved; action calls `DisableChurchDomain`.
+40. **Release:** higher-consequence confirmation explains disconnection/history/30-day quarantine; action calls `ReleaseChurchDomain`.
+41. **Quarantine:** released history explicitly shows the 30-day protection and remains non-actionable.
+42. **History:** bounded “Previous domains” disclosure is implemented for released records. Detailed event timeline was intentionally omitted to keep the page focused; `ChurchDomainEvent` remains canonical evidence.
 
-## 58–67. Performance, schema and files
+## Integrations and boundaries
 
-58. **Queries:** response tests enforce ≤4 DB queries for first-party, custom, and alias paths before asset delivery; canonical selection is bounded and N+1-free.
-59. **Indexes:** unique UUID/hostname; Church/status; status/last-check; Church/primary/status; release/hostname; event domain/time, Church/type/time, and idempotency.
-60. **Migrations:** `2026_09_01_090000_create_church_domains_table.php`; `2026_09_01_090010_create_church_domain_events_table.php`. Additive only.
-61. **SQLite:** full 1,036-test RefreshDatabase suite passes.
-62. **MySQL:** 8.0.30 applied both migrations without reset; InnoDB schema, defaults, unique index, FKs, and named indexes inspected.
-63. **Uniqueness:** normalization and service/DB tests cover equivalent and cross-Church collisions.
-64. **Concurrency:** Church-row serialization plus retries leaves one primary; no generated-column workaround.
-65. **Created:** `app/Domain/` (21 files); six domain enums plus `PublicWebsiteHostType`; job; two models; policy; three public-host/canonical classes; two migrations; three Domain test files.
-66. **Modified:** Church role/model/membership, provider, public controller/middleware/context/media/SEO, shell URL resolver, public config/routes, three Proclaim views, focused Authorization/ChurchWebsite/Onboarding/Trust tests.
-67. **Packages:** none.
+43. **Website Overview:** now shows the effective public address with Visit and governance-aware Manage domains actions.
+44. **Shell:** Go to Website remains visually unchanged and follows `ChurchPublicUrlResolver`; healthy-primary regression passes.
+45. **Unpublished Website:** page remains available but states that domain configuration does not make the Website public.
+46. **Publication:** no domain action invokes WebsitePublisher, creates WebsitePublication, or mutates working content; publication-count/current-publication assertions pass.
+47. **Trust:** PublicationTrustGate and immutable publication rendering are untouched.
+48. **Canonical/SEO:** 001B canonical/OG/JSON-LD/sitemap/robots behavior is unchanged and covered by full Domain/Website regressions.
+49. **Entitlement:** current Website availability semantics are retained; no expiry/grace policy or record deletion was invented.
+50. **Organization:** no Organization destination, read model, or authority path.
+51. **Care:** zero Care models/queries/fields.
+52. **Communications:** no workflow, provenance, calendar, or outcome changes.
+53. **Lifecycle reuse:** claim, regeneration, verification job, primary, disable, and release all use 001B actions/services.
+54. **Direct mutation audit:** no page/view lifecycle `update`, `forceFill`, state assignment, or browser-owned Church/actor/timestamp/TLS/primary input exists.
 
-## 68–90. Verification and delivery
+## Security and experience proof
 
-68. **Security tests:** normalization, ASCII/IDN/punycode/scheme/path/port/wildcard/IP/local/platform rejection, collision, limit, quarantine, immutable evidence.
-69. **Authorization:** Primary Administrator allowed; non-Primary Administrator, capability-less Primary, Communications, Care, Organization-only, cross-Church, suspended, removed, manipulated actors denied.
-70. **Verification:** TXT match/mismatch/timeout, separate routing, TLS gate, token regeneration, fake determinism, duplicate job/evidence idempotency.
-71. **Routing:** marketing/platform, exact first-party/custom, ineligible 404, alias 308, fallback, sequential/authenticated context isolation.
-72. **Canonical/SEO:** first-party/custom/degraded, fallback custom canonical, canonical/OG/JSON-LD/sitemap/robots agreement, relative navigation.
-73. **Slug:** activated/historically published mutation denied, display name allowed, provisional allocation retained.
-74. **Website regression:** included in focused 249-test run and full suite; publication, preview, media, publisher, and unpublished boundaries pass.
-75. **Shell regression:** focused run passes; resolver and Organization exclusion preserved.
-76. **Communications regression:** all pass; attribution/outcome unchanged.
-77. **Authorization/Tenancy/Care regression:** all pass; Care remains excluded.
-78. **Organization regression:** all pass; hierarchy does not manufacture authority.
-79. **Full suite:** PASS—1,036 tests, 3,375 assertions, PHP memory limit 1G.
-80. **Build:** PASS—Vite 8.1.3, 7 modules transformed.
-81. **Pint:** PASS—scoped files.
-82. **Diff checks:** working and cached checks pass.
-83. **Sensitive scan:** only `verification_token_hash` persistence; no raw token/provider secret/DNS payload. New domain provider queries do not bypass tenancy; lifecycle unscopes only authoritative IDs under locks.
-84. **Browser first-party:** PASS at 1440×1000 and 390×844; HTTP 200, immutable heading, relative link, custom canonical.
-85. **Browser custom:** PASS at both sizes; HTTP 200, same immutable publication, custom canonical, relative navigation. Screenshots remained temporary.
-86. **Alias/fallback:** alias 308 Location `https://domain-proof.test/about?campaign=proof`; fallback HTTP 200/custom canonical. Isolated fixture deleted exactly.
-87. **Final status:** milestone committed; pre-existing unrelated `.gitignore`, seeder/docs and agent/skill artifacts remain unstaged. Exact status is in handoff.
-88. **Preservation:** no stash/reset/clean/pull/merge/rebase/broad add. Only explicit 001B paths/report staged.
-89. **Commits:** `6abd0c1 feat(domains): add governed custom-domain claims`; `924aa0e feat(domains): add verified host and canonical resolution`; report commit in handoff.
-90. **Push:** not performed.
+55. **Token security:** DB contains SHA-256 only; raw value is absent after reload and from query strings, logs, events, local storage, and model fields; regeneration invalidates old value.
+56. **Cross-Church:** domain lookup is both TenantContext-scoped and explicitly same-Church filtered; manipulated Church B ID fails closed.
+57. **Suspended/removed:** loaded page actions re-resolve DB membership and deny both states.
+58. **Primary transfer:** old Primary loses action authority immediately; new qualifying Primary Administrator succeeds.
+59. **Accessibility:** semantic headings/lists/dl, labelled form/copy controls, adjacent errors, text plus color status, visible focus rings, keyboard actions, and meaningful native confirmations.
+60. **Responsive:** core workflow uses cards and wrapping code containers, not tables; buttons stack at narrow widths.
+61. **Desktop browser:** authenticated Chrome 1440×1000 proved empty, claim/token, healthy primary, confirmation, and exact 1440px document width.
+62. **Mobile browser:** authenticated Chrome 390×844 proved returning DNS and degraded states with exact 390px document/scroll width.
+63. **Long hostname/TXT:** deliberately long Church identity, `_keryon-verification.www.browser-proof.org`, and 64-character token wrapped without horizontal overflow; token copy remained reachable.
+64. **Queries:** measured management render ceiling is 18 including Filament shell/navigation authorization. Two domains render in one domain query, no event N+1, and zero DNS checks on load.
+65. **Migrations:** none.
+66. **Packages:** none.
 
-## 91–95. Remaining infrastructure and closure
+## Verification
 
-91. **Production ingress blockers:** approved DNS resolver, ingress/apex targets, TLS adapter/API/credentials, callbacks, and production proof remain. Production fails closed.
-92. **Wildcard blockers:** `*.keryon.app` DNS/TLS remain K-DOMAIN-001D deployment prerequisites.
-93. **Entitlement/grace:** lapsed-Website behavior remains a Product Office policy decision; records and current runtime semantics are preserved.
-94. **Can 001B close?** Yes. Model, governance, verification, routing, canonical/fallback, security, MySQL/SQLite, browser, build, and regressions are proven.
-95. **Is 001C ready?** Yes. UI can bind to real actions/lifecycle, safely show one-time instructions, retain Primary+Administrator governance, and never simulate production TLS readiness.
+67. **Focused tests:** `ChurchDomainManagementPageTest` PASS, 10 tests / 81 assertions; combined Domain/Website-management/Shell slice PASS, 62 tests / 381 assertions before final additions.
+68. **Domain regression:** PASS in the required 518-test focused aggregate.
+69. **Website regression:** PASS, including public marketing and ChurchWebsite runtime.
+70. **Shell regression:** PASS; Go to Website and Organization exclusion preserved.
+71. **Authorization/Tenancy:** PASS; stale, cross-Church, role, Primary, suspended, removed cases covered.
+72. **Organization:** PASS; Organization-only actor denied.
+73. **Care:** PASS; no domain data path.
+74. **Trust:** PASS; publication/public-media boundaries unchanged.
+75. **Communications:** PASS; no domain coupling.
+76. **Full suite:** PASS, 1,046 tests / 3,456 assertions with PHP memory limit 1G.
+77. **Build:** PASS, Vite 8.1.3 production build, 7 modules transformed.
+78. **Pint:** PASS on all scoped PHP files.
+79. **Diff checks:** working and cached `git diff --check` pass.
+80. **Sensitive scan:** no raw token persistence, provider exception output, browser-owned authority fields, or direct lifecycle mutation found.
+81. **Fake safety:** existing 001B constructor/binding tests plus 001C unavailable-environment test prove production cannot bind fake DNS/TLS or offer false activation.
+
+## Files, repository, and closure
+
+82. **Created:** `app/Domain/ChurchDomainStatusPresenter.php`; `app/Filament/Clusters/Website/Pages/ManageDomains.php`; Domains Blade view; claim-form partial; `tests/Feature/Domains/ChurchDomainManagementPageTest.php`.
+83. **Modified:** `WebsiteOverview.php` and its Blade view only.
+84. **Final Git status:** milestone implementation/report committed; pre-existing `.gitignore`, seeder/docs, `.agents`, `.claude/skills`, `AGENTS.md`, `skills-lock.json`, and `stubs/` remain unstaged. Exact output is in final handoff.
+85. **Unrelated preservation:** no reset/clean/stash/pull/merge/rebase/broad add. Browser fixture and DB rows were isolated and cleaned exactly.
+86. **Commit:** `71241c5 feat(domains): add Church domain management experience`; report commit hash is in final handoff.
+87. **Push:** not performed.
+88. **Production blockers:** approved DNS resolver, ingress/apex targets, TLS adapter/API/credentials, callbacks, wildcard DNS/TLS, and production activation proof remain 001D scope.
+89. **Entitlement/grace:** lapsed subscription/trial/grace behavior remains Product Office policy; domain records remain preserved.
+90. **Can 001C close?** Yes. Governance, truthful workflow, tokens, responsive UX, integrations, security, browser proof, regressions, and quality gates pass.
+91. **Is 001D technically ready?** Yes. The product experience and provider-neutral seams are ready for controlled production DNS, ingress, TLS, monitoring, and credential proof.
