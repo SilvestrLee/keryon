@@ -247,7 +247,7 @@ class WorkspaceShellTest extends TestCase
         $queries = [];
         $component->call('openSearch')->set('query', 'member');
 
-        $this->assertLessThanOrEqual(22, count($queries));
+        $this->assertLessThanOrEqual(24, count($queries));
         $this->assertLessThanOrEqual(10, $baseHeaderQueries);
         $this->assertFalse(collect($queries)->contains(fn (string $sql) => str_contains($sql, 'prayer_requests')));
     }

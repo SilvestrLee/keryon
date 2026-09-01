@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Enums\Capability;
 use App\Enums\WorkspaceType;
 use App\Localization\UserLocaleResolver;
 use App\Search\GlobalSearchService;
@@ -51,10 +52,26 @@ class KeryonWorkspaceHeader extends Component
             'minimumLength' => (int) config('keryon.search.minimum_length', 2),
             'locales' => app(UserLocaleResolver::class)->supported(),
             'currentLocale' => app()->getLocale(),
-            'websiteUrl' => $workspaceType === WorkspaceType::Church && $workspace !== null
-                ? app(ChurchPublicUrlResolver::class)->resolve($workspace)
-                : null,
+            'websiteAction' => $this->websiteAction($workspaceType, $workspace),
         ]);
+    }
+
+    /** @return array{label: string, description: string, url: string, external: bool}|null */
+    private function websiteAction(WorkspaceType $workspaceType, mixed $workspace): ?array
+    {
+        if ($workspaceType !== WorkspaceType::Church || $workspace === null) {
+            return null;
+        }
+
+        if ($url = app(ChurchPublicUrlResolver::class)->resolve($workspace)) {
+            return ['label' => __('shell.go_to_website'), 'description' => __('shell.public_church_website'), 'url' => $url, 'external' => true];
+        }
+
+        if (! (app(TenantContext::class)->currentMembership()?->hasCapability(Capability::WebsiteContentView) ?? false)) {
+            return null;
+        }
+
+        return ['label' => __('shell.preview_website'), 'description' => __('shell.private_website_preview'), 'url' => route('website.preview'), 'external' => true];
     }
 
     private function workspaceType(): WorkspaceType

@@ -14,6 +14,8 @@ return [
     'search_results' => '{0} No results|{1} 1 result|[2,*] :count results',
     'go_to_website' => 'Go to Website',
     'public_church_website' => 'Public Church Website',
+    'preview_website' => 'Preview Website',
+    'private_website_preview' => 'Private Website preview',
     'more_actions' => 'More workspace actions',
     'language' => 'Language',
     'choose_workspace_help' => 'Choose the authority context you intend to enter.',

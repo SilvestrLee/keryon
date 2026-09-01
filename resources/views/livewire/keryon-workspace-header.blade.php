@@ -36,10 +36,10 @@
         <kbd>⌘K</kbd>
     </button>
 
-    @if ($websiteUrl)
-        <a class="ks-control ks-website" href="{{ $websiteUrl }}" target="_blank" rel="noopener noreferrer">
-            <x-filament::icon icon="heroicon-o-arrow-top-right-on-square" aria-hidden="true" />
-            <span>{{ __('shell.go_to_website') }}</span>
+    @if ($websiteAction)
+        <a class="ks-control ks-website" href="{{ $websiteAction['url'] }}" @if($websiteAction['external']) target="_blank" rel="noopener noreferrer" @endif>
+            <x-filament::icon :icon="$websiteAction['label'] === __('shell.preview_website') ? 'heroicon-o-eye' : 'heroicon-o-arrow-top-right-on-square'" aria-hidden="true" />
+            <span>{{ $websiteAction['label'] }}</span>
         </a>
     @endif
 
@@ -68,10 +68,10 @@
             <x-filament::icon icon="heroicon-o-ellipsis-horizontal" aria-hidden="true" />
         </button>
         <div class="ks-menu" x-cloak x-show="mobileMenuOpen" x-transition.opacity x-on:click.outside="mobileMenuOpen = false" role="menu">
-            @if ($websiteUrl)
-                <a class="ks-menu__item" href="{{ $websiteUrl }}" target="_blank" rel="noopener noreferrer" role="menuitem">
-                    <span><strong>{{ __('shell.go_to_website') }}</strong><small>{{ __('shell.public_church_website') }}</small></span>
-                    <x-filament::icon icon="heroicon-o-arrow-top-right-on-square" aria-hidden="true" />
+            @if ($websiteAction)
+                <a class="ks-menu__item" href="{{ $websiteAction['url'] }}" @if($websiteAction['external']) target="_blank" rel="noopener noreferrer" @endif role="menuitem">
+                    <span><strong>{{ $websiteAction['label'] }}</strong><small>{{ $websiteAction['description'] }}</small></span>
+                    <x-filament::icon :icon="$websiteAction['label'] === __('shell.preview_website') ? 'heroicon-o-eye' : 'heroicon-o-arrow-top-right-on-square'" aria-hidden="true" />
                 </a>
             @endif
             <p class="ks-menu__heading">{{ __('shell.language') }}</p>
