@@ -13,7 +13,7 @@ enum WorkspaceType: string
         return match ($this) {
             self::Church => __('shell.church_workspace'),
             self::Organization => __('shell.organization_workspace'),
-            self::Central => 'Keryon Central',
+            self::Central => __('shell.platform_operations'),
         };
     }
 }

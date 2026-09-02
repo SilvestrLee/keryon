@@ -10,6 +10,7 @@ use App\Models\PlatformMembership;
 use App\Support\OrganizationContext;
 use App\Support\PlatformContext;
 use App\Support\TenantContext;
+use Filament\Facades\Filament;
 use Illuminate\Http\RedirectResponse;
 
 class SwitchWorkspaceController
@@ -32,7 +33,7 @@ class SwitchWorkspaceController
             app(PlatformContext::class)->forgetResolved();
             app(PlatformContext::class)->currentMembership();
 
-            return redirect('/central');
+            return redirect(filled(config('central.domain')) ? Filament::getPanel('central')->getUrl() : '/central');
         }
 
         if ($workspaceType === WorkspaceType::Church) {

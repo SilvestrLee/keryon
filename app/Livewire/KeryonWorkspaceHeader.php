@@ -4,6 +4,8 @@ namespace App\Livewire;
 
 use App\Enums\Capability;
 use App\Enums\WorkspaceType;
+use App\Filament\Central\Pages\SecuritySettings;
+use App\Filament\Pages\AccountProfile;
 use App\Localization\UserLocaleResolver;
 use App\Search\GlobalSearchService;
 use App\Support\OrganizationContext;
@@ -53,6 +55,10 @@ class KeryonWorkspaceHeader extends Component
             'locales' => app(UserLocaleResolver::class)->supported(),
             'currentLocale' => app()->getLocale(),
             'websiteAction' => $this->websiteAction($workspaceType, $workspace),
+            'profileUrl' => AccountProfile::getUrl(panel: Filament::getCurrentPanel()?->getId()),
+            'securityUrl' => $workspaceType === WorkspaceType::Central ? SecuritySettings::getUrl(panel: 'central') : null,
+            'helpUrl' => route('site.resources'),
+            'logoutUrl' => Filament::getLogoutUrl(),
         ]);
     }
 

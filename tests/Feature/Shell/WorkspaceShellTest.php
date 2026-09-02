@@ -7,13 +7,19 @@ use App\Enums\ChurchRole;
 use App\Enums\ContentType;
 use App\Enums\EntitlementKey;
 use App\Enums\MembershipStatus;
+use App\Enums\OrganizationMembershipStatus;
+use App\Enums\PlatformMembershipStatus;
+use App\Enums\PlatformRole;
 use App\Enums\WorkspaceType;
+use App\Filament\Pages\AccountProfile;
 use App\Livewire\KeryonWorkspaceHeader;
 use App\Localization\UserLocaleResolver;
 use App\Models\Campaign;
 use App\Models\Church;
 use App\Models\ChurchMembership;
 use App\Models\ContentItem;
+use App\Models\OrganizationMembership;
+use App\Models\PlatformMembership;
 use App\Models\User;
 use App\Models\WebsitePublication;
 use App\Models\WebsiteSettings;
@@ -21,12 +27,14 @@ use App\Organizations\OrganizationHierarchyService;
 use App\Organizations\OrganizationIdentityService;
 use App\Search\GlobalSearchService;
 use App\Support\OrganizationContext;
+use App\Support\PlatformContext;
 use App\Support\TenantContext;
 use App\Website\ChurchPublicUrlResolver;
 use App\Workspace\WorkspaceRegistry;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 use Mockery;
@@ -250,5 +258,162 @@ class WorkspaceShellTest extends TestCase
         $this->assertLessThanOrEqual(24, count($queries));
         $this->assertLessThanOrEqual(10, $baseHeaderQueries);
         $this->assertFalse(collect($queries)->contains(fn (string $sql) => str_contains($sql, 'prayer_requests')));
+    }
+
+    public function test_account_panel_exposes_identity_active_context_and_only_live_utilities(): void
+    {
+        $church = Church::factory()->create(['name' => 'Grace Harmony Ministry']);
+        $user = User::factory()->forChurch($church, [ChurchRole::ADMINISTRATOR])->create([
+            'name' => 'Ada Nwosu',
+            'email' => 'ada@example.test',
+        ]);
+        $this->actingAs($user)->withSession(['active_church_id' => $church->id]);
+        app(TenantContext::class)->forgetResolved();
+
+        Livewire::test(KeryonWorkspaceHeader::class)
+            ->assertSee('Open account and workspace panel')
+            ->assertSee('Ada Nwosu')
+            ->assertSee('ada@example.test')
+            ->assertSee('Active workspace')
+            ->assertSee('Grace Harmony Ministry')
+            ->assertSee('My Profile')
+            ->assertSee('Help &amp; Support', escape: false)
+            ->assertSee('Sign out')
+            ->assertSeeHtml('href="'.route('site.resources').'"')
+            ->assertSeeHtml('action="'.Filament::getLogoutUrl().'"')
+            ->assertDontSee('Notifications')
+            ->assertDontSee('Appearance')
+            ->assertDontSee('Central multi-factor authentication');
+
+        config(['app.env' => 'local']);
+        $this->get('/admin/account-profile')->assertOk()->assertSee('My Profile');
+    }
+
+    public function test_account_panel_logout_uses_the_panel_post_logout_flow(): void
+    {
+        $church = Church::factory()->create();
+        $user = User::factory()->forChurch($church, [ChurchRole::ADMINISTRATOR])->create();
+        $this->actingAs($user)->withSession(['active_church_id' => $church->id]);
+        config(['app.env' => 'local']);
+
+        $this->withSession(['_token' => 'shell-test-token'])
+            ->post(Filament::getLogoutUrl(), ['_token' => 'shell-test-token'])
+            ->assertRedirect();
+
+        $this->assertGuest();
+    }
+
+    public function test_profile_updates_user_identity_without_moving_workspace_owned_settings(): void
+    {
+        $church = Church::factory()->create(['name' => 'Unchanged Church']);
+        $user = User::factory()->forChurch($church, [ChurchRole::ADMINISTRATOR])->create([
+            'name' => 'Initial Name',
+            'email' => 'verified@example.test',
+            'password' => 'current-password',
+        ]);
+        $this->actingAs($user)->withSession(['active_church_id' => $church->id]);
+
+        Livewire::test(AccountProfile::class)
+            ->assertSee('verified@example.test')
+            ->assertSeeHtml('disabled')
+            ->set('name', 'Updated Identity')
+            ->call('saveIdentity')
+            ->assertHasNoErrors()
+            ->set('currentPassword', 'current-password')
+            ->set('password', 'new-secure-password')
+            ->set('passwordConfirmation', 'new-secure-password')
+            ->call('changePassword')
+            ->assertHasNoErrors();
+
+        $this->assertSame('Updated Identity', $user->fresh()->name);
+        $this->assertSame('verified@example.test', $user->fresh()->email);
+        $this->assertSame('Unchanged Church', $church->fresh()->name);
+        $this->assertTrue(Hash::check('new-secure-password', $user->fresh()->password));
+    }
+
+    public function test_registry_filters_inactive_memberships_across_all_three_planes(): void
+    {
+        $activeChurch = Church::factory()->create(['name' => 'Active Church']);
+        $inactiveChurch = Church::factory()->create(['name' => 'Inactive Membership Church']);
+        $user = User::factory()->forChurch($activeChurch, [ChurchRole::ADMINISTRATOR])->create();
+        ChurchMembership::factory()->for($inactiveChurch)->for($user)->create(['status' => MembershipStatus::SUSPENDED]);
+        $activeOrganization = app(OrganizationHierarchyService::class)->createOrganization('Active Organization', 'active-organization');
+        $inactiveOrganization = app(OrganizationHierarchyService::class)->createOrganization('Inactive Organization', 'inactive-organization');
+        app(OrganizationIdentityService::class)->bootstrapAdministrator($activeOrganization, $user);
+        app(OrganizationIdentityService::class)->bootstrapAdministrator($inactiveOrganization, $user)
+            ->update(['status' => OrganizationMembershipStatus::REMOVED]);
+        PlatformMembership::create(['user_id' => $user->id, 'role' => PlatformRole::SUPPORT, 'status' => PlatformMembershipStatus::SUSPENDED, 'activated_at' => now(), 'suspended_at' => now()]);
+
+        $options = app(WorkspaceRegistry::class)->for($user, WorkspaceType::Church);
+
+        $this->assertEqualsCanonicalizing(['Active Church', 'Active Organization'], $options->pluck('name')->all());
+        $this->assertFalse($options->contains(fn ($option) => $option->type === WorkspaceType::Central));
+    }
+
+    public function test_combined_identity_sees_each_directly_authorized_plane_without_manufacturing_context(): void
+    {
+        $church = Church::factory()->create(['name' => 'Direct Church']);
+        $user = User::factory()->forChurch($church, [ChurchRole::ADMINISTRATOR])->create();
+        $organization = app(OrganizationHierarchyService::class)->createOrganization('Direct Organization', 'direct-organization');
+        app(OrganizationIdentityService::class)->bootstrapAdministrator($organization, $user);
+        $platform = PlatformMembership::create(['user_id' => $user->id, 'role' => PlatformRole::SUPPORT, 'status' => PlatformMembershipStatus::ACTIVE, 'activated_at' => now()]);
+        $this->actingAs($user)->withSession(['active_church_id' => $church->id, 'active_workspace_type' => 'church']);
+        app(TenantContext::class)->forgetResolved();
+
+        $options = app(WorkspaceRegistry::class)->for($user, WorkspaceType::Church);
+        $this->assertEqualsCanonicalizing(['church', 'organization', 'central'], $options->pluck('type.value')->all());
+
+        $this->post(route('workspace.switch', ['type' => 'central', 'workspace' => $platform->id]))->assertRedirect();
+        $this->assertFalse(app(TenantContext::class)->hasContext());
+        $this->assertFalse(app(OrganizationContext::class)->hasContext());
+        app(PlatformContext::class)->forgetResolved();
+        $this->assertTrue(app(PlatformContext::class)->hasContext());
+        $this->assertSame(1, ChurchMembership::query()->where('user_id', $user->id)->count());
+        $this->assertSame(1, OrganizationMembership::query()->where('user_id', $user->id)->count());
+    }
+
+    public function test_platform_only_identity_has_no_customer_destination(): void
+    {
+        $user = User::factory()->create();
+        PlatformMembership::create(['user_id' => $user->id, 'role' => PlatformRole::SUPPORT, 'status' => PlatformMembershipStatus::ACTIVE, 'activated_at' => now()]);
+        $this->actingAs($user);
+
+        $options = app(WorkspaceRegistry::class)->for($user, WorkspaceType::Central);
+
+        $this->assertSame(['central'], $options->pluck('type.value')->all());
+        $this->post(route('workspace.switch', ['type' => 'church', 'workspace' => 999]))->assertForbidden();
+        $this->post(route('workspace.switch', ['type' => 'organization', 'workspace' => 999]))->assertForbidden();
+    }
+
+    public function test_central_account_panel_links_to_existing_security_and_does_not_transfer_mfa_state(): void
+    {
+        Filament::setCurrentPanel(Filament::getPanel('central'));
+        $user = User::factory()->create();
+        PlatformMembership::create(['user_id' => $user->id, 'role' => PlatformRole::SUPPORT, 'status' => PlatformMembershipStatus::ACTIVE, 'activated_at' => now()]);
+        $this->actingAs($user)->withSession(['active_workspace_type' => 'central']);
+        app(PlatformContext::class)->forgetResolved();
+
+        Livewire::test(KeryonWorkspaceHeader::class)
+            ->assertSee('Keryon Central')
+            ->assertSee('Platform Operations', escape: false)
+            ->assertSee('Security')
+            ->assertSee('Central multi-factor authentication');
+
+        $this->assertFalse(session()->has('platform_mfa_verified_at'));
+    }
+
+    public function test_workspace_selection_has_a_deliberate_empty_state_and_includes_platform_when_eligible(): void
+    {
+        $empty = User::factory()->create();
+        $this->actingAs($empty)->get(route('workspaces.select'))
+            ->assertOk()
+            ->assertSee('No active workspace');
+
+        $platform = User::factory()->create();
+        PlatformMembership::create(['user_id' => $platform->id, 'role' => PlatformRole::SUPPORT, 'status' => PlatformMembershipStatus::ACTIVE, 'activated_at' => now()]);
+        $this->actingAs($platform)->get(route('workspaces.select'))
+            ->assertOk()
+            ->assertSee('Keryon Central')
+            ->assertDontSee('No active workspace');
     }
 }

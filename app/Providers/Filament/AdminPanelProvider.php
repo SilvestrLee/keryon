@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\AccountProfile;
 use App\Filament\Pages\ChurchDashboard;
 use App\Http\Middleware\ApplyUserLocale;
 use App\Http\Middleware\EnsureUserHasChurch;
@@ -34,6 +35,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogoHeight('2.25rem')
             ->login()
             ->passwordReset()
+            ->userMenu(false)
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -42,6 +44,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
                 ChurchDashboard::class,
+                AccountProfile::class,
             ])
             // K-CHURCHWEB-001C §37 — the Website Management cluster
             // (Overview/Home/About/Leadership/Ministries/Contact/Church

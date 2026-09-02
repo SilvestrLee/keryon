@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Central\Auth\CentralLogin;
 use App\Filament\Central\Pages\CentralHome;
+use App\Filament\Pages\AccountProfile;
 use App\Http\Middleware\ApplyUserLocale;
 use App\Http\Middleware\AuthenticatePlatformWorkspace;
 use App\Http\Middleware\CentralSecurityHeaders;
@@ -41,6 +42,7 @@ class CentralPanelProvider extends PanelProvider
             ->brandLogoHeight('2.25rem')
             ->login(CentralLogin::class)
             ->passwordReset()
+            ->userMenu(false)
             ->multiFactorAuthentication(
                 PlatformAppAuthentication::make()->recoverable()->regenerableRecoveryCodes(false)->recoveryCodeCount(10)->brandName('Keryon Central'),
                 isRequired: true,
@@ -48,7 +50,7 @@ class CentralPanelProvider extends PanelProvider
             ->colors(['primary' => Color::Amber])
             ->renderHook(PanelsRenderHook::GLOBAL_SEARCH_BEFORE, fn () => view('filament.partials.workspace-header'))
             ->discoverPages(in: app_path('Filament/Central/Pages'), for: 'App\\Filament\\Central\\Pages')
-            ->pages([CentralHome::class])
+            ->pages([CentralHome::class, AccountProfile::class])
             ->widgets([AccountWidget::class])
             ->middleware([
                 EncryptCookies::class,

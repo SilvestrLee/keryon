@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Organization\Pages\OrganizationOverview;
+use App\Filament\Pages\AccountProfile;
 use App\Http\Middleware\ApplyUserLocale;
 use App\Http\Middleware\AuthenticateOrganizationWorkspace;
 use App\Http\Middleware\EnsureOrganizationAccess;
@@ -34,13 +35,14 @@ class OrganizationPanelProvider extends PanelProvider
             ->brandLogo(fn () => view('components.keryon-logo'))
             ->brandLogoHeight('2.25rem')
             ->login()
+            ->userMenu(false)
             ->colors(['primary' => Color::Amber])
             ->renderHook(PanelsRenderHook::GLOBAL_SEARCH_BEFORE, fn () => view('filament.partials.workspace-header'))
             ->discoverPages(
                 in: app_path('Filament/Organization/Pages'),
                 for: 'App\\Filament\\Organization\\Pages',
             )
-            ->pages([OrganizationOverview::class])
+            ->pages([OrganizationOverview::class, AccountProfile::class])
             ->widgets([AccountWidget::class])
             ->middleware([
                 EncryptCookies::class,

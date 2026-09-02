@@ -15,7 +15,7 @@
             <span>{{ __('shell.choose_workspace_help') }}</span>
         </header>
         <div class="ks-selection__groups">
-            @foreach ([\App\Enums\WorkspaceType::Church, \App\Enums\WorkspaceType::Organization] as $type)
+            @foreach ([\App\Enums\WorkspaceType::Church, \App\Enums\WorkspaceType::Organization, \App\Enums\WorkspaceType::Central] as $type)
                 @if (($workspaces[$type->value] ?? collect())->isNotEmpty())
                     <section>
                         <h2>{{ $type->label() }}</h2>
@@ -31,6 +31,12 @@
                     </section>
                 @endif
             @endforeach
+            @if ($workspaces->flatten(1)->isEmpty())
+                <section class="ks-selection__empty">
+                    <h2>{{ __('shell.no_workspaces') }}</h2>
+                    <p>{{ __('shell.no_workspaces_help') }}</p>
+                </section>
+            @endif
         </div>
     </main>
 </body>

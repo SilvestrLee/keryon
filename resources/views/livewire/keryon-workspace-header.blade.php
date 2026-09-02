@@ -1,9 +1,9 @@
 <div
     class="ks-shell"
-    x-data="{ workspaceOpen: false, languageOpen: false, mobileMenuOpen: false, activeResult: 0 }"
+    x-data="{ workspaceOpen: false, languageOpen: false, mobileMenuOpen: false, accountOpen: false, activeResult: 0 }"
     x-on:keydown.window.meta.k.prevent="$wire.openSearch()"
     x-on:keydown.window.ctrl.k.prevent="$wire.openSearch()"
-    x-on:keydown.escape.window="workspaceOpen = false; languageOpen = false; mobileMenuOpen = false; $wire.closeSearch()"
+    x-on:keydown.escape.window="workspaceOpen = false; languageOpen = false; mobileMenuOpen = false; if (accountOpen) { accountOpen = false; $nextTick(() => $refs.accountTrigger.focus()) }; $wire.closeSearch()"
 >
     <div class="ks-workspace">
         <button type="button" class="ks-control ks-workspace__trigger" x-on:click="workspaceOpen = ! workspaceOpen" x-bind:aria-expanded="workspaceOpen" aria-haspopup="menu" aria-label="{{ __('shell.switch_workspace') }}">
@@ -86,6 +86,90 @@
                 </form>
             @endforeach
         </div>
+    </div>
+
+    <div class="ks-account">
+        <button
+            type="button"
+            class="ks-account__trigger"
+            x-ref="accountTrigger"
+            x-on:click="accountOpen = ! accountOpen"
+            x-bind:aria-expanded="accountOpen"
+            aria-haspopup="dialog"
+            aria-controls="ks-account-panel"
+            aria-label="{{ __('shell.open_account_panel') }}"
+        >
+            <span aria-hidden="true">{{ mb_strtoupper(mb_substr(auth()->user()->name, 0, 1)) }}</span>
+        </button>
+
+        <aside
+            id="ks-account-panel"
+            class="ks-account__panel"
+            x-cloak
+            x-show="accountOpen"
+            x-transition.opacity
+            x-on:click.outside="accountOpen = false"
+            x-trap.inert.noscroll="accountOpen"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ks-account-title"
+        >
+            <header class="ks-account__identity">
+                <span class="ks-account__avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr(auth()->user()->name, 0, 1)) }}</span>
+                <span>
+                    <strong id="ks-account-title">{{ auth()->user()->name }}</strong>
+                    <small>{{ auth()->user()->email }}</small>
+                </span>
+                <button type="button" x-on:click="accountOpen = false; $nextTick(() => $refs.accountTrigger.focus())" aria-label="{{ __('shell.close_account_panel') }}">
+                    <x-filament::icon icon="heroicon-o-x-mark" aria-hidden="true" />
+                </button>
+            </header>
+
+            <section class="ks-account__active" aria-labelledby="ks-active-workspace">
+                <p id="ks-active-workspace">{{ __('shell.active_workspace') }}</p>
+                <div>
+                    <span class="ks-workspace__mark" aria-hidden="true">{{ mb_strtoupper(mb_substr($workspaceName ?? 'K', 0, 1)) }}</span>
+                    <span><strong>{{ $workspaceName ?? __('shell.workspace') }}</strong><small>{{ $workspaceType->label() }}</small></span>
+                </div>
+            </section>
+
+            <section class="ks-account__workspaces" aria-labelledby="ks-account-workspaces">
+                <h3 id="ks-account-workspaces">{{ __('shell.your_workspaces') }}</h3>
+                @foreach ([\App\Enums\WorkspaceType::Church, \App\Enums\WorkspaceType::Organization, \App\Enums\WorkspaceType::Central] as $type)
+                    @if (($workspaces[$type->value] ?? collect())->isNotEmpty())
+                        <p>{{ __('shell.workspace_group_'.$type->value) }}</p>
+                        @foreach ($workspaces[$type->value] as $option)
+                            <form method="POST" action="{{ route('workspace.switch', ['type' => $option->type->value, 'workspace' => $option->id]) }}">
+                                @csrf
+                                <button type="submit" @class(['ks-account__workspace', 'is-current' => $option->current]) @if($option->current) aria-current="page" @endif>
+                                    <span><strong>{{ $option->name }}</strong><small>{{ $option->type->label() }}</small></span>
+                                    @if ($option->current)
+                                        <span class="ks-current">{{ __('shell.current') }}</span>
+                                    @else
+                                        <x-filament::icon icon="heroicon-o-arrow-right" aria-hidden="true" />
+                                    @endif
+                                </button>
+                            </form>
+                        @endforeach
+                    @endif
+                @endforeach
+            </section>
+
+            <nav class="ks-account__utilities" aria-label="{{ __('shell.account_utilities') }}">
+                @if ($profileUrl)
+                    <a href="{{ $profileUrl }}" wire:navigate><x-filament::icon icon="heroicon-o-user-circle" aria-hidden="true" /><span><strong>{{ __('shell.my_profile') }}</strong><small>{{ __('shell.profile_description') }}</small></span></a>
+                @endif
+                @if ($securityUrl)
+                    <a href="{{ $securityUrl }}" wire:navigate><x-filament::icon icon="heroicon-o-shield-check" aria-hidden="true" /><span><strong>{{ __('shell.security') }}</strong><small>{{ __('shell.security_description') }}</small></span></a>
+                @endif
+                <a href="{{ $helpUrl }}"><x-filament::icon icon="heroicon-o-lifebuoy" aria-hidden="true" /><span><strong>{{ __('shell.help_support') }}</strong><small>{{ __('shell.help_description') }}</small></span></a>
+            </nav>
+
+            <form class="ks-account__logout" method="POST" action="{{ $logoutUrl }}">
+                @csrf
+                <button type="submit"><x-filament::icon icon="heroicon-o-arrow-left-start-on-rectangle" aria-hidden="true" />{{ __('shell.sign_out') }}</button>
+            </form>
+        </aside>
     </div>
 
     @if ($searchOpen)
