@@ -10,15 +10,19 @@ use App\Models\ChurchOrganizationAssignment;
 use App\Models\OrganizationUnit;
 use App\Organizations\AuthorizedChurchAssignmentAction;
 use App\Organizations\OrganizationScopeResolver;
+use App\Organizations\Read\Dto\OrganizationChurchSummary;
+use App\Organizations\Read\OrganizationWorkspaceQuery;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Pages\Page;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Livewire\WithPagination;
 
 class OrganizationChurches extends Page
 {
-    use InteractsWithOrganizationWorkspace;
+    use InteractsWithOrganizationWorkspace, WithPagination;
 
     protected string $view = 'filament.organization.pages.churches';
 
@@ -32,14 +36,28 @@ class OrganizationChurches extends Page
 
     protected static ?int $navigationSort = 2;
 
-    /** @return Collection<int, Church> */
-    public function churches(): Collection
+    public string $search = '';
+
+    public string $attention = '';
+
+    public function updatedSearch(): void
     {
-        return app(OrganizationScopeResolver::class)
-            ->churchesInScope()
-            ->with('currentOrganizationAssignment.unit')
-            ->orderBy('churches.name')
-            ->get();
+        $this->resetPage('churchesPage');
+    }
+
+    public function updatedAttention(): void
+    {
+        $this->resetPage('churchesPage');
+    }
+
+    public function churches(): LengthAwarePaginator
+    {
+        return app(OrganizationWorkspaceQuery::class)->paginateChurches($this->search, $this->attention);
+    }
+
+    public function detailUrl(OrganizationChurchSummary $church): string
+    {
+        return OrganizationChurchDetail::getUrl(['record' => $church->id], panel: 'organization');
     }
 
     /** @return Collection<int, ChurchOrganizationAssignment> */

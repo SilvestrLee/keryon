@@ -3,48 +3,68 @@
 namespace App\Filament\Organization\Pages;
 
 use App\Enums\OrganizationCapability;
+use App\Enums\OrganizationUnitStatus;
 use App\Filament\Organization\Concerns\InteractsWithOrganizationWorkspace;
 use App\Models\OrganizationUnit;
 use App\Models\OrganizationUnitType;
 use App\Organizations\OrganizationHierarchyService;
 use App\Organizations\OrganizationScopeResolver;
+use App\Organizations\Read\Dto\OrganizationUnitSummary;
+use App\Organizations\Read\OrganizationWorkspaceQuery;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Pages\Page;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Gate;
+use Livewire\WithPagination;
 
 class OrganizationUnits extends Page
 {
-    use InteractsWithOrganizationWorkspace;
+    use InteractsWithOrganizationWorkspace, WithPagination;
 
     protected string $view = 'filament.organization.pages.units';
 
-    protected static ?string $title = 'Units';
+    protected static ?string $title = 'Organization Structure';
 
     protected static ?string $slug = 'units';
 
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-library';
+    protected static ?string $navigationLabel = 'Structure';
+
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-squares-2x2';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Structure';
 
     protected static ?int $navigationSort = 1;
 
-    /** @return Collection<int, OrganizationUnit> */
-    public function units(): Collection
+    public string $search = '';
+
+    public string $state = OrganizationUnitStatus::ACTIVE->value;
+
+    public function updatedSearch(): void
     {
-        return app(OrganizationScopeResolver::class)
-            ->unitsInScope(includeArchived: true)
-            ->with('type')
-            ->join('organization_unit_paths as root_paths', function ($join): void {
-                $join->on('root_paths.descendant_id', '=', 'organization_units.id')
-                    ->where('root_paths.ancestor_id', $this->organization()->root_unit_id);
-            })
-            ->select('organization_units.*', 'root_paths.depth as hierarchy_depth')
-            ->orderBy('root_paths.depth')
-            ->orderBy('organization_units.name')
-            ->get();
+        $this->resetPage('unitsPage');
+    }
+
+    public function updatedState(): void
+    {
+        $this->resetPage('unitsPage');
+    }
+
+    public function units(): LengthAwarePaginator
+    {
+        return app(OrganizationWorkspaceQuery::class)->paginateUnits($this->search, $this->state);
+    }
+
+    /** @return list<OrganizationUnitSummary> */
+    public function scopeRoots(): array
+    {
+        return app(OrganizationWorkspaceQuery::class)->scopeRoots();
+    }
+
+    public function detailUrl(OrganizationUnitSummary $unit): string
+    {
+        return OrganizationUnitDetail::getUrl(['record' => $unit->id], panel: 'organization');
     }
 
     public function canManageUnits(): bool

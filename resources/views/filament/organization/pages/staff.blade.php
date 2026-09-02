@@ -1,13 +1,17 @@
 <x-filament-panels::page>
     @include('filament.organization.partials.context')
 
-    <p class="org-intro">Organization staff authority is separate from Church staff access. Roles remain scoped to the Organization structure shown here.</p>
+    <header class="org-page-heading">
+        <p class="org-eyebrow">People &amp; access</p>
+        <h1>Organization responsibilities</h1>
+        <p>Organization authority is separate from Church staff access and remains bound to explicit hierarchy scopes.</p>
+    </header>
 
     <section class="org-section">
         <div class="org-section__header">
             <div>
-                <h2>Organization staff</h2>
-                <p>Manage Organization memberships and independent role assignments.</p>
+                <h2>Organization members</h2>
+                <p>Manage memberships and responsibility assignments without manufacturing Church access.</p>
             </div>
         </div>
         <div class="org-list">
@@ -34,7 +38,7 @@
                         @forelse ($membership->roleAssignments as $assignment)
                             <div class="org-role">
                                 <div>
-                                    <strong>{{ str($assignment->role->value)->headline() }}</strong>
+                                    <strong>{{ $assignment->role->label() }}</strong>
                                     <span>{{ $assignment->unit->name }}</span>
                                     @if (! $this->roleIsActive($assignment))
                                         <span class="org-badge">{{ str($assignment->status->value)->headline() }}</span>

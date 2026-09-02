@@ -26,9 +26,11 @@ class OrganizationStaff extends Page
 
     protected string $view = 'filament.organization.pages.staff';
 
-    protected static ?string $title = 'Organization Staff';
+    protected static ?string $title = 'People & Access';
 
     protected static ?string $slug = 'staff';
+
+    protected static ?string $navigationLabel = 'People & Access';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-user-group';
 
@@ -204,9 +206,9 @@ class OrganizationStaff extends Page
     private function roleOptions(): array
     {
         return [
-            OrganizationRole::ORGANIZATION_ADMINISTRATOR->value => 'Organization Administrator',
-            OrganizationRole::UNIT_ADMINISTRATOR->value => 'Unit Administrator',
-            OrganizationRole::ORGANIZATION_VIEWER->value => 'Organization Viewer',
+            OrganizationRole::ORGANIZATION_ADMINISTRATOR->value => OrganizationRole::ORGANIZATION_ADMINISTRATOR->label(),
+            OrganizationRole::UNIT_ADMINISTRATOR->value => OrganizationRole::UNIT_ADMINISTRATOR->label(),
+            OrganizationRole::ORGANIZATION_VIEWER->value => OrganizationRole::ORGANIZATION_VIEWER->label(),
         ];
     }
 

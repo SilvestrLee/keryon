@@ -3,6 +3,7 @@
 namespace App\Filament\Organization\Concerns;
 
 use App\Models\Organization;
+use App\Organizations\Read\OrganizationWorkspaceQuery;
 use App\Support\OrganizationContext;
 use Filament\Notifications\Notification;
 use Throwable;
@@ -25,6 +26,12 @@ trait InteractsWithOrganizationWorkspace
         return auth()->user()?->activeOrganizationMemberships()
             ->whereHas('organization', fn ($query) => $query->where('status', 'active'))
             ->count() > 1;
+    }
+
+    /** @return list<array{path:string,responsibilities:list<string>}> */
+    public function organizationScopes(): array
+    {
+        return app(OrganizationWorkspaceQuery::class)->scopePresentation();
     }
 
     protected function runGoverned(callable $operation, string $success): mixed

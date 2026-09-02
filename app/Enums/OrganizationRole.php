@@ -8,6 +8,15 @@ enum OrganizationRole: string
     case UNIT_ADMINISTRATOR = 'unit_administrator';
     case ORGANIZATION_VIEWER = 'organization_viewer';
 
+    public function label(): string
+    {
+        return match ($this) {
+            self::ORGANIZATION_ADMINISTRATOR => 'Organization Administrator',
+            self::UNIT_ADMINISTRATOR => 'Unit Administrator',
+            self::ORGANIZATION_VIEWER => 'Organization Viewer',
+        };
+    }
+
     /** @return list<OrganizationCapability> */
     public function capabilities(): array
     {
