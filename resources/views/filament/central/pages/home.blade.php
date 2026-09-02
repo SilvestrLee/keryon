@@ -19,6 +19,6 @@
         </section>
         @php($activity = $this->recentActivity())
         @if($activity->isNotEmpty())<section class="central-section"><div class="central-section__head"><h2>Recent platform activity</h2><p>Immutable Central authority evidence.</p></div><div class="central-list">@foreach($activity as $event)<article class="central-row"><div><strong>{{ str($event->event_type->value)->replace('.',' ')->headline() }}</strong><small>{{ $event->actor?->name ?? 'Bootstrap process' }}</small></div><div><strong>{{ str($event->target_type->value)->headline() }}</strong><small>{{ $event->occurred_at->format('j M Y, H:i') }}</small></div></article>@endforeach</div></section>@endif
-        <p class="central-production-gate">Production access remains unavailable until platform MFA is implemented and enforced.</p>
+        <p class="central-production-gate">Privileged access is protected by mandatory multi-factor authentication and expires after inactivity.</p>
     </main>
 </x-filament-panels::page>

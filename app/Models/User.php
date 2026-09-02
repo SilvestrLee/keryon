@@ -3,7 +3,10 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Platform\Security\PlatformMfaCredentialService;
 use Database\Factories\UserFactory;
+use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthentication;
+use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthenticationRecovery;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,10 +15,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use SensitiveParameter;
 
 #[Fillable(['name', 'email', 'password', 'church_id', 'locale'])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable
+class User extends Authenticatable implements HasAppAuthentication, HasAppAuthenticationRecovery
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -54,6 +58,37 @@ class User extends Authenticatable
     public function platformMembership(): HasOne
     {
         return $this->hasOne(PlatformMembership::class);
+    }
+
+    public function getAppAuthenticationSecret(): ?string
+    {
+        $membership = $this->platformMembership()->active()->with('mfaCredential')->first();
+
+        return $membership ? app(PlatformMfaCredentialService::class)->secretFor($membership) : null;
+    }
+
+    public function saveAppAuthenticationSecret(#[SensitiveParameter] ?string $secret): void
+    {
+        $membership = $this->platformMembership()->active()->firstOrFail();
+        abort_if($secret === null, 403, 'Multi-factor authentication cannot be disabled from Central.');
+        app(PlatformMfaCredentialService::class)->beginEnrollment($membership, $secret);
+    }
+
+    public function getAppAuthenticationHolderName(): string
+    {
+        return $this->email;
+    }
+
+    public function getAppAuthenticationRecoveryCodes(): ?array
+    {
+        return $this->platformMembership()->active()->with('mfaCredential')->first()?->mfaCredential?->recovery_code_hashes;
+    }
+
+    public function saveAppAuthenticationRecoveryCodes(#[SensitiveParameter] ?array $codes): void
+    {
+        abort_if($codes === null, 403, 'Recovery credentials cannot be disabled from Central.');
+        $membership = $this->platformMembership()->active()->firstOrFail();
+        app(PlatformMfaCredentialService::class)->saveRecoveryHashes($membership, $codes);
     }
 
     public function churchStaffInvitations(): HasMany

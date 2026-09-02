@@ -28,7 +28,9 @@ class RejectUnsupportedKeryonHost
         }
 
         if ($host === 'central.'.$baseDomain) {
-            abort(404);
+            abort_unless(filled(config('central.domain')) && hash_equals(strtolower((string) config('central.domain')), $host) && $request->routeIs('filament.central.*'), 404);
+
+            return $next($request);
         }
 
         if (! in_array($host, [...$marketingHosts, ...$applicationHosts, ...$localHosts], true)

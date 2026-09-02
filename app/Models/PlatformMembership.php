@@ -8,6 +8,7 @@ use App\Enums\PlatformRole;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class PlatformMembership extends Model
 {
@@ -35,6 +36,11 @@ class PlatformMembership extends Model
     public function provisionedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'provisioned_by_user_id');
+    }
+
+    public function mfaCredential(): HasOne
+    {
+        return $this->hasOne(PlatformMfaCredential::class);
     }
 
     public function scopeActive(Builder $query): Builder

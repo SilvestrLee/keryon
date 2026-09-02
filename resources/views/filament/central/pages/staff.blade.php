@@ -21,6 +21,9 @@
                         <div><strong>{{ $membership->role->label() }}</strong><small>Activated {{ $membership->activated_at->format('j M Y') }}</small></div>
                         <div class="central-status">{{ $membership->status->value }}@if($membership->suspended_at)<small>{{ $membership->suspended_at->format('j M Y, H:i') }}</small>@elseif($membership->removed_at)<small>{{ $membership->removed_at->format('j M Y, H:i') }}</small>@endif</div>
                         <div class="central-actions">
+                            @if($membership->mfaCredential?->isUsable() && $this->platformMembership()->hasCapability(\App\Enums\PlatformCapability::PlatformMfaReset))
+                                <button type="button" class="central-action central-action--danger" wire:click="prepareAction({{ $membership->id }}, 'reset-mfa')">Reset MFA</button>
+                            @endif
                             @if($membership->status === \App\Enums\PlatformMembershipStatus::ACTIVE && $membership->id !== $this->platformMembership()->id)
                                 <button type="button" class="central-action" wire:click="prepareAction({{ $membership->id }}, 'suspend')">Suspend</button>
                                 <button type="button" class="central-action central-action--danger" wire:click="prepareAction({{ $membership->id }}, 'remove')">Remove</button>
@@ -33,7 +36,7 @@
 
         @if($targetId)
             <section class="central-confirm" aria-labelledby="platform-action-heading">
-                <h3 id="platform-action-heading">Confirm {{ $targetAction }} access</h3>
+                <h3 id="platform-action-heading">Confirm {{ $targetAction === 'reset-mfa' ? 'MFA reset' : $targetAction.' access' }}</h3>
                 <p>Type the target email, confirm your password, and record why this authority change is required.</p>
                 <form wire:submit="confirmAction" class="central-form">
                     <div class="central-field"><label for="target-identifier">Target email</label><input id="target-identifier" wire:model="targetIdentifier">@error('targetIdentifier')<span class="central-error">{{ $message }}</span>@enderror</div>

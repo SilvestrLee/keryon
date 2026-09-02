@@ -48,6 +48,7 @@ enum PlatformRole: string
                 PlatformCapability::ProvidersView, PlatformCapability::ProvidersManage,
                 PlatformCapability::TrustView, PlatformCapability::TrustManage,
                 PlatformCapability::PlatformAuditView,
+                PlatformCapability::PlatformMfaReset,
             ],
         };
     }

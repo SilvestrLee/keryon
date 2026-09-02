@@ -2,12 +2,16 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Central\Auth\CentralLogin;
 use App\Filament\Central\Pages\CentralHome;
 use App\Http\Middleware\ApplyUserLocale;
 use App\Http\Middleware\AuthenticatePlatformWorkspace;
+use App\Http\Middleware\CentralSecurityHeaders;
+use App\Http\Middleware\EnsureCentralMfaSession;
 use App\Http\Middleware\EnsurePlatformAccess;
 use App\Http\Middleware\RequireCentralMfaReadiness;
 use App\Http\Middleware\ResolvePlatformContext;
+use App\Platform\Security\PlatformAppAuthentication;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -30,12 +34,17 @@ class CentralPanelProvider extends PanelProvider
         return $panel
             ->id('central')
             ->path('central')
+            ->domain(config('central.domain'))
             ->viteTheme('resources/css/filament/central/theme.css')
             ->darkMode(false)
             ->brandLogo(fn () => view('components.keryon-logo'))
             ->brandLogoHeight('2.25rem')
-            ->login()
+            ->login(CentralLogin::class)
             ->passwordReset()
+            ->multiFactorAuthentication(
+                PlatformAppAuthentication::make()->recoverable()->regenerableRecoveryCodes(false)->recoveryCodeCount(10)->brandName('Keryon Central'),
+                isRequired: true,
+            )
             ->colors(['primary' => Color::Amber])
             ->renderHook(PanelsRenderHook::GLOBAL_SEARCH_BEFORE, fn () => view('filament.partials.workspace-header'))
             ->discoverPages(in: app_path('Filament/Central/Pages'), for: 'App\\Filament\\Central\\Pages')
@@ -52,12 +61,14 @@ class CentralPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                CentralSecurityHeaders::class,
             ])
             ->authMiddleware([
                 AuthenticatePlatformWorkspace::class,
                 RequireCentralMfaReadiness::class,
                 ResolvePlatformContext::class,
                 EnsurePlatformAccess::class,
+                EnsureCentralMfaSession::class,
             ])
             ->strictAuthorization();
     }

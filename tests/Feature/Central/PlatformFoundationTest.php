@@ -20,11 +20,13 @@ use App\Models\ChurchMembership;
 use App\Models\OrganizationMembership;
 use App\Models\PlatformAuditEvent;
 use App\Models\PlatformMembership;
+use App\Models\PlatformMfaCredential;
 use App\Models\User;
 use App\Organizations\OrganizationHierarchyService;
 use App\Organizations\OrganizationIdentityService;
 use App\Platform\PlatformAudit as PlatformAuditRecorder;
 use App\Platform\PlatformStaffService;
+use App\Platform\Security\PlatformMfaSession;
 use App\Search\GlobalSearchService;
 use App\Support\OrganizationContext;
 use App\Support\PlatformContext;
@@ -62,6 +64,7 @@ class PlatformFoundationTest extends TestCase
         [$user] = $this->platformUser(PlatformRole::SUPPORT);
         app(PlatformContext::class)->forgetResolved();
         $this->actingAs($user);
+        app(PlatformMfaSession::class)->markVerified($user->platformMembership()->first());
         $this->assertTrue(app(PlatformContext::class)->hasContext());
         $this->assertTrue(CentralHome::canAccess());
         $response = $this->get('/central/central-home');
@@ -105,7 +108,7 @@ class PlatformFoundationTest extends TestCase
             PlatformRole::OPERATIONS->value => [PlatformCapability::PlatformHomeView, PlatformCapability::ChurchesView, PlatformCapability::ChurchesProvision, PlatformCapability::ActivationsView, PlatformCapability::ActivationsManage, PlatformCapability::OrganizationsView, PlatformCapability::OrganizationsProvision, PlatformCapability::AssignmentsView, PlatformCapability::SubscriptionsView, PlatformCapability::PricingView, PlatformCapability::DomainsView, PlatformCapability::DomainsManage, PlatformCapability::DeliveriesView, PlatformCapability::DeliveriesManage, PlatformCapability::ProvidersView, PlatformCapability::PlatformAuditView, PlatformCapability::PlatformChurchProvision, PlatformCapability::PlatformActivationResend, PlatformCapability::PlatformActivationRevoke, PlatformCapability::PlatformDomainRetry],
             PlatformRole::SUPPORT->value => [PlatformCapability::PlatformHomeView, PlatformCapability::ChurchesView, PlatformCapability::ActivationsView, PlatformCapability::OrganizationsView, PlatformCapability::AssignmentsView, PlatformCapability::DomainsView, PlatformCapability::DeliveriesView, PlatformCapability::ProvidersView, PlatformCapability::PlatformActivationResend, PlatformCapability::PlatformDomainRetry],
             PlatformRole::COMMERCIAL->value => [PlatformCapability::PlatformHomeView, PlatformCapability::ChurchesView, PlatformCapability::ActivationsView, PlatformCapability::ActivationsManage, PlatformCapability::OrganizationsView, PlatformCapability::AssignmentsView, PlatformCapability::SubscriptionsView, PlatformCapability::SubscriptionsManage, PlatformCapability::PricingView, PlatformCapability::PricingManage, PlatformCapability::BillingView, PlatformCapability::BillingManage, PlatformCapability::ProvidersView, PlatformCapability::PlatformAuditView],
-            PlatformRole::TRUST_SECURITY->value => [PlatformCapability::PlatformHomeView, PlatformCapability::DomainsView, PlatformCapability::ProvidersView, PlatformCapability::ProvidersManage, PlatformCapability::TrustView, PlatformCapability::TrustManage, PlatformCapability::PlatformAuditView],
+            PlatformRole::TRUST_SECURITY->value => [PlatformCapability::PlatformHomeView, PlatformCapability::DomainsView, PlatformCapability::ProvidersView, PlatformCapability::ProvidersManage, PlatformCapability::TrustView, PlatformCapability::TrustManage, PlatformCapability::PlatformAuditView, PlatformCapability::PlatformMfaReset],
         ];
 
         foreach (PlatformRole::cases() as $role) {
@@ -246,12 +249,14 @@ class PlatformFoundationTest extends TestCase
     {
         [$support] = $this->platformUser(PlatformRole::SUPPORT);
         $this->actingAs($support)->withSession(['active_workspace_type' => 'central']);
+        app(PlatformMfaSession::class)->markVerified($support->platformMembership()->first());
         app(PlatformContext::class)->forgetResolved();
         $this->get('/central/platform-staff')->assertForbidden();
         $this->get('/central/platform-audit')->assertForbidden();
 
         [$admin, $membership] = $this->platformUser(PlatformRole::ADMINISTRATOR);
         $this->actingAs($admin)->withSession(['active_workspace_type' => 'central']);
+        app(PlatformMfaSession::class)->markVerified($membership);
         app(PlatformContext::class)->forgetResolved();
         Livewire::test(PlatformStaff::class)->assertSee('Platform Staff');
         Livewire::test(PlatformAudit::class)->assertSee('Platform authority evidence');
@@ -277,7 +282,7 @@ class PlatformFoundationTest extends TestCase
             ->assertSee('Search Keryon')
             ->assertSee('English')
             ->assertDontSee('Go to Website');
-        Livewire::test(CentralHome::class)->assertSee('Platform Operations')->assertSee('Production access remains unavailable');
+        Livewire::test(CentralHome::class)->assertSee('Platform Operations')->assertSee('mandatory multi-factor authentication');
     }
 
     public function test_production_environment_fails_closed_until_mfa_exists(): void
@@ -312,6 +317,14 @@ class PlatformFoundationTest extends TestCase
     {
         $user = User::factory()->create();
         $membership = app(PlatformStaffService::class)->create($user, $role, null, PlatformAuditReasonCategory::PLATFORM_ADMINISTRATION, 'Test fixture');
+        $credential = PlatformMfaCredential::create(['platform_membership_id' => $membership->id, 'totp_secret' => 'TESTSECRET', 'confirmed_at' => now(), 'recovery_code_hashes' => [], 'recovery_codes_generated_at' => now()]);
+        $this->withSession([
+            'platform_mfa.membership_id' => $membership->id,
+            'platform_mfa.credential_version' => $credential->credential_version,
+            'platform_mfa.verified_at' => now()->timestamp,
+            'platform_mfa.last_activity_at' => now()->timestamp,
+            'platform_mfa.password_signature' => hash_hmac('sha256', $user->password, (string) config('app.key')),
+        ]);
 
         return [$user, $membership];
     }

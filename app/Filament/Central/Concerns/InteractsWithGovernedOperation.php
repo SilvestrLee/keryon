@@ -4,6 +4,7 @@ namespace App\Filament\Central\Concerns;
 
 use App\Enums\PlatformAuditReasonCategory;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -49,7 +50,13 @@ trait InteractsWithGovernedOperation
     protected function authorizeOperation(): PlatformAuditReasonCategory
     {
         $data = $this->validate($this->operationRules());
-        abort_unless(Hash::check($data['password'], auth()->user()->password), 403, 'Password confirmation failed.');
+        $key = 'central-reauth:'.auth()->id().':'.request()->ip();
+        abort_if(RateLimiter::tooManyAttempts($key, 5), 429, 'Too many reauthorization attempts. Try again later.');
+        if (! Hash::check($data['password'], auth()->user()->password)) {
+            RateLimiter::hit($key, 60);
+            abort(403, 'Password confirmation failed.');
+        }
+        RateLimiter::clear($key);
 
         return PlatformAuditReasonCategory::from($data['reason']);
     }

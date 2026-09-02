@@ -10,7 +10,11 @@ class RequireCentralMfaReadiness
 {
     public function handle(Request $request, Closure $next): Response
     {
-        abort_if(app()->environment('production'), 503, 'Keryon Central is unavailable until platform MFA is enforced.');
+        if (app()->environment('production')) {
+            abort_unless(filled(config('central.domain')), 503, 'Keryon Central production host is not configured.');
+            abort_unless($request->getHost() === config('central.domain'), 404);
+            abort_unless(config('session.secure') === true, 503, 'Keryon Central requires secure session cookies.');
+        }
 
         return $next($request);
     }

@@ -8,4 +8,5 @@ enum PlatformAuditTargetType: string
     case CHURCH = 'church';
     case CHURCH_ACTIVATION = 'church_activation';
     case CHURCH_DOMAIN = 'church_domain';
+    case PLATFORM_MFA_CREDENTIAL = 'platform_mfa_credential';
 }

@@ -101,6 +101,14 @@
 .central-operation-submit { justify-content: flex-end; }
 .central-operation-submit a { font-size: .76rem; font-weight: 750; }
 .central-operation-confirm { background: var(--central-soft); border-radius: .8rem; display: grid; gap: .85rem; max-width: 42rem; padding: 1rem; }
+.central-security { color: var(--central-ink); display: grid; gap: 1.25rem; margin: 0 auto; width: min(100%,34rem); }
+.central-security h1 { font-size: clamp(2rem,7vw,3rem); line-height: 1; margin: 0; }
+.central-security > p { color: var(--central-muted); line-height: 1.65; margin: 0; }
+.central-security .central-operation-form { gap: .75rem; }
+.central-security input { border: 1px solid #c7d0d2; border-radius: .65rem; font: inherit; min-height: 3rem; padding: .75rem .9rem; width: 100%; }
+.central-security input:focus-visible { border-color: #a56b18; outline: 3px solid rgba(224,159,62,.24); }
+.central-recovery { background: #fffbf0; border: 1px solid #d9c79f; border-radius: .8rem; padding: 1rem; }
+.central-recovery pre { font-size: .9rem; line-height: 1.6; margin: 1rem 0 0; overflow-wrap: anywhere; white-space: pre-wrap; }
 
 @media (max-width: 767px) {
     .central { gap: 1.25rem; }
