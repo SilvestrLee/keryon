@@ -122,6 +122,11 @@ class OrganizationCommunicationRevision extends Model
         return $this->hasMany(OrganizationCommunicationMaterial::class)->orderBy('sort_order');
     }
 
+    public function assets(): HasMany
+    {
+        return $this->hasMany(OrganizationCommunicationAsset::class, 'organization_communication_revision_id')->latest('id');
+    }
+
     public function isSubstantivelyImmutable(): bool
     {
         return in_array($this->state, [

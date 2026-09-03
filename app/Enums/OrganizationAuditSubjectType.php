@@ -11,4 +11,5 @@ enum OrganizationAuditSubjectType: string
     case ROLE_ASSIGNMENT = 'organization_role_assignment';
     case COMMUNICATION = 'organization_communication';
     case COMMUNICATION_REVISION = 'organization_communication_revision';
+    case COMMUNICATION_ASSET = 'organization_communication_asset';
 }

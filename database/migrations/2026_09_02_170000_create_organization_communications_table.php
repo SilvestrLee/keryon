@@ -14,7 +14,9 @@ return new class extends Migration
             $table->foreignId('organization_id')->constrained()->restrictOnDelete();
             $table->foreignId('governing_unit_id')->constrained('organization_units')->restrictOnDelete();
             $table->foreignId('created_by_organization_membership_id')
-                ->constrained('organization_memberships')
+                // Explicit short name: MySQL's 64-char identifier limit
+                // rejects the auto-generated name for this column.
+                ->constrained('organization_memberships', 'id', 'org_comms_creator_membership_fk')
                 ->restrictOnDelete();
             $table->string('kind', 32);
             $table->string('state', 32)->default('draft');

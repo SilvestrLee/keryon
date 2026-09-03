@@ -3,6 +3,7 @@
 use App\Http\Controllers\ChurchActivationController;
 use App\Http\Controllers\ChurchStaffInvitationController;
 use App\Http\Controllers\InvitationLandingController;
+use App\Http\Controllers\OrganizationCommunicationAssetController;
 use App\Http\Controllers\PrivateMediaController;
 use App\Http\Controllers\PublicMediaRenditionController;
 use App\Http\Controllers\SelectLocaleController;
@@ -18,6 +19,10 @@ Route::get('/media/{rendition}', PublicMediaRenditionController::class)
 Route::get('/app/media/{asset}', PrivateMediaController::class)
     ->whereUuid('asset')
     ->name('media.private');
+
+Route::get('/app/organization-assets/{asset}', OrganizationCommunicationAssetController::class)
+    ->whereUuid('asset')
+    ->name('organization-communications.assets.private');
 
 Route::middleware([SecureInvitationResponse::class])->group(function (): void {
     Route::get('/invitation/continue/{continuation}', [InvitationLandingController::class, 'show'])->name('invitations.continue');

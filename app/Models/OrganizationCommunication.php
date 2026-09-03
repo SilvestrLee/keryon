@@ -7,6 +7,7 @@ use App\Enums\OrganizationCommunicationState;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use LogicException;
@@ -89,6 +90,16 @@ class OrganizationCommunication extends Model
     public function latestRevision(): ?OrganizationCommunicationRevision
     {
         return $this->revisions()->latest('version')->first();
+    }
+
+    /**
+     * Eager-loadable equivalent of latestRevision() — a proper relation
+     * (via ofMany) so list queries can `with('currentRevision')` instead
+     * of running one query per row.
+     */
+    public function currentRevision(): HasOne
+    {
+        return $this->hasOne(OrganizationCommunicationRevision::class)->ofMany('version', 'max');
     }
 
     private function assertOwnershipChain(): void

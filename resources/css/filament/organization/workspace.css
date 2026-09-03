@@ -499,6 +499,116 @@
 .org-role strong { color: var(--org-text); font-size: .78rem; }
 .org-role span { margin-left: .5rem; color: var(--org-muted); font-size: .75rem; }
 
+/* K-ORG-COMMS-001B — Communications landing + authoring workspace.
+   Reuses the existing tokens/primitives above; no new visual language. */
+
+.org-badge--draft { background: var(--org-soft); color: var(--org-muted); }
+.org-badge--in-review,
+.org-badge--changes-requested { background: var(--org-warm); color: #735a08; }
+.org-badge--approved { background: #e5f2e9; color: #27633f; }
+.org-badge--closed { background: #f0f2f0; color: #69716c; }
+
+.org-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+    border-bottom: 1px solid var(--org-line);
+    padding: 0 1.35rem;
+}
+
+.org-tab {
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: none;
+    padding: .85rem .35rem;
+    color: var(--org-muted);
+    font-size: .82rem;
+    font-weight: 720;
+    cursor: pointer;
+}
+
+.org-tab:hover { color: var(--org-text); }
+.org-tab.is-active { border-color: var(--org-gold); color: var(--org-ink); }
+.org-tab-panel { padding: 1.25rem 1.35rem 1.5rem; }
+
+.org-state-banner {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    border-radius: .8rem;
+    padding: 1rem 1.1rem;
+}
+
+.org-state-banner--approved { border: 1px solid #cfe0d4; background: #f7faf7; }
+.org-state-banner--changes-requested { border: 1px solid #e7dcae; background: #fffdf5; }
+.org-state-banner strong { display: block; color: var(--org-text); font-size: .85rem; }
+.org-state-banner p { margin-top: .3rem; max-width: 40rem; color: var(--org-muted); font-size: .78rem; line-height: 1.55; }
+
+.org-material-list,
+.org-asset-grid { display: grid; gap: .65rem; }
+
+.org-material {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    border: 1px solid var(--org-line);
+    border-radius: .8rem;
+    background: white;
+    padding: .9rem 1rem;
+}
+
+.org-material__order { display: flex; flex-direction: column; gap: .2rem; }
+.org-material__order button {
+    display: grid;
+    place-items: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    border: 1px solid var(--org-line);
+    border-radius: .4rem;
+    background: white;
+    color: var(--org-muted);
+    cursor: pointer;
+}
+
+.org-material__order button:hover:not(:disabled) { border-color: var(--org-gold); color: var(--org-ink); }
+.org-material__order button:disabled { opacity: .35; cursor: not-allowed; }
+.org-material__body { min-width: 0; flex: 1; }
+.org-material__type { color: var(--org-muted); font-size: .68rem; font-weight: 720; text-transform: uppercase; letter-spacing: .06em; }
+.org-material__title { margin-top: .2rem; color: var(--org-text); font-size: .85rem; font-weight: 730; }
+.org-material__excerpt { margin-top: .3rem; overflow-wrap: anywhere; color: var(--org-muted); font-size: .78rem; line-height: 1.55; }
+
+.org-asset-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border: 1px solid var(--org-line);
+    border-radius: .8rem;
+    background: white;
+    padding: .8rem 1rem;
+}
+
+.org-asset-card__meta { min-width: 0; }
+.org-asset-card__name { overflow-wrap: anywhere; color: var(--org-text); font-size: .82rem; font-weight: 730; }
+.org-asset-card__detail { margin-top: .2rem; color: var(--org-muted); font-size: .72rem; line-height: 1.5; }
+
+.org-timeline { display: grid; gap: 0; border-top: 1px solid var(--org-line); }
+.org-timeline-item { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: .9rem 0; }
+.org-timeline-item + .org-timeline-item { border-top: 1px solid var(--org-line); }
+.org-timeline-item__version { color: var(--org-text); font-size: .84rem; font-weight: 750; }
+.org-timeline-item__meta { margin-top: .2rem; color: var(--org-muted); font-size: .74rem; line-height: 1.5; }
+
+.org-form-actions { display: flex; flex-wrap: wrap; gap: .5rem; padding: 1rem 1.35rem 1.35rem; border-top: 1px solid var(--org-line); }
+
+@media (max-width: 640px) {
+    .org-tabs { overflow-x: auto; padding: 0 1rem; }
+    .org-material,
+    .org-asset-card { flex-direction: column; }
+    .org-material__order { flex-direction: row; }
+}
+
 @media (max-width: 900px) {
     .org-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .org-metric:nth-child(3) { border-left: 0; border-top: 1px solid var(--org-line); }

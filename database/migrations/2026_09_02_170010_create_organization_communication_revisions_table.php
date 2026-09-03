@@ -10,23 +10,26 @@ return new class extends Migration
     {
         Schema::create('organization_communication_revisions', function (Blueprint $table): void {
             $table->id();
+            // Explicit short constraint names throughout this table: the
+            // auto-generated `{table}_{column}_foreign` names exceed
+            // MySQL's 64-char identifier limit for every column below.
             $table->foreignId('organization_communication_id')
-                ->constrained('organization_communications')
+                ->constrained('organization_communications', 'id', 'org_comm_revisions_communication_fk')
                 ->cascadeOnDelete();
             $table->foreignId('created_by_organization_membership_id')
-                ->constrained('organization_memberships')
+                ->constrained('organization_memberships', 'id', 'org_comm_revisions_creator_fk')
                 ->restrictOnDelete();
             $table->foreignId('submitted_by_organization_membership_id')
                 ->nullable()
-                ->constrained('organization_memberships')
+                ->constrained('organization_memberships', 'id', 'org_comm_revisions_submitter_fk')
                 ->restrictOnDelete();
             $table->foreignId('reviewed_by_organization_membership_id')
                 ->nullable()
-                ->constrained('organization_memberships')
+                ->constrained('organization_memberships', 'id', 'org_comm_revisions_reviewer_fk')
                 ->restrictOnDelete();
             $table->foreignId('approved_by_organization_membership_id')
                 ->nullable()
-                ->constrained('organization_memberships')
+                ->constrained('organization_memberships', 'id', 'org_comm_revisions_approver_fk')
                 ->restrictOnDelete();
             $table->unsignedInteger('version');
             $table->string('state', 32)->default('draft');

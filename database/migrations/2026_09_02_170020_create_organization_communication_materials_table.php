@@ -10,8 +10,10 @@ return new class extends Migration
     {
         Schema::create('organization_communication_materials', function (Blueprint $table): void {
             $table->id();
+            // Explicit short name: the auto-generated `{table}_{column}_foreign`
+            // name exceeds MySQL's 64-char identifier limit.
             $table->foreignId('organization_communication_revision_id')
-                ->constrained('organization_communication_revisions')
+                ->constrained('organization_communication_revisions', 'id', 'org_comm_materials_revision_fk')
                 ->cascadeOnDelete();
             $table->string('type', 48);
             $table->string('title')->nullable();

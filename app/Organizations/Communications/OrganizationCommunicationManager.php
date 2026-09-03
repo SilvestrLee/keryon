@@ -10,10 +10,12 @@ use App\Enums\OrganizationCommunicationMaterialType;
 use App\Enums\OrganizationCommunicationRevisionState;
 use App\Enums\OrganizationCommunicationState;
 use App\Models\OrganizationCommunication;
+use App\Models\OrganizationCommunicationAsset;
 use App\Models\OrganizationCommunicationMaterial;
 use App\Models\OrganizationCommunicationRevision;
 use App\Models\OrganizationUnit;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use LogicException;
 
@@ -144,6 +146,40 @@ class OrganizationCommunicationManager
         }, 3);
     }
 
+    /**
+     * Swaps a material with its immediate neighbor. Uses a transient
+     * negative sort_order so the swap never collides with the
+     * (revision_id, sort_order) unique index mid-transaction.
+     */
+    public function moveMaterial(OrganizationCommunicationMaterial $material, string $direction): void
+    {
+        DB::transaction(function () use ($material, $direction): void {
+            $locked = OrganizationCommunicationMaterial::query()->lockForUpdate()->findOrFail($material->id);
+            $revision = $this->lockedRevision($locked->revision);
+            $this->authorizer->forCommunication(OrganizationCapability::CommunicationsEdit, $revision->communication);
+            $this->assertDraft($revision);
+
+            $ordered = $revision->materials()->orderBy('sort_order')->get();
+            $index = $ordered->search(fn (OrganizationCommunicationMaterial $item): bool => $item->id === $locked->id);
+            $swapIndex = $direction === 'up' ? $index - 1 : $index + 1;
+
+            if ($index === false || $swapIndex < 0 || $swapIndex >= $ordered->count()) {
+                return;
+            }
+
+            $neighbor = $ordered->get($swapIndex);
+            $originalOrder = $locked->sort_order;
+            $neighborOrder = $neighbor->sort_order;
+
+            // sort_order is unsigned; 0 is never assigned by addMaterial()
+            // (which starts at 1), so it is a safe transient marker that
+            // never collides with the (revision_id, sort_order) unique index.
+            $locked->forceFill(['sort_order' => 0])->save();
+            $neighbor->forceFill(['sort_order' => $originalOrder])->save();
+            $locked->forceFill(['sort_order' => $neighborOrder])->save();
+        }, 3);
+    }
+
     public function createNextRevision(
         OrganizationCommunicationRevision $source,
     ): OrganizationCommunicationRevision {
@@ -173,6 +209,35 @@ class OrganizationCommunicationManager
                     'title' => $material->title,
                     'body' => $material->body,
                     'sort_order' => $material->sort_order,
+                ])->save();
+            }
+
+            // K-ORG-COMMS-001B §83 Option A: the next Draft revision
+            // receives new asset records referencing the same immutable
+            // stored file (same disk/path/sha256) as the approved source
+            // — no byte duplication, and the source revision's asset rows
+            // remain untouched and immutable.
+            foreach ($lockedSource->assets()->get() as $asset) {
+                $copy = new OrganizationCommunicationAsset;
+                $copy->uuid = (string) Str::uuid();
+                $copy->forceFill([
+                    'organization_id' => $asset->organization_id,
+                    'organization_communication_id' => $next->organization_communication_id,
+                    'organization_communication_revision_id' => $next->id,
+                    'uploaded_by_organization_membership_id' => $asset->uploaded_by_organization_membership_id,
+                    'disk' => $asset->disk,
+                    'path' => $asset->path,
+                    'original_filename' => $asset->original_filename,
+                    'mime_type' => $asset->mime_type,
+                    'size' => $asset->size,
+                    'sha256' => $asset->sha256,
+                    'width' => $asset->width,
+                    'height' => $asset->height,
+                    'alt_text' => $asset->alt_text,
+                    'rights_basis' => $asset->rights_basis,
+                    'usage_guidance' => $asset->usage_guidance,
+                    'attribution_required' => $asset->attribution_required,
+                    'attribution_text' => $asset->attribution_text,
                 ])->save();
             }
 

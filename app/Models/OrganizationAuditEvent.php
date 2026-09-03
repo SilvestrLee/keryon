@@ -31,4 +31,9 @@ class OrganizationAuditEvent extends Model
     {
         return $this->belongsTo(Organization::class);
     }
+
+    public function actor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'actor_user_id');
+    }
 }

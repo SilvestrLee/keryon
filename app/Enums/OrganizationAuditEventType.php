@@ -29,4 +29,6 @@ enum OrganizationAuditEventType: string
     case COMMUNICATION_REVISION_APPROVED = 'organization.communication.revision_approved';
     case COMMUNICATION_WITHDRAWN = 'organization.communication.withdrawn';
     case COMMUNICATION_CLOSED = 'organization.communication.closed';
+    case COMMUNICATION_ASSET_ADDED = 'organization.communication.asset_added';
+    case COMMUNICATION_ASSET_REMOVED = 'organization.communication.asset_removed';
 }
