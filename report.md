@@ -1,308 +1,345 @@
-# K-ORG-DASH-001 — IMPLEMENTATION & VERIFICATION REPORT
+# K-ORG-COMMS-001A — DOMAIN & PERSISTENCE IMPLEMENTATION REPORT
 
 ## Executive result
 
-K-ORG-DASH-001 is implemented and verified locally. The Organization panel is now a first-class, attention-led workspace for authorized organization leadership rather than a generic hierarchy administration surface or a scaled-up Church Dashboard. Its complete information architecture remains visible when an Organization has no operational data, so the same finished layout fills naturally as Churches, Units, readiness signals, coordination activity, and governance events become available.
+K-ORG-COMMS-001A is implemented and verified as a bounded, Organization-owned communications foundation. The implementation adds the approved three-table aggregate, immutable revisions and approved materials, scoped Organization authorization, explicit lifecycle services, low-volume governance audit events, and comprehensive security/regression coverage.
 
-The delivered workspace answers which Organization and scope are active, which Churches and Units are visible, what factual website/domain/onboarding conditions need attention, and where the user can safely act next. All aggregates and direct-detail routes are bounded by `OrganizationContext`, active membership, assigned unit scope, and the existing closure-table authorization model. No Church private records, Care data, tenant impersonation, new ownership semantics, migrations, packages, organization publishing workflows, or analytics infrastructure were introduced.
+The implementation preserves the locked authority boundary: Organization communications never establish `TenantContext`, never manufacture Church authority, and do not create or depend on Church Campaign, Content Studio, Media, FaithFlow, Website, Care, congregation, financial, or attendance records.
 
-The accepted starting baseline was 1,106 tests / 3,927 assertions. The final full suite passes 1,111 tests / 3,990 assertions: five new focused tests and 63 additional assertions, with no reduction.
+No Organization authoring UI, distribution, assets, Church inbox/import, dashboard integration, notification transport, or Organization FaithFlow behavior was implemented.
+
+**Close recommendation:** K-ORG-COMMS-001A can be classified **CLOSED**, subject to Product Office review of this uncommitted implementation.
 
 ## Repository and Git state
 
-- Branch: `master`
-- Starting HEAD: `38d4f2c5f5335ba8f1294ce8e7b2861a825711ce`
-- Final HEAD: `38d4f2c5f5335ba8f1294ce8e7b2861a825711ce` (unchanged)
-- Starting commit: `feat(shell): unify authenticated account and context navigation`
-- Commit created: no; implementation remains uncommitted for Product Office review.
-- Push performed: no.
-- Pull, merge, rebase, reset, clean, stash, broad staging, or destructive Git operation: none.
-- Unrelated user-owned state was preserved.
+- Starting HEAD: `0e3626a23e39737047600dfa2d7083f0431fa26b`
+- Final HEAD: `0e3626a23e39737047600dfa2d7083f0431fa26b`
+- Repository changes: source, migrations, tests, and this governed rolling report only; no commit was created.
+- Staging index: empty.
+- Commit status: **not committed**, as directed.
+- Push status: **not pushed**.
+- Packages: none added or changed.
+- Existing unrelated work remains present and unstaged: `.gitignore`; Congregation enum/resource changes; `DatabaseSeeder`; local-development documentation; agent/skill/governance/lock/stub files.
 
-## Existing Organization architecture discovered
+## Existing conventions confirmed
 
-The existing architecture materially matches the approved K-ORG model, so no stop-condition refactor was needed.
+- Organization identity is modeled separately through `Organization`, `OrganizationMembership`, `OrganizationRoleAssignment`, `OrganizationUnit`, and closure-table-backed unit paths.
+- `OrganizationContext` resolves an active Organization membership from the selected Organization workspace; it is independent of `TenantContext`.
+- Scope authorization combines active membership, active role assignment, role capability, assigned Unit, and descendant resolution through `OrganizationScopeResolver`.
+- Organization models use integer primary keys plus UUID stable external identity where needed; enum-backed strings, Eloquent casts, database transactions, row locks, action/domain services, and Laravel policies are established conventions.
+- `OrganizationAuditEvent` uses Organization ownership, bounded event/subject enums, actor user attribution, optional Unit attribution, and JSON state metadata.
+- Church Campaigns, Content Items, Media Assets, FaithFlow, Website content, Care, and congregation data are tenant-owned and remain outside Organization communications.
 
-- `Organization` is a distinct aggregate with its own status, root Unit, memberships, Units, Church assignments, and audit events.
-- `OrganizationUnit` is a distinct hierarchy entity typed by `OrganizationUnitType`; it is not a Church or tenant.
-- `ChurchOrganizationAssignment` is the governed relationship between a Church, Organization, and Unit. Attachment uses a pending/request/Church-side acceptance lifecycle and the Church keeps a current-assignment pointer. Organization authority does not create Church authority.
-- `OrganizationMembership` is independent from `ChurchMembership` and `PlatformMembership`. Membership states are invited, active, suspended, and removed.
-- `OrganizationRoleAssignment` binds a fixed Organization role to a specific Unit scope and has its own active/suspended/removed lifecycle.
-- `OrganizationAuditEvent` records bounded Organization governance events.
+## Persistence foundation
 
-No architecture gap required a material Organization redesign, new hierarchy model, or new Organization-to-Church ownership semantics.
+### Migrations and tables added
 
-## OrganizationContext behavior
+Exactly the approved three migrations were added:
 
-`OrganizationContext` remains the only customer context established by the Organization panel. It resolves an active Organization membership, validates the Organization state, honors a valid explicit Organization selection where multiple memberships exist, and fails closed for zero, inactive, ambiguous, or invalid memberships.
+1. `2026_09_02_170000_create_organization_communications_table.php`
+2. `2026_09_02_170010_create_organization_communication_revisions_table.php`
+3. `2026_09_02_170020_create_organization_communication_materials_table.php`
 
-The panel context middleware and access middleware revalidate this authority on direct requests. Organization selection clears incompatible Church selection state. The Organization read model neither resolves nor establishes `TenantContext`; the new focused tests also assert that an Organization-only user has no manufactured tenant context.
+Tables:
 
-## Hierarchy and closure-table behavior
+- `organization_communications`: stable Organization-owned root; UUID; Organization, governing Unit, and creator OrganizationMembership foreign keys; kind; root state; timestamps; soft deletion.
+- `organization_communication_revisions`: ordered version-owned content and guidance; creator/submitter/reviewer/approver OrganizationMembership attribution; revision state and review timestamps.
+- `organization_communication_materials`: typed canonical Organization-owned copy/resources attached only to a revision, with deterministic ordering.
 
-The hierarchy is implemented by `organization_unit_paths`, storing ancestor/descendant/depth closure rows, including self relationships. `OrganizationHierarchyService` owns governed creation, moves, archival, and closure maintenance.
+No target, distribution, delivery, Organization asset, Church import, notification, or telemetry table was added.
 
-`OrganizationScopeResolver` builds SQL-backed scope queries by joining active role assignments to closure paths. An assigned Unit authorizes only the Unit and permitted descendants for capabilities granted by that role. Siblings, ancestors outside the assignment, and Units in another Organization remain excluded. Dashboard and directory queries reuse these subqueries rather than recursively loading a tree in PHP.
+### Indexes and constraints
 
-## Membership, scope assignment, and capability model
+- Unique root UUID.
+- Unique `(organization_communication_id, version)` revision identity.
+- Unique `(organization_communication_revision_id, sort_order)` material order.
+- Root indexes for Organization/state/update time and governing Unit/state.
+- Revision indexes for communication/state and review queue state/submission time.
+- Material index for revision/type.
+- Restrictive foreign keys protect Organization, Unit, and actor membership governance records.
+- Revision/material ownership cascades only with physical parent deletion; root soft deletion remains the normal draft-deletion path.
+- Application-level model invariants require Organization, governing Unit, and all actor memberships to belong to the same Organization.
+- No nullable mixed owner, `church_id`, ContentItem foreign key, or MediaAsset foreign key exists.
 
-Membership plus active role assignment plus assigned Unit scope remain authoritative. A membership alone does not imply global visibility.
+Migration verification used a clean temporary SQLite database: all migrations applied, the three new tables were present, `migrate:rollback --step=3` removed exactly the new three migrations, and migration status returned them to pending. The temporary database was removed afterward.
 
-The fixed roles discovered are:
+## Domain models and lifecycle
 
-- Organization Administrator — Organization-root administration and all existing Organization capabilities.
-- Unit Administrator — scoped Unit viewing/management and scoped Church-assignment viewing/management.
-- Organization Viewer — scoped Organization/Unit/Church read visibility.
+### OrganizationCommunication
 
-The capability model currently covers Organization, Unit, Church-assignment, and membership responsibilities. It has no Organization Care, Church content, communications, campaign, publishing, domain-infrastructure, billing, or analytics authority. User-facing role labels were centralized on `OrganizationRole::label()` so raw capability names are not exposed.
+- Stable aggregate root owned by one Organization.
+- Requires one governing Organization Unit and creator OrganizationMembership from that same Organization.
+- Supports `communication` and `campaign` kinds; it has no relationship to the existing Church `Campaign` model.
+- Server-managed identity, ownership, governing Unit, creator, kind, UUID, and state are guarded from mass assignment.
+- Governing scope and stable identity are immutable after creation.
+- Soft deletion is permitted only for a never-distributed Draft; force deletion and deletion of non-Draft roots are rejected.
 
-## Existing Organization panel state
+Root lifecycle:
 
-The existing Filament panel already provided:
+- `Draft`: authoring/review foundation; no distribution fact exists.
+- `Active`: reserved for future 001C distribution evidence and cannot be entered in 001A.
+- `Withdrawn`: reserved for an Active communication; no Draft-to-Withdrawn transition is allowed.
+- `Closed`: terminal historical/inactive state; a Draft or future Active root may close.
 
-- `/organization` panel isolation;
-- Organization context/access middleware and strict authorization;
-- the shared K-SHELL account/workspace header;
-- Overview, Units, Churches, and Staff pages;
-- governed Unit and Church-assignment actions;
-- root-governed Organization membership and role management;
-- the existing Keryon/Gilroy theme and Organization workspace stylesheet.
+Direct model attempts to claim `Active` from Draft fail. No transition in this phase manufactures distribution evidence.
 
-Before this milestone, Overview was a small metric/governance page and Units/Churches were eager generic lists. There was no curated attention centre, safe operational Church detail, hierarchy drill-down, status aggregation, pagination, or large-organization browsing model.
+### OrganizationCommunicationRevision
 
-## Organization Dashboard architecture
+- Version-owned fields: title, summary/purpose, requested Church action, advisory adaptation policy, campaign start/end guidance, recommended response date, suggested publish-by date, availability start/end, lifecycle/review state, and actor/timestamp attribution.
+- Revision identity is immutable.
+- Approved and future Distributed revisions reject substantive field mutation.
+- Date validation enforces campaign end on/after start and availability end on/after start.
 
-The implemented read path is:
+Revision lifecycle:
 
-`Organization Filament Page → OrganizationWorkspaceQuery → OrganizationContext + OrganizationScopeResolver → authorized SQL scope → canonical Organization/Church operational tables → immutable DTOs → Blade`
+- `Draft → In Review`
+- `In Review → Changes Requested → Draft`
+- `In Review → Approved`
+- `Approved → Distributed` is reserved structurally for 001C; no distribution action exists in 001A.
+- Invalid state transitions fail at both workflow and model invariant boundaries.
 
-Complex hierarchy, authorization, aggregation, and status logic is not placed in Blade. `OrganizationWorkspaceQuery` produces `OrganizationDashboardSnapshot`, `OrganizationChurchSummary`, and `OrganizationUnitSummary` DTOs for presentation.
+### Revision-number allocation and next-revision behavior
 
-## Dashboard sections implemented
+- New versions are allocated inside a database transaction while the communication root and source revision are locked.
+- Database uniqueness on communication/version is the final concurrency invariant.
+- An Approved or future Distributed revision can intentionally seed a new Draft revision.
+- Canonical fields and ordered materials are copied; the approved source remains unchanged.
+- Repeated next-revision creation produced ordered versions `1, 2, 3`; an attempted duplicate version failed at the database constraint.
 
-- Personalized Organization Home introduction and Organization identity.
-- Persistent current Organization and human-readable authorized-scope context.
-- Attention centre as the primary dashboard region.
-- Restrained Organization overview metrics.
-- Website readiness distribution with an accessible textual equivalent.
-- Domain-state operational summary.
-- Authorized responsibility/scope presentation.
-- People & Access summary only for users with root membership visibility.
-- Bounded recent Organization governance activity.
-- Organization network lanes for Churches and Units, with both populated previews and composed zero-data states.
-- Stable communications and campaign lanes with future-ready read contracts and honest capability states that preserve Church-local authority.
-- Complete zero-data treatments for attention, overview, network, website readiness, domain state, coordination, scope, access, and activity.
+### OrganizationCommunicationMaterial
 
-No health score, engagement score, pastoral score, performance ranking, financial summary, attendance summary, Care metric, or vanity chart was added.
+- Materials are Organization-owned through `OrganizationCommunication → Revision → Material` only.
+- Supported bounded types: general, announcement, social caption, devotional, prayer points, discussion questions, campaign copy, website copy, and WhatsApp/status copy.
+- Material body is required and non-empty; optional title is normalized.
+- Sort order is deterministic and unique within a revision; deletion compacts remaining positions.
+- Create/update/delete operations are allowed only while the parent revision is Draft.
+- Materials on Approved revisions are immutable.
+- Material type is enum-constrained in domain actions and Eloquent casting.
 
-## Attention model
+### Adaptation policy and date semantics
 
-Attention is factual and canonical. A scoped Church needs attention when any of these real conditions applies:
+Advisory adaptation vocabulary:
 
-- Church is inactive;
-- onboarding is `not_started` or `in_progress`;
-- no current website publication exists;
-- a current primary custom domain is not fully active, ownership-verified, routing-verified, TLS-ready, and enabled.
+- Use as provided
+- Local adaptation encouraged
+- Local details required
+- Reference material only
 
-The dashboard surfaces conditions, not synthetic scoring or inferred stale thresholds. Attention filtering uses the same predicates as aggregate counting and Church summary mapping.
+These values communicate Organization intent only. They grant no control over future Church-owned copies and implement no DRM. Reference-only import behavior remains deferred to the Church import milestone.
 
-## Overview metrics and visualizations
+Dates are deliberately guidance-oriented: campaign start/end, recommended response date, and suggested publish-by date do not schedule or publish anything. Availability start/end is persisted for future acceptance/import rules; no acceptance behavior exists yet.
 
-Metrics are restricted to the authorized Church/Unit scope:
+## Capabilities and role mappings
 
-- Churches and active Churches;
-- visible active Units below the internal Organization root;
-- Churches needing attention;
-- onboarding needing attention;
-- websites live / not published;
-- custom domains active / needing attention;
-- Churches using a Keryon address;
-- active Organization members only where root membership visibility exists.
+Added stable Organization capability vocabulary:
 
-The first visualization is a compact website publishing-state distribution with visible labels and counts. Domain readiness is presented as a restrained three-state textual distribution. No chart package was added, and every graphical cue has a text equivalent.
+- `organization.communications.view`
+- `organization.communications.create`
+- `organization.communications.edit`
+- `organization.communications.approve`
+- `organization.communications.distribute`
+- `organization.communications.withdraw`
+- `organization.communications.deliveries.view`
 
-## Churches surface and Church detail boundary
+Default mappings:
 
-The Organization Churches surface is curated, searchable, filterable, paginated, and scope-bound. It shows only Organization-visible operational metadata: Church name, Unit/type, active state, onboarding state, website publication state, bounded domain state, and factual attention conditions.
+- Organization Administrator: all current Organization capabilities, including view/create/edit/approve/distribute/withdraw/delivery facts, within authorized scope.
+- Unit Administrator: view/create/edit and future delivery facts within assigned Unit plus permitted descendants; no approve, distribute, or withdraw.
+- Organization Viewer: view only.
 
-The read-only Church detail route reauthorizes the Church through the scope query and returns 404 outside scope or Organization. It presents hierarchy location and allowed operational status only. It has no “enter tenant,” impersonation, “view as Church,” or administrator takeover action. Governed move/detach controls remain visible only where the existing assignment-management capability permits them.
+Distribution and delivery capabilities are catalogue-only seams in 001A; they do not expose behavior.
 
-Church workspace access continues to come only from an independent active `ChurchMembership` through the shared shell.
+## Action/service and policy architecture
 
-## Hierarchy navigation and scope breadcrumbs
+- `OrganizationCommunicationAuthorizer`: re-resolves current `OrganizationContext` authority on every action and applies `OrganizationScopeResolver` capability checks to the governing Unit.
+- `OrganizationCommunicationManager`: creates roots/revision 1, edits Drafts, manages ordered Draft materials, creates locked next revisions, and soft-deletes eligible Drafts.
+- `OrganizationCommunicationWorkflow`: performs submit, request changes, return to Draft, approve, close, and truthful withdraw transitions.
+- `OrganizationCommunicationAudit`: records bounded, low-volume governance evidence without communication bodies.
+- Policies cover root, revision, and material view/mutation operations and repeat Organization ownership, current membership, capability, and Unit scope checks.
 
-The Structure surface now provides:
+`OrganizationScopeResolver::hasCapabilityForUnit()` exposes the existing closure-table scope decision as a reusable domain seam; it does not introduce a second scope model.
 
-- human-readable assigned-scope roots;
-- searchable, state-filtered, paginated Units;
-- direct Unit detail routes that reauthorize scope;
-- hierarchy breadcrumbs using Organization and Unit names rather than database terminology;
-- one-level-at-a-time child Unit drill-down;
-- paginated Churches below a selected Unit and its permitted descendants;
-- direct child Unit and direct Church counts.
+All action inputs derive Organization ownership, governing authority, actor memberships, lifecycle state, revision version, approval timestamps, and audit identity on the server. Models are guarded against mass assignment.
 
-The implementation does not eagerly render the complete tree. Scope labels use language such as `Keryon Fellowship → Lagos Region → Province 12`; closure-table terms and raw IDs are not primary UI.
+## Authorization and persona results
 
-## Communications and campaigns
-
-Existing Campaign and communications records are Church-owned tenant models. No approved Organization-owned campaign, communication package, distribution, local-adaptation, or Organization communications capability exists.
-
-Accordingly, this milestone does not aggregate Church campaigns or expose private Church content. Home now renders the completed Communications and Campaigns product lanes in both populated-contract and zero-data states. `OrganizationDashboardSnapshot` carries dedicated communication and campaign collections, currently empty until an approved canonical source exists. Future implementation can fill those read contracts without redesigning the dashboard, while the present UI clearly labels the capability as awaiting approval instead of fabricating actions or authority.
-
-## Website and domain health
-
-Website state uses the canonical `website_settings.current_publication_id`: `Live` or `Not published`.
-
-Domain state uses only bounded, non-secret operational evidence from the current primary unreleased domain: `Custom domain active`, `Verification required`, `Domain needs attention`, `Domain disabled`, or `Keryon address`. DNS secrets, verification hashes, provider credentials, internal payloads, and Central retry/force controls are not exposed.
-
-## People & Access and Settings
-
-The existing Staff page is retained and relabeled People & Access. It continues to use the existing Organization membership, role-assignment, policy, and identity services; it does not create a second identity model. Role labels now use responsibility language.
-
-People & Access navigation and dashboard summary are absent for non-root users lacking membership visibility. No new Organization Settings surface was invented because the repository has no mature Organization settings capability to expose safely.
-
-## Query performance and N+1 review
-
-- Scope is expressed as SQL subqueries backed by the existing role-assignment, closure-path, Unit, and Church-assignment indexes.
-- Aggregate counts execute over one authorized Church subquery.
-- Church status rows use joins/subqueries for onboarding, website publication, primary domain, Unit/type, and manageability; no per-Church query loop is used.
-- Unit rows use correlated counts for direct children and direct Church assignments; no recursive PHP traversal is used.
-- Direct hierarchy pages load only the selected Unit, one paginated child level, and one paginated descendant-Church list.
-- The focused pagination test creates 23 scoped Churches, confirms a 10-row page, and holds directory query execution to 12 queries or fewer.
-- Search and pagination tests prove a sibling Church is excluded even when its name matches.
-
-## Privacy and prohibited-data boundaries
-
-Care aggregation is excluded. The read model does not query prayer requests, Care notes, congregation members, private content, or media assets. The focused SQL-trace test verifies no queries reference `prayer_requests`, `congregation_members`, `content_items`, or `media_assets` while building the dashboard.
-
-No local member identity, prayer text, follow-up note, private draft, media asset, donation, attendance, billing, or pastoral data is displayed or aggregated. Source scans found no TenantContext shortcut, global-scope bypass, impersonation, private-data table reference, or customer-plane context mutation in the new read model/detail pages.
-
-## Authorization persona and route verification
-
-Verified through new and existing Organization, identity, shell, authorization, and Central tests:
-
-- Full Organization administrator: sees the full root-authorized scope and root People & Access.
-- Scoped Organization user: sees assigned Unit plus permitted descendants only.
-- Second/sibling scope: sibling Unit and Church names and counts remain excluded.
-- Church-only user: Organization Home denied.
-- Organization-only user: Organization access succeeds without a Church membership or TenantContext.
-- Combined Church + Organization user: each direct context remains independent and the shared shell offers only directly authorized workspaces.
-- Platform-only user: Organization Home denied.
-- Suspended Organization membership: denied.
+- Organization Administrator: can create, submit, explicitly self-approve, request changes, close, and create a later Draft revision inside authorized scope.
+- Unit Administrator: can create/edit/submit inside assigned Unit and descendants; cannot approve, distribute, withdraw, or act in a sibling Unit.
+- Organization Viewer: can view authorized records but cannot mutate.
+- Organization-only identity: works with no ChurchMembership and no `TenantContext`.
+- Church-only identity: denied.
+- Platform-only identity: denied.
+- Sibling-scoped identity: direct policy and action access denied.
+- Different-Organization identity: direct policy and action access denied.
+- Suspended Organization membership: stale session authority revalidation denies the next action.
 - Removed Organization membership: denied.
-- Different Organization: Church and Unit detail routes return not found.
-- Direct sibling URLs: Church and Unit detail routes return not found.
-- Aggregate correctness: a user authorized for two Churches sees two, not the third sibling Church.
-- Context isolation: OrganizationContext does not establish TenantContext; Church and Central regressions remain green.
+- Revoked role assignment: denied.
+- Cross-Organization Unit/creator/actor association: rejected by authorization and ownership-chain invariants.
+- Self-approval: explicitly allowed for a scoped Organization Administrator and records approver membership/time plus audit evidence.
 
-## Shell integration
+## Audit and privacy
 
-The Organization workspace uses the committed K-SHELL header/account panel and its workspace switching. No profile menu, logout, Help utility, account drawer, or context-switch implementation was duplicated. Browser proof confirmed the Organization identity and an independently authorized Church destination in the shared account panel.
+Low-volume `OrganizationAuditEvent` types were added for:
 
-## Desktop, mobile, accessibility, and empty states
+- communication created
+- next revision created
+- revision submitted
+- changes requested
+- revision approved
+- communication withdrawn
+- communication closed
 
-Rendered review used approximately 1440 × 1000 and 390 × 844.
+Audit subjects distinguish communication roots and revisions. Events store factual lifecycle/version/kind data plus actor membership ID, actor user ID, Organization, and governing Unit. They do not store titles, summaries, requested actions, material bodies, or review feedback. Tests explicitly verified canonical communication text and change-request feedback are absent from audit JSON.
 
-- Desktop Home establishes Organization identity, scope, attention priority, restrained metrics, readiness, responsibility, People & Access, and recent activity.
-- Structure supports breadcrumbs, one-level drill-down, counts, and authorized Churches.
-- Churches supports search, operational filters, bounded state badges, detail navigation, and existing authorized actions.
-- Mobile Home and Churches have no horizontal overflow at 390 pixels; long Organization names wrap safely and row layouts become readable stacked cards.
-- Existing Gilroy typography, Keryon shell, quiet green palette, restrained gold attention cues, whitespace, and low-density card relationships are preserved.
-- Headings, landmarks, breadcrumb labels, form labels, search semantics, list/table alternatives, text status labels, text chart equivalents, keyboard links, and visible focus states are present.
-- Reduced-motion handling remains available.
-- Empty states distinguish no assignment from no filter match and explain what will appear next.
-- A root-only Organization still renders the finished Home composition: compact clear-attention status, zero overview metrics, Church and Unit network lanes, website/domain readiness, communications, campaigns, authorized scope, People & Access, and governance activity.
-- Empty attention no longer creates a large vacant panel; spacing was tightened so overview and network context appear materially earlier in the viewport.
+The high-volume delivery event/telemetry model remains deferred.
 
-## Browser proof and local fixtures
+## Context and private-data boundaries
 
-Headless Chrome proof passed with zero page errors:
+- `OrganizationContext` is mandatory and freshly resolved for every domain action.
+- `TenantContext` is never established, consulted, or modified by the new domain.
+- No fallback exists through `users.church_id`, ChurchMembership, selected Church, or customer-plane shortcuts.
+- No dependency or foreign key targets Church Campaign, ContentItem, MediaAsset, FaithFlow, Website drafts, Prayer Requests, Care, congregation members, private Church notes, finance, or attendance.
+- Focused tests verify creation leaves Church Campaign, ContentItem, MediaAsset, and ChurchMembership counts unchanged for an Organization-only actor.
+- Source scan across new domain/actions/policies/migrations found no prohibited Church/Tenant/private-data dependency.
 
-- complete zero-data Organization Home desktop;
-- complete zero-data Organization Home mobile;
-- Organization Home desktop;
-- Structure drill-down desktop;
-- scoped Churches search/filter desktop;
-- read-only Church operational detail;
-- shared shell account/workspace panel;
-- Organization Home mobile;
-- Churches mobile;
-- no horizontal overflow at 390 pixels.
+Church model changes: none.
 
-Controlled local fixtures represented an Organization, multi-level Units, four Churches, active and pending domain states, published and unpublished websites, onboarding variation, and a combined Church + Organization identity. All Organization-dashboard-specific Unit, Church, assignment, website, domain, onboarding, membership, and audit fixture rows were removed after proof. No customer data was used or committed.
+Church Campaign changes: none.
 
-## Automated verification results
+Content Studio changes: none.
 
-- Focused Organization dashboard: 5 tests / 63 assertions — passed.
-- Organization architecture, hierarchy, OrganizationContext, scope authorization, and workspace combined: 40 tests / 267 assertions — passed.
-- Final context/identity/authorization/shell/Central/tenancy regression matrix: 99 tests / 632 assertions — passed.
-- Church Dashboard and Campaign workspace/authorization regression: 16 tests / 114 assertions — passed.
-- Full suite: 1,111 tests / 3,990 assertions — passed.
-- Accepted baseline comparison: +5 tests / +63 assertions; no unexplained reduction.
-- `npm run build`: passed with Vite 8.1.3.
-- Scoped Pint: passed.
-- Blade compilation (`php artisan view:cache`): passed.
-- PHP syntax checks for new page/read-model classes: passed.
-- `git diff --check`: passed.
-- Browser proof: passed at desktop and mobile, zero page errors, zero horizontal overflow.
-- Sensitive/private-data source scan: passed.
-- Prohibited-context/private-table SQL trace: passed.
+Media changes: none.
 
-## Migrations and packages
+FaithFlow changes: none.
 
-- Migrations added or changed: none.
-- Schema changes: none.
-- Packages installed or changed: none.
-- Analytics, chart, hierarchy, or Organization libraries added: none.
+TenantContext changes: none.
 
-## Implementation files
+## Deferred implementation status
 
+- Distribution targets/batches/deliveries: **not implemented**; belongs to K-ORG-COMMS-001C.
+- Organization communication assets: **not implemented**; belongs to K-ORG-COMMS-001B.
+- Organization authoring/review UI: **not implemented**; belongs to K-ORG-COMMS-001B.
+- Church inbox/receipt: **not implemented**.
+- Church import/adaptation: **not implemented**; belongs to K-ORG-COMMS-001E.
+- Notifications/email/SMS/WhatsApp/social transport: **not implemented**.
+- Organization FaithFlow: **not implemented**.
+- Dashboard integration: **not implemented**.
+- Browser proof: not required because no user-visible surface changed.
+
+## Verification results
+
+### Focused and architecture tests
+
+- K-ORG-COMMS-001A focused foundation: **11 tests, 82 assertions — PASS**.
+- Focused foundation plus Organization scope authorization: **22 tests, 138 assertions — PASS**.
+- Complete Organization feature directory: **51 tests, 349 assertions — PASS**.
+
+Focused coverage includes lifecycle, approval, self-approval, changes requested, immutability, next revision, version uniqueness, materials, schema/foreign keys/indexes, role mappings, sibling scope, cross-Organization denial, stale memberships/roles, identity personas, context isolation, mass assignment, audit privacy, and Church-model exclusion.
+
+### Regression groups
+
+- Shell / Identity / Authorization / Tenancy: **175 tests, 619 assertions — PASS**.
+- Content Studio / Campaigns / Communications: **149 tests, 511 assertions — PASS**.
+- FaithFlow: **195 tests, 373 assertions — PASS**.
+- Church Website / Trust / Central: **183 tests, 906 assertions — PASS**.
+- Organization architecture/context/dashboard regression: covered by the 51-test Organization run and final full suite — **PASS**.
+- Church authorization and TenantContext regression: covered by grouped and final full suite — **PASS**.
+- Content Studio regression: **PASS**.
+- Campaign regression: **PASS**.
+- FaithFlow regression: **PASS**.
+- Media regression: covered by grouped and final full suite — **PASS**.
+- Central regression: **PASS**.
+- Shell regression: **PASS**.
+
+### Full suite
+
+- Authoritative result: **1,122 tests, 4,072 assertions — PASS**.
+- Accepted baseline: 1,111 tests / 3,990 assertions.
+- Delta: +11 tests / +82 assertions; no unexplained reduction.
+
+Two initial `php artisan test` attempts exhausted the existing 128 MB CLI limit while rendering the pre-existing Care Center `PrayerRequestResourceTest`; neither reported a test assertion failure. The authoritative full run used the direct PHPUnit runner with a 512 MB process limit and completed successfully without changing repository or application configuration.
+
+### Build, style, syntax, and diff
+
+- `npm run build`: **PASS** (Vite production build).
+- Scoped Laravel Pint on every milestone PHP path: **PASS**.
+- PHP syntax validation on every new enum/model/service/policy/migration/test: **PASS**.
+- `git diff --check`: **PASS**, no whitespace errors.
+- Migration fresh/rollback proof: **PASS**.
+- Package files: unchanged.
+
+## Security review
+
+- IDOR/cross-Organization: policy and action-level ownership/scope checks deny foreign IDs.
+- Scope bypass: governing Unit is freshly resolved and checked through closure-table-backed `OrganizationScopeResolver`.
+- Stale membership/role: `OrganizationContext` cache is cleared and membership/role state is re-resolved before each action.
+- Unauthorized transitions: explicit workflow guards plus model lifecycle invariants reject invalid transitions.
+- Approved mutation: canonical revision fields and materials cannot mutate after approval; edits require a new Draft revision.
+- Direct Active claim: rejected until a future distribution action provides the factual basis.
+- Mass assignment: ownership, authority, actor, state, version, approval, and audit fields are guarded/server-managed.
+- Cross-Organization association: model ownership-chain validation rejects foreign Unit and membership attribution.
+- Tenant leakage: no TenantContext dependency and Organization-only operation is tested.
+- Sensitive-data leakage: source scan and audit-content assertions pass.
+
+## Performance review
+
+- Root/revision creation and lifecycle transitions use bounded queries inside short transactions.
+- Revision allocation locks the aggregate root and relies on a unique database invariant.
+- Materials use deterministic database ordering.
+- Relationships are explicit and support eager loading; the domain does not recursively traverse hierarchy in PHP.
+- Authorization delegates descendant checks to the existing closure-table resolver.
+- No delivery fan-out or 10,000-recipient work exists in this phase, so queues/batching are correctly deferred.
+- No obvious N+1 path was introduced into a user-facing surface because no UI/query listing surface was added.
+
+## Exact milestone file set
+
+Modified:
+
+- `app/Enums/OrganizationAuditEventType.php`
+- `app/Enums/OrganizationAuditSubjectType.php`
+- `app/Enums/OrganizationCapability.php`
 - `app/Enums/OrganizationRole.php`
-- `app/Filament/Organization/Concerns/InteractsWithOrganizationWorkspace.php`
-- `app/Filament/Organization/Pages/OrganizationOverview.php`
-- `app/Filament/Organization/Pages/OrganizationChurches.php`
-- `app/Filament/Organization/Pages/OrganizationChurchDetail.php`
-- `app/Filament/Organization/Pages/OrganizationUnits.php`
-- `app/Filament/Organization/Pages/OrganizationUnitDetail.php`
-- `app/Filament/Organization/Pages/OrganizationStaff.php`
-- `app/Organizations/Read/OrganizationWorkspaceQuery.php`
-- `app/Organizations/Read/Dto/OrganizationDashboardSnapshot.php`
-- `app/Organizations/Read/Dto/OrganizationChurchSummary.php`
-- `app/Organizations/Read/Dto/OrganizationUnitSummary.php`
-- `resources/views/filament/organization/partials/context.blade.php`
-- `resources/views/filament/organization/pages/overview.blade.php`
-- `resources/views/filament/organization/pages/churches.blade.php`
-- `resources/views/filament/organization/pages/church-detail.blade.php`
-- `resources/views/filament/organization/pages/units.blade.php`
-- `resources/views/filament/organization/pages/unit-detail.blade.php`
-- `resources/views/filament/organization/pages/staff.blade.php`
-- `resources/css/filament/organization/workspace.css`
-- `tests/Feature/Organization/OrganizationDashboardTest.php`
+- `app/Models/Organization.php`
+- `app/Models/OrganizationMembership.php`
+- `app/Models/OrganizationUnit.php`
+- `app/Organizations/OrganizationScopeResolver.php`
+- `tests/Feature/Organization/OrganizationScopeAuthorizationTest.php`
 - `report.md`
 
-## Unrelated repository state preserved
+Added:
 
-The implementation did not absorb or modify the known unrelated categories:
+- `app/Enums/OrganizationCommunicationAdaptationPolicy.php`
+- `app/Enums/OrganizationCommunicationKind.php`
+- `app/Enums/OrganizationCommunicationMaterialType.php`
+- `app/Enums/OrganizationCommunicationRevisionState.php`
+- `app/Enums/OrganizationCommunicationState.php`
+- `app/Models/OrganizationCommunication.php`
+- `app/Models/OrganizationCommunicationMaterial.php`
+- `app/Models/OrganizationCommunicationRevision.php`
+- `app/Organizations/Communications/OrganizationCommunicationAudit.php`
+- `app/Organizations/Communications/OrganizationCommunicationAuthorizer.php`
+- `app/Organizations/Communications/OrganizationCommunicationManager.php`
+- `app/Organizations/Communications/OrganizationCommunicationWorkflow.php`
+- `app/Policies/OrganizationCommunicationMaterialPolicy.php`
+- `app/Policies/OrganizationCommunicationPolicy.php`
+- `app/Policies/OrganizationCommunicationRevisionPolicy.php`
+- `database/migrations/2026_09_02_170000_create_organization_communications_table.php`
+- `database/migrations/2026_09_02_170010_create_organization_communication_revisions_table.php`
+- `database/migrations/2026_09_02_170020_create_organization_communication_materials_table.php`
+- `tests/Feature/Organization/OrganizationCommunicationFoundationTest.php`
 
-- `.gitignore` changes;
-- Congregation enum/resource/page changes;
-- `DatabaseSeeder` changes;
-- local-development documentation changes;
-- agent/skill/governance/lock/stub files.
+## Deviations and stop conditions
 
-These remain in the worktree alongside the uncommitted K-ORG-DASH-001 files. No staging occurred.
+- No material deviation from the approved three-table boundary.
+- No distribution/target/delivery persistence was added.
+- No Church ownership model was altered.
+- No polymorphic ownership was introduced.
+- No package was installed.
+- No Organization architecture refactor was required.
+- No stop condition was encountered.
 
-## Deferred Organization capabilities
+## Closure and recommended next step
 
-- Organization-owned communications and campaigns, including explicit capabilities, audience governance, distribution, local adaptation/approval, and audit semantics.
-- Any Organization-level settings model that Product Office separately approves.
-- Broader People & Access product refinement beyond the existing governed identity services.
-- Domain remediation controls, which remain a Central/infrastructure capability.
-- Any analytics beyond the current factual operational summaries.
-- All Care, congregation, finance, attendance, billing, impersonation, ERP, HR, payroll, and Church-private-data capabilities.
+K-ORG-COMMS-001A satisfies its domain, persistence, authorization, lifecycle, audit, isolation, migration, and regression criteria and **can close** after Product Office review.
 
-## Close recommendation
-
-K-ORG-DASH-001 can be classified **CLOSED** after Product Office reviews and accepts this uncommitted implementation report. All authorized implementation and verification criteria are satisfied, and no stop condition was crossed.
-
-Recommended next Product Office milestone: **K-ORG-COMMS-001 — Organization Communications & Campaign Distribution Architecture**, beginning with explicit capability, ownership, audience-scope, local-adaptation, privacy, and audit design rather than reusing Church Campaign records.
+Recommended next step: authorize **K-ORG-COMMS-001B — Organization authoring, review UX, and Organization-owned communication assets**. That phase should consume this domain service boundary, keep approval explicit, avoid exposing unfinished distribution navigation, and must not weaken Church ownership or tenancy protections.

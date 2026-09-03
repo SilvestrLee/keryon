@@ -44,6 +44,11 @@ class OrganizationMembership extends Model
         return $this->hasMany(OrganizationRoleAssignment::class);
     }
 
+    public function createdCommunications(): HasMany
+    {
+        return $this->hasMany(OrganizationCommunication::class, 'created_by_organization_membership_id');
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', OrganizationMembershipStatus::ACTIVE->value);

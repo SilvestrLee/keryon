@@ -27,11 +27,16 @@ enum OrganizationRole: string
                 OrganizationCapability::UnitsManage,
                 OrganizationCapability::ChurchesView,
                 OrganizationCapability::ChurchesManageAssignments,
+                OrganizationCapability::CommunicationsView,
+                OrganizationCapability::CommunicationsCreate,
+                OrganizationCapability::CommunicationsEdit,
+                OrganizationCapability::CommunicationDeliveriesView,
             ],
             self::ORGANIZATION_VIEWER => [
                 OrganizationCapability::OrganizationView,
                 OrganizationCapability::UnitsView,
                 OrganizationCapability::ChurchesView,
+                OrganizationCapability::CommunicationsView,
             ],
         };
     }

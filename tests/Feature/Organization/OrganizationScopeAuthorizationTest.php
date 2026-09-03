@@ -73,11 +73,16 @@ class OrganizationScopeAuthorizationTest extends TestCase
             OrganizationCapability::UnitsManage,
             OrganizationCapability::ChurchesView,
             OrganizationCapability::ChurchesManageAssignments,
+            OrganizationCapability::CommunicationsView,
+            OrganizationCapability::CommunicationsCreate,
+            OrganizationCapability::CommunicationsEdit,
+            OrganizationCapability::CommunicationDeliveriesView,
         ], OrganizationRole::UNIT_ADMINISTRATOR->capabilities());
         $this->assertSame([
             OrganizationCapability::OrganizationView,
             OrganizationCapability::UnitsView,
             OrganizationCapability::ChurchesView,
+            OrganizationCapability::CommunicationsView,
         ], OrganizationRole::ORGANIZATION_VIEWER->capabilities());
         $this->assertFalse(enum_exists('App\\Enums\\OrganizationCareCapability'));
         $this->assertFalse(in_array(ChurchRole::CARE->value, array_map(fn ($capability) => $capability->value, OrganizationCapability::cases()), true));

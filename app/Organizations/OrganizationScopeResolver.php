@@ -49,6 +49,14 @@ class OrganizationScopeResolver
             && $this->unitIsInScope($unit, OrganizationCapability::ChurchesManageAssignments);
     }
 
+    public function hasCapabilityForUnit(
+        OrganizationCapability $capability,
+        OrganizationUnit $unit,
+        bool $includeArchivedTarget = false,
+    ): bool {
+        return $this->unitIsInScope($unit, $capability, $includeArchivedTarget);
+    }
+
     public function hasOrganizationCapability(OrganizationCapability $capability): bool
     {
         $membership = $this->trustedMembership();

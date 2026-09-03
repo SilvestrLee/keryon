@@ -56,4 +56,9 @@ class OrganizationUnit extends Model
     {
         return $this->hasMany(OrganizationRoleAssignment::class);
     }
+
+    public function governedCommunications(): HasMany
+    {
+        return $this->hasMany(OrganizationCommunication::class, 'governing_unit_id');
+    }
 }

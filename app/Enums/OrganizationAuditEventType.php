@@ -22,4 +22,11 @@ enum OrganizationAuditEventType: string
     case ROLE_SUSPENDED = 'organization.role.suspended';
     case ROLE_REMOVED = 'organization.role.removed';
     case ROLE_SCOPE_CHANGED = 'organization.role.scope_changed';
+    case COMMUNICATION_CREATED = 'organization.communication.created';
+    case COMMUNICATION_REVISION_CREATED = 'organization.communication.revision_created';
+    case COMMUNICATION_REVISION_SUBMITTED = 'organization.communication.revision_submitted';
+    case COMMUNICATION_REVISION_CHANGES_REQUESTED = 'organization.communication.revision_changes_requested';
+    case COMMUNICATION_REVISION_APPROVED = 'organization.communication.revision_approved';
+    case COMMUNICATION_WITHDRAWN = 'organization.communication.withdrawn';
+    case COMMUNICATION_CLOSED = 'organization.communication.closed';
 }
