@@ -4,14 +4,21 @@ namespace App\Filament\Organization\Pages;
 
 use App\Enums\OrganizationCommunicationAdaptationPolicy;
 use App\Enums\OrganizationCommunicationAssetRightsBasis;
+use App\Enums\OrganizationCommunicationDistributionState;
 use App\Enums\OrganizationCommunicationKind;
 use App\Enums\OrganizationCommunicationMaterialType;
 use App\Enums\OrganizationCommunicationRevisionState;
+use App\Enums\OrganizationCommunicationTargetMode;
 use App\Filament\Organization\Concerns\InteractsWithOrganizationWorkspace;
+use App\Models\Church;
 use App\Models\OrganizationCommunication;
 use App\Models\OrganizationCommunicationAsset;
+use App\Models\OrganizationCommunicationDistribution;
 use App\Models\OrganizationCommunicationMaterial;
 use App\Models\OrganizationCommunicationRevision;
+use App\Models\OrganizationUnit;
+use App\Organizations\Communications\Distribution\OrganizationCommunicationAudienceResolver;
+use App\Organizations\Communications\Distribution\OrganizationCommunicationDistributionManager;
 use App\Organizations\Communications\OrganizationCommunicationAssetManager;
 use App\Organizations\Communications\OrganizationCommunicationManager;
 use App\Organizations\Communications\OrganizationCommunicationWorkflow;
@@ -21,13 +28,17 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\MarkdownEditor;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Wizard;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Throwable;
 
 /**
  * K-ORG-COMMS-001B §12-§13/§25-§33 — the dedicated authoring/review
@@ -501,6 +512,182 @@ class OrganizationCommunicationDetail extends Page
                     $this->redirect($this->backUrl());
                 }
             });
+    }
+
+    // ---------------------------------------------------------------
+    // Distribution — K-ORG-COMMS-001C §32-§34
+    // ---------------------------------------------------------------
+
+    public function canDistribute(): bool
+    {
+        $revision = $this->revision();
+
+        return in_array($revision->state, [
+            OrganizationCommunicationRevisionState::APPROVED,
+            OrganizationCommunicationRevisionState::DISTRIBUTED,
+        ], true) && (bool) auth()->user()?->can('distribute', $this->communication());
+    }
+
+    public function distributeAction(): Action
+    {
+        return Action::make('distribute')
+            ->label('Distribute')
+            ->color('primary')
+            ->visible(fn (): bool => $this->canDistribute())
+            ->steps([
+                Wizard\Step::make('Audience')
+                    ->schema([
+                        Select::make('target_mode')
+                            ->label('Who should receive this?')
+                            ->options([
+                                OrganizationCommunicationTargetMode::GOVERNING_SCOPE->value => 'Entire governing scope — '.$this->governingUnitPath(),
+                                OrganizationCommunicationTargetMode::UNIT_SUBTREE->value => 'A specific Unit within the governing scope',
+                                OrganizationCommunicationTargetMode::EXPLICIT_CHURCHES->value => 'Specific Churches',
+                            ])
+                            ->default(OrganizationCommunicationTargetMode::GOVERNING_SCOPE->value)
+                            ->live()
+                            ->required()
+                            ->native(false),
+                        Select::make('target_unit_id')
+                            ->label('Unit')
+                            ->helperText('Only Units within this communication\'s governing scope are offered.')
+                            ->options(fn (): array => $this->subtreeUnitOptions())
+                            ->searchable()
+                            ->native(false)
+                            ->live()
+                            ->visible(fn (callable $get): bool => $get('target_mode') === OrganizationCommunicationTargetMode::UNIT_SUBTREE->value)
+                            ->required(fn (callable $get): bool => $get('target_mode') === OrganizationCommunicationTargetMode::UNIT_SUBTREE->value),
+                        Select::make('church_ids')
+                            ->label('Churches')
+                            ->multiple()
+                            ->searchable()
+                            ->getSearchResultsUsing(fn (string $search): array => $this->searchEligibleChurches($search))
+                            ->getOptionLabelsUsing(fn (array $values): array => Church::query()->whereIn('id', $values)->pluck('name', 'id')->all())
+                            ->live()
+                            ->visible(fn (callable $get): bool => $get('target_mode') === OrganizationCommunicationTargetMode::EXPLICIT_CHURCHES->value)
+                            ->required(fn (callable $get): bool => $get('target_mode') === OrganizationCommunicationTargetMode::EXPLICIT_CHURCHES->value),
+                    ]),
+                Wizard\Step::make('Preview')
+                    ->schema([
+                        Placeholder::make('preview')
+                            ->label('Resolved recipients')
+                            ->content(fn (callable $get): string => $this->audiencePreviewSummary($get('target_mode'), $get('target_unit_id'), $get('church_ids'))),
+                    ]),
+                Wizard\Step::make('Confirm')
+                    ->schema([
+                        Placeholder::make('confirm')
+                            ->label('Ready to distribute')
+                            ->content(fn (callable $get): string => $this->distributionConfirmationCopy($get('target_mode'), $get('target_unit_id'), $get('church_ids'))),
+                    ]),
+            ])
+            ->modalHeading('Distribute this approved communication')
+            ->modalSubmitActionLabel('Distribute')
+            ->action(function (array $data): void {
+                $mode = OrganizationCommunicationTargetMode::from($data['target_mode']);
+                $this->runGovernedFresh(
+                    fn () => app(OrganizationCommunicationDistributionManager::class)->request(
+                        $this->revision(),
+                        $mode,
+                        $data['target_unit_id'] ?? null,
+                        $data['church_ids'] ?? null,
+                    ),
+                    'Distribution started',
+                );
+            });
+    }
+
+    /** @return array<int, string> */
+    private function subtreeUnitOptions(): array
+    {
+        $communication = $this->communication();
+
+        return OrganizationUnit::query()
+            ->whereIn('id', DB::table('organization_unit_paths')
+                ->where('organization_id', $communication->organization_id)
+                ->where('ancestor_id', $communication->governing_unit_id)
+                ->select('descendant_id'))
+            ->orderBy('name')
+            ->pluck('name', 'id')
+            ->all();
+    }
+
+    /** @return array<int, string> */
+    private function searchEligibleChurches(string $search): array
+    {
+        $communication = $this->communication();
+
+        return app(OrganizationCommunicationAudienceResolver::class)
+            ->preview($communication->organization_id, $communication->governing_unit_id, null, $search, 25)
+            ->getCollection()
+            ->pluck('name', 'id')
+            ->all();
+    }
+
+    /** @param list<int>|null $churchIds */
+    private function resolvedAudienceCount(?string $mode, ?int $unitId, ?array $churchIds): ?int
+    {
+        if ($mode === null) {
+            return null;
+        }
+
+        try {
+            $resolver = app(OrganizationCommunicationAudienceResolver::class);
+            $target = $resolver->validateTarget($this->communication(), OrganizationCommunicationTargetMode::from($mode), $unitId, $churchIds);
+
+            return $resolver->previewCount($this->communication()->organization_id, $target['unitId'], $target['churchIds']);
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    /** @param list<int>|null $churchIds */
+    public function audiencePreviewSummary(?string $mode, ?int $unitId, ?array $churchIds): string
+    {
+        $count = $this->resolvedAudienceCount($mode, $unitId, $churchIds);
+
+        return match (true) {
+            $count === null => 'Choose a valid audience to see resolved recipients.',
+            $count === 0 => 'No eligible Churches match this audience yet.',
+            $count === 1 => '1 Church currently matches this audience.',
+            default => "{$count} Churches currently match this audience.",
+        };
+    }
+
+    /** @param list<int>|null $churchIds */
+    public function distributionConfirmationCopy(?string $mode, ?int $unitId, ?array $churchIds): string
+    {
+        $count = $this->resolvedAudienceCount($mode, $unitId, $churchIds);
+        $headline = match (true) {
+            $count === null => 'Make this approved communication available?',
+            $count === 0 => 'No eligible Churches currently match this audience.',
+            $count === 1 => 'Make this approved communication available to 1 Church?',
+            default => "Make this approved communication available to {$count} Churches?",
+        };
+
+        return $headline."\n\nChurches will receive the approved Organization version. This does not publish anything on their behalf — the count above reflects current eligibility and may be re-confirmed at the moment of distribution.";
+    }
+
+    /** @return Collection<int, OrganizationCommunicationDistribution> */
+    public function distributions(): Collection
+    {
+        return $this->communication()->distributions()
+            ->with(['revision', 'targetUnit', 'initiatorMembership.user'])
+            ->limit(10)
+            ->get();
+    }
+
+    public function distributionStateLabel(OrganizationCommunicationDistributionState $state): string
+    {
+        return $state->label();
+    }
+
+    public function distributionTargetSummary(OrganizationCommunicationDistribution $distribution): string
+    {
+        return match ($distribution->target_mode) {
+            OrganizationCommunicationTargetMode::GOVERNING_SCOPE => 'Entire governing scope',
+            OrganizationCommunicationTargetMode::UNIT_SUBTREE => 'Unit: '.($distribution->targetUnit?->name ?? '—'),
+            OrganizationCommunicationTargetMode::EXPLICIT_CHURCHES => count($distribution->target_church_ids ?? []).' selected Churches',
+        };
     }
 
     /** @return array<string, string> */

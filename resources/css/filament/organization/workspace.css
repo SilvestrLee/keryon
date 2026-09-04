@@ -505,8 +505,11 @@
 .org-badge--draft { background: var(--org-soft); color: var(--org-muted); }
 .org-badge--in-review,
 .org-badge--changes-requested { background: var(--org-warm); color: #735a08; }
-.org-badge--approved { background: #e5f2e9; color: #27633f; }
+.org-badge--approved,
+.org-badge--completed { background: #e5f2e9; color: #27633f; }
 .org-badge--closed { background: #f0f2f0; color: #69716c; }
+.org-badge--processing { background: var(--org-warm); color: #735a08; }
+.org-badge--failed { background: var(--org-alert-soft); color: var(--org-alert); }
 
 .org-tabs {
     display: flex;

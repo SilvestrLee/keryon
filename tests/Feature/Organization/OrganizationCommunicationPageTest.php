@@ -132,7 +132,29 @@ class OrganizationCommunicationPageTest extends TestCase
         $response->assertSee('Approved and ready for sharing');
         $response->assertSee('Submitted for review');
         $response->assertSee('Revision approved');
+        // K-ORG-COMMS-001C §32 — Distribute is now a legitimate control for
+        // an authorized actor on an Approved revision (it was correctly
+        // absent under 001B, before this milestone existed). What must
+        // still never appear is any *other* distribution/publication
+        // control.
+        $response->assertSee('Distribute');
         $response->assertDontSee('Send now');
-        $response->assertDontSee('Distribute');
+        $response->assertDontSee('Publish');
+        $response->assertDontSee('Choose recipients');
+        $response->assertDontSee('Choose Churches');
+    }
+
+    public function test_distribute_action_wizard_mounts_without_error(): void
+    {
+        $revision = $this->manager->create($this->scope, OrganizationCommunicationKind::COMMUNICATION, ['title' => 'Distribute wizard check'])
+            ->revisions->sole();
+        $this->manager->addMaterial($revision, OrganizationCommunicationMaterialType::GENERAL, 'Body copy');
+        $workflow = app(OrganizationCommunicationWorkflow::class);
+        $approved = $workflow->approve($workflow->submit($revision));
+
+        Livewire::test(OrganizationCommunicationDetail::class, ['record' => $approved->organization_communication_id])
+            ->assertSuccessful()
+            ->mountAction('distribute')
+            ->assertActionMounted('distribute');
     }
 }

@@ -12,4 +12,5 @@ enum OrganizationAuditSubjectType: string
     case COMMUNICATION = 'organization_communication';
     case COMMUNICATION_REVISION = 'organization_communication_revision';
     case COMMUNICATION_ASSET = 'organization_communication_asset';
+    case COMMUNICATION_DISTRIBUTION = 'organization_communication_distribution';
 }

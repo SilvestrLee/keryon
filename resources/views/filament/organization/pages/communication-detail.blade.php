@@ -6,6 +6,7 @@
     @php($canApprove = (bool) auth()->user()?->can('approve', $communication))
     @php($canClose = (bool) auth()->user()?->can('close', $communication))
     @php($canDelete = (bool) auth()->user()?->can('delete', $communication))
+    @php($canViewDistributions = (bool) auth()->user()?->can('viewDistributions', $communication))
     @php($isDraft = $revision->state->value === 'draft')
     @php($isInReview = $revision->state->value === 'in_review')
     @php($isChangesRequested = $revision->state->value === 'changes_requested')
@@ -41,11 +42,16 @@
         <section class="org-state-banner org-state-banner--approved" role="status">
             <div>
                 <strong>Approved and ready for sharing</strong>
-                <p>Approved by {{ $revision->approverMembership?->user?->name ?? 'an Organization Administrator' }} on {{ $revision->approved_at?->format('j M Y') }}. This revision is read-only. Distribution will become available once audience targeting is configured.</p>
+                <p>Approved by {{ $revision->approverMembership?->user?->name ?? 'an Organization Administrator' }} on {{ $revision->approved_at?->format('j M Y') }}. This revision is read-only.</p>
             </div>
-            @if ($canEdit)
-                <x-filament::button size="sm" wire:click="mountAction('createNextRevision')">Create new revision</x-filament::button>
-            @endif
+            <div class="org-actions">
+                @if ($this->canDistribute())
+                    <x-filament::button size="sm" wire:click="mountAction('distribute')">Distribute</x-filament::button>
+                @endif
+                @if ($canEdit)
+                    <x-filament::button size="sm" color="gray" wire:click="mountAction('createNextRevision')">Create new revision</x-filament::button>
+                @endif
+            </div>
         </section>
     @endif
 
@@ -55,6 +61,9 @@
             <button type="button" class="org-tab" :class="tab === 'resources' && 'is-active'" @click="tab = 'resources'" role="tab">Resources</button>
             <button type="button" class="org-tab" :class="tab === 'guidance' && 'is-active'" @click="tab = 'guidance'" role="tab">Guidance &amp; dates</button>
             <button type="button" class="org-tab" :class="tab === 'review' && 'is-active'" @click="tab = 'review'" role="tab">Review</button>
+            @if ($canViewDistributions && $isApproved)
+                <button type="button" class="org-tab" :class="tab === 'distribution' && 'is-active'" @click="tab = 'distribution'" role="tab">Distribution</button>
+            @endif
             <button type="button" class="org-tab" :class="tab === 'history' && 'is-active'" @click="tab = 'history'" role="tab">History</button>
         </nav>
 
@@ -224,6 +233,52 @@
                 @endif
             </div>
         </div>
+
+        {{-- Distribution --}}
+        @if ($canViewDistributions && $isApproved)
+            <div class="org-tab-panel" x-show="tab === 'distribution'" role="tabpanel" x-cloak>
+                <div class="org-section__header org-section__header--compact" style="padding-left: 0; padding-right: 0;">
+                    <div>
+                        <h3>Distribution</h3>
+                        <p>Make this approved revision available to a bounded set of Churches. Churches remain responsible for local use.</p>
+                    </div>
+                    @if ($this->canDistribute())
+                        <x-filament::button size="sm" wire:click="mountAction('distribute')">Distribute</x-filament::button>
+                    @endif
+                </div>
+
+                @if ($this->distributions()->isEmpty())
+                    <div class="org-empty org-empty--compact">
+                        <h3>Not yet distributed</h3>
+                        <p>{{ $this->canDistribute() ? 'Choose an audience to make this approved revision available to Churches.' : 'An authorized Organization Administrator can distribute this approved revision.' }}</p>
+                    </div>
+                @else
+                    <div class="org-timeline">
+                        @foreach ($this->distributions() as $distribution)
+                            <div class="org-timeline-item">
+                                <div>
+                                    <div class="org-timeline-item__version">
+                                        v{{ $distribution->revision->version }} · {{ $this->distributionTargetSummary($distribution) }}
+                                        <span class="org-badge org-badge--{{ str($distribution->state->value)->replace('_', '-') }}">{{ $this->distributionStateLabel($distribution->state) }}</span>
+                                    </div>
+                                    <div class="org-timeline-item__meta">
+                                        Requested by {{ $distribution->initiatorMembership?->user?->name ?? '—' }}, {{ $distribution->requested_at?->format('j M Y, H:i') }}
+                                        @if ($distribution->snapshot_at)
+                                            · Audience captured {{ $distribution->snapshot_at->format('j M Y, H:i') }}
+                                        @endif
+                                        @if ($distribution->state->value === 'completed')
+                                            · Distributed to {{ $distribution->delivered_count }} {{ str('Church')->plural($distribution->delivered_count) }}
+                                        @elseif ($distribution->state->value === 'failed')
+                                            · {{ $distribution->failure_reason }}
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        @endif
 
         {{-- History --}}
         <div class="org-tab-panel" x-show="tab === 'history'" role="tabpanel" x-cloak>

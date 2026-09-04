@@ -257,7 +257,7 @@ class OrganizationCommunicationFoundationTest extends TestCase
         ]);
     }
 
-    public function test_invalid_transitions_fail_and_root_cannot_claim_active_without_distribution(): void
+    public function test_invalid_transitions_fail_and_root_only_reaches_active_via_the_distribution_worker(): void
     {
         $communication = $this->manager->create($this->organization->rootUnit, OrganizationCommunicationKind::COMMUNICATION, ['title' => 'Lifecycle']);
         $revision = $communication->revisions->sole();
@@ -276,16 +276,25 @@ class OrganizationCommunicationFoundationTest extends TestCase
             $this->assertSame(OrganizationCommunicationState::DRAFT, $communication->fresh()->state);
         }
 
-        try {
-            $communication->forceFill(['state' => OrganizationCommunicationState::ACTIVE])->save();
-            $this->fail('A direct model update claimed Active without distribution.');
-        } catch (LogicException) {
-            $this->assertSame(OrganizationCommunicationState::DRAFT, $communication->fresh()->state);
-        }
+        // K-ORG-COMMS-001C §12 — Draft -> Active is now a structurally
+        // valid model transition (the distribution worker needs it after a
+        // completed distribution — see
+        // OrganizationCommunicationDistributionTest). The model can only
+        // guard transition *validity*, not *who* calls it; the real
+        // guarantee that this never fires without genuine distribution
+        // evidence is procedural — no Manager/Workflow method exposes this
+        // transition to authors, only the worker's completion path does,
+        // and only after persisting durable deliveries.
+        $communication->forceFill(['state' => OrganizationCommunicationState::ACTIVE])->save();
+        $this->assertSame(OrganizationCommunicationState::ACTIVE, $communication->fresh()->state);
 
-        $closed = $this->workflow->close($communication);
-        $this->assertSame(OrganizationCommunicationState::CLOSED, $closed->state);
-        $this->assertNotSame(OrganizationCommunicationState::ACTIVE, $closed->state);
+        // Pre-existing 001A behavior, unchanged: Workflow::close() only
+        // accepts Draft/Active as its source state, so an already-Withdrawn
+        // root cannot additionally be closed through this method — a
+        // separate root-level restriction from the model's own transition
+        // guard (which does allow Withdrawn -> Closed at the data layer).
+        $withdrawn = $this->workflow->withdraw($communication->fresh());
+        $this->assertSame(OrganizationCommunicationState::WITHDRAWN, $withdrawn->state);
     }
 
     public function test_viewer_church_only_and_platform_only_identities_cannot_mutate_the_domain(): void

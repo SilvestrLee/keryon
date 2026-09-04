@@ -7,6 +7,7 @@ use App\Enums\OrganizationAuditSubjectType;
 use App\Models\OrganizationAuditEvent;
 use App\Models\OrganizationCommunication;
 use App\Models\OrganizationCommunicationAsset;
+use App\Models\OrganizationCommunicationDistribution;
 use App\Models\OrganizationCommunicationRevision;
 use App\Models\OrganizationMembership;
 
@@ -18,7 +19,7 @@ class OrganizationCommunicationAudit
      */
     public function record(
         OrganizationAuditEventType $event,
-        OrganizationCommunication|OrganizationCommunicationRevision|OrganizationCommunicationAsset $subject,
+        OrganizationCommunication|OrganizationCommunicationRevision|OrganizationCommunicationAsset|OrganizationCommunicationDistribution $subject,
         OrganizationMembership $actor,
         array $new,
         ?array $previous = null,
@@ -26,11 +27,13 @@ class OrganizationCommunicationAudit
         $communication = match (true) {
             $subject instanceof OrganizationCommunicationRevision => $subject->communication,
             $subject instanceof OrganizationCommunicationAsset => $subject->communication,
+            $subject instanceof OrganizationCommunicationDistribution => $subject->communication,
             default => $subject,
         };
         $subjectType = match (true) {
             $subject instanceof OrganizationCommunicationRevision => OrganizationAuditSubjectType::COMMUNICATION_REVISION,
             $subject instanceof OrganizationCommunicationAsset => OrganizationAuditSubjectType::COMMUNICATION_ASSET,
+            $subject instanceof OrganizationCommunicationDistribution => OrganizationAuditSubjectType::COMMUNICATION_DISTRIBUTION,
             default => OrganizationAuditSubjectType::COMMUNICATION,
         };
 

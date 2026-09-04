@@ -48,7 +48,12 @@ class OrganizationCommunication extends Model
             if ($communication->isDirty('state')) {
                 $from = OrganizationCommunicationState::from((string) $communication->getRawOriginal('state'));
                 $allowed = match ($from) {
-                    OrganizationCommunicationState::DRAFT => [OrganizationCommunicationState::CLOSED],
+                    // K-ORG-COMMS-001C §12 — Active becomes legitimate now
+                    // that real distribution evidence exists. Only the
+                    // distribution worker sets this, and only after a
+                    // completed durable distribution (never merely because
+                    // an operator opened the targeting screen).
+                    OrganizationCommunicationState::DRAFT => [OrganizationCommunicationState::ACTIVE, OrganizationCommunicationState::CLOSED],
                     OrganizationCommunicationState::ACTIVE => [OrganizationCommunicationState::WITHDRAWN, OrganizationCommunicationState::CLOSED],
                     OrganizationCommunicationState::WITHDRAWN => [OrganizationCommunicationState::CLOSED],
                     OrganizationCommunicationState::CLOSED => [],
@@ -85,6 +90,11 @@ class OrganizationCommunication extends Model
     public function revisions(): HasMany
     {
         return $this->hasMany(OrganizationCommunicationRevision::class)->orderBy('version');
+    }
+
+    public function distributions(): HasMany
+    {
+        return $this->hasMany(OrganizationCommunicationDistribution::class, 'organization_communication_id')->latest('id');
     }
 
     public function latestRevision(): ?OrganizationCommunicationRevision

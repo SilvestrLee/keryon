@@ -31,4 +31,7 @@ enum OrganizationAuditEventType: string
     case COMMUNICATION_CLOSED = 'organization.communication.closed';
     case COMMUNICATION_ASSET_ADDED = 'organization.communication.asset_added';
     case COMMUNICATION_ASSET_REMOVED = 'organization.communication.asset_removed';
+    case COMMUNICATION_DISTRIBUTION_REQUESTED = 'organization.communication.distribution_requested';
+    case COMMUNICATION_DISTRIBUTION_COMPLETED = 'organization.communication.distribution_completed';
+    case COMMUNICATION_DISTRIBUTION_FAILED = 'organization.communication.distribution_failed';
 }

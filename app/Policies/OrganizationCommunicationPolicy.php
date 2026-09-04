@@ -53,6 +53,16 @@ class OrganizationCommunicationPolicy
         return $this->allows($user, $communication, OrganizationCapability::CommunicationsWithdraw);
     }
 
+    public function distribute(User $user, OrganizationCommunication $communication): bool
+    {
+        return $this->allows($user, $communication, OrganizationCapability::CommunicationsDistribute);
+    }
+
+    public function viewDistributions(User $user, OrganizationCommunication $communication): bool
+    {
+        return $this->allows($user, $communication, OrganizationCapability::CommunicationDeliveriesView);
+    }
+
     public function close(User $user, OrganizationCommunication $communication): bool
     {
         return $this->withdraw($user, $communication);
