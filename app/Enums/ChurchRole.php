@@ -65,6 +65,7 @@ enum ChurchRole: string
                 Capability::WebsiteDomainManage,
                 Capability::OrganizationCommunicationsView,
                 Capability::OrganizationCommunicationsRespond,
+                Capability::OrganizationCommunicationsImport,
             ],
             self::COMMUNICATIONS => [
                 Capability::CongregationView,
@@ -85,6 +86,7 @@ enum ChurchRole: string
                 Capability::MediaManage,
                 Capability::OrganizationCommunicationsView,
                 Capability::OrganizationCommunicationsRespond,
+                Capability::OrganizationCommunicationsImport,
             ],
             self::CARE => [
                 Capability::CongregationView,

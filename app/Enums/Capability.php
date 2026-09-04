@@ -66,11 +66,13 @@ enum Capability: string
     /**
      * K-ORG-COMMS-001D §4 — the Church-side capability family for
      * receiving/responding to Organization-distributed communications.
-     * `OrganizationCommunicationsImport` is deliberately reserved now
-     * (declared, code-referenceable) but granted to no role's
-     * `capabilities()` yet — see K-ORG-COMMS-001D report, Product Office
-     * decision F. Do not activate import behavior against this case
-     * before K-ORG-COMMS-001E.
+     * K-ORG-COMMS-001E §6/§44 activates `OrganizationCommunicationsImport`
+     * (Administrator, Communications) — but it is never sufficient on its
+     * own: importing any concrete record additionally requires that
+     * record's own destination capability (`content.manage`,
+     * `campaigns.manage`, `media.manage`). Import authority is
+     * conjunctive, never a shortcut around local Church authorization —
+     * see OrganizationCommunicationImportService.
      */
     case OrganizationCommunicationsView = 'organization_communications.view';
     case OrganizationCommunicationsRespond = 'organization_communications.respond';

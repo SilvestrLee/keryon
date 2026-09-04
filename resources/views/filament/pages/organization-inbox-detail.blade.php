@@ -120,11 +120,36 @@
                     @endif
                 </div>
             @elseif ($state === 'accepted')
+                @php($importPlan = $this->importPlan())
+                @php($existingImport = $this->existingImport())
                 <div class="kc-inbox-response-body">
                     <p><strong>Accepted</strong> — Your Church has accepted this Organization communication.</p>
-                    <p>Import into your Church workspace will become available in the next workflow step.</p>
                     @if ($delivery->responderMembership?->user)
                         <p class="kc-inbox-response-meta">Accepted by {{ $delivery->responderMembership->user->name }} on {{ $delivery->accepted_at?->format('j M Y') }}.</p>
+                    @endif
+
+                    @if ($existingImport)
+                        <div class="kc-inbox-imported">
+                            <p><strong>Imported to your Church</strong></p>
+                            @if ($existingImport->importerMembership?->user)
+                                <p class="kc-inbox-response-meta">Imported by {{ $existingImport->importerMembership->user->name }} on {{ $existingImport->imported_at?->format('j M Y') }}.</p>
+                            @endif
+                            <div class="kc-inbox-response-actions">
+                                @foreach ($this->postImportLinks() as $link)
+                                    @if ($link['url'])
+                                        <a class="kc-text-link" href="{{ $link['url'] }}" wire:navigate>{{ $link['label'] }} <span aria-hidden="true">→</span></a>
+                                    @else
+                                        <span class="kc-inbox-response-meta">{{ $link['label'] }}</span>
+                                    @endif
+                                @endforeach
+                            </div>
+                        </div>
+                    @elseif ($this->isReferenceOnly())
+                        <p>This item is provided as reference material and cannot be imported directly into your Church workspace.</p>
+                    @elseif ($importPlan?->canExecute())
+                        <div class="kc-inbox-response-actions">
+                            <x-filament::button color="primary" wire:click="mountAction('importDelivery')">Import to your Church</x-filament::button>
+                        </div>
                     @endif
                 </div>
             @elseif ($state === 'declined')

@@ -173,14 +173,14 @@ class OrganizationInboxTest extends TestCase
         $this->assertFalse(collect(ChurchRole::CARE->capabilities())->contains(Capability::OrganizationCommunicationsView));
     }
 
-    public function test_import_capability_is_declared_but_granted_to_no_role(): void
+    public function test_import_capability_is_granted_to_administrator_and_communications_only(): void
     {
-        foreach (ChurchRole::cases() as $role) {
-            $this->assertFalse(
-                collect($role->capabilities())->contains(Capability::OrganizationCommunicationsImport),
-                "{$role->value} must not carry organization_communications.import in K-ORG-COMMS-001D."
-            );
-        }
+        // K-ORG-COMMS-001D declared this capability unassigned;
+        // K-ORG-COMMS-001E §6 activates it for Administrator and
+        // Communications. Care never carries it.
+        $this->assertTrue(collect(ChurchRole::ADMINISTRATOR->capabilities())->contains(Capability::OrganizationCommunicationsImport));
+        $this->assertTrue(collect(ChurchRole::COMMUNICATIONS->capabilities())->contains(Capability::OrganizationCommunicationsImport));
+        $this->assertFalse(collect(ChurchRole::CARE->capabilities())->contains(Capability::OrganizationCommunicationsImport));
     }
 
     public function test_care_role_cannot_access_the_inbox(): void

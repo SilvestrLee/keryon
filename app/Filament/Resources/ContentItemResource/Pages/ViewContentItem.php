@@ -4,12 +4,14 @@ namespace App\Filament\Resources\ContentItemResource\Pages;
 
 use App\Commercial\Entitlements\EntitlementResolver;
 use App\Enums\Capability;
+use App\Enums\ContentOrigin;
 use App\Enums\ContentStatus;
 use App\Enums\ContentType;
 use App\Enums\EntitlementKey;
 use App\Filament\Pages\WebsiteDraftHandoff;
 use App\Filament\Resources\ContentItemResource;
 use App\Models\ContentItem;
+use App\Models\OrganizationCommunicationImportResult;
 use App\Support\TenantContext;
 use App\Website\Drafts\AvailableWebsiteDraftDestinations;
 use Filament\Actions\Action;
@@ -71,6 +73,34 @@ class ViewContentItem extends ViewRecord
                     ])
                     ->columns(2)
                     ->visible(fn (ContentItem $record): bool => $record->status === ContentStatus::APPROVED),
+
+                // K-ORG-COMMS-001E §50/§51 — provenance only, never an
+                // Organization edit control and never a live sync: a
+                // restrained, read-only source note for content that
+                // started life as an Organization import.
+                Section::make('Source')
+                    ->schema([
+                        TextEntry::make('organization_source')
+                            ->label('Organization source')
+                            ->state(function (ContentItem $record): string {
+                                $result = OrganizationCommunicationImportResult::query()
+                                    ->where('content_item_id', $record->id)
+                                    ->with(['import.organization', 'import.revision'])
+                                    ->first();
+
+                                if ($result === null) {
+                                    return '—';
+                                }
+
+                                $organizationName = $result->import->organization?->name ?? 'an Organization';
+                                $revisionTitle = $result->import->revision?->title;
+                                $importedAt = $result->import->imported_at?->format('j M Y');
+
+                                return "Shared by {$organizationName}".($revisionTitle ? " · {$revisionTitle}" : '')." · Imported {$importedAt}";
+                            })
+                            ->columnSpanFull(),
+                    ])
+                    ->visible(fn (ContentItem $record): bool => $record->origin === ContentOrigin::ORGANIZATION_IMPORT),
 
                 Section::make('Record Information')
                     ->schema([

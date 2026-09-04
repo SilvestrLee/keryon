@@ -41,6 +41,36 @@ class RecordMediaAssetRights
         );
     }
 
+    /**
+     * K-ORG-COMMS-001E §20 — rights for an asset imported from an
+     * Organization Communication. The Organization declared these rights
+     * at authoring time (`OrganizationCommunicationAsset::rights_basis`),
+     * not the Church, hence `AssetProvenance::OrganizationShared` rather
+     * than `churchDeclared()`. Grants the same bounded operational uses
+     * as any other Church-declared asset (§22 — import itself never
+     * publishes anything; ordinary downstream publication rules remain
+     * authoritative for whatever happens to this asset next).
+     */
+    public function organizationShared(MediaAsset $asset, bool $attributionRequired, ?string $attributionText): MediaAssetRights
+    {
+        Gate::authorize('update', $asset);
+
+        $rights = $asset->rights()->firstOrCreate([], $this->attributes(
+            $asset,
+            AssetProvenance::OrganizationShared,
+            AssetRightsStatus::Declared,
+            AssetRightsPolicy::churchOperationalUses(),
+            Auth::id(),
+        ));
+
+        $rights->forceFill([
+            'attribution_required' => $attributionRequired,
+            'attribution_text' => $attributionText,
+        ])->save();
+
+        return $rights->fresh();
+    }
+
     public function restrict(MediaAsset $asset, AssetRightsStatus $status, string $reason): MediaAssetRights
     {
         Gate::authorize('update', $asset);

@@ -11,7 +11,7 @@ class ContentOriginTest extends TestCase
     {
         $values = array_map(fn (ContentOrigin $case) => $case->value, ContentOrigin::cases());
 
-        $this->assertSame(['human', 'faithflow'], $values);
+        $this->assertSame(['human', 'faithflow', 'organization_import'], $values);
     }
 
     public function test_every_case_has_a_label(): void
@@ -26,6 +26,7 @@ class ContentOriginTest extends TestCase
         $this->assertSame([
             'human' => 'Human',
             'faithflow' => 'FaithFlow',
+            'organization_import' => 'Organization import',
         ], ContentOrigin::options());
     }
 }

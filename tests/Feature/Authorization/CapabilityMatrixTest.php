@@ -147,20 +147,11 @@ class CapabilityMatrixTest extends TestCase
     {
         $membership = $this->membership([ChurchRole::ADMINISTRATOR, ChurchRole::COMMUNICATIONS, ChurchRole::CARE]);
 
-        // K-ORG-COMMS-001D §4/§86(F) — `OrganizationCommunicationsImport`
-        // is deliberately declared now but granted to no role yet
-        // (reserved for K-ORG-COMMS-001E). Every other capability must
-        // still be reachable through some role union — this is the one
-        // documented, directive-authorized exception to that invariant.
-        $reserved = [Capability::OrganizationCommunicationsImport];
-
+        // K-ORG-COMMS-001D reserved `OrganizationCommunicationsImport`
+        // unassigned; K-ORG-COMMS-001E §6 now activates it for
+        // Administrator and Communications, so every declared Capability
+        // is reachable through this full role union again.
         foreach (Capability::cases() as $capability) {
-            if (in_array($capability, $reserved, true)) {
-                $this->assertFalse($membership->hasCapability($capability), "Expected reserved capability {$capability->value} to remain unassigned.");
-
-                continue;
-            }
-
             $this->assertTrue($membership->hasCapability($capability), "Expected {$capability->value} to be present in the full role union.");
         }
     }

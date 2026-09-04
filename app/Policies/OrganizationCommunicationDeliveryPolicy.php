@@ -46,6 +46,26 @@ class OrganizationCommunicationDeliveryPolicy
     }
 
     /**
+     * K-ORG-COMMS-001E §44 — the BASE import gate only:
+     * `organization_communications.import` plus delivery ownership.
+     * Deliberately does not (and cannot, from here) check the
+     * destination-record capabilities (`content.manage`,
+     * `campaigns.manage`, `media.manage`) required for what a specific
+     * import would actually create — that conjunctive check depends on
+     * the concrete import plan and is enforced by
+     * `OrganizationCommunicationImportService`/`OrganizationCommunicationImportPlan`,
+     * never bypassable by satisfying this method alone.
+     */
+    public function import(User $user, OrganizationCommunicationDelivery $delivery): bool
+    {
+        $membership = $this->membershipFor($user);
+
+        return $membership !== null
+            && $membership->hasCapability(Capability::OrganizationCommunicationsImport)
+            && (int) $delivery->church_id === (int) $membership->church_id;
+    }
+
+    /**
      * K-ORG-COMMS-001D §21-§24 — the Church-side asset boundary. An asset
      * is only ever reachable through a delivery the Church may view, and
      * only when that exact asset belongs to the exact revision the

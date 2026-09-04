@@ -4,11 +4,16 @@ namespace App\Filament\Pages;
 
 use App\Communications\OrganizationInbox\ChurchOrganizationCommunicationQuery;
 use App\Communications\OrganizationInbox\Exceptions\OrganizationCommunicationResponseException;
+use App\Communications\OrganizationInbox\Import\Exceptions\OrganizationCommunicationImportException;
+use App\Communications\OrganizationInbox\Import\OrganizationCommunicationImportPlan;
+use App\Communications\OrganizationInbox\Import\OrganizationCommunicationImportService;
 use App\Communications\OrganizationInbox\OrganizationCommunicationChurchResponseService;
 use App\Enums\OrganizationCommunicationAdaptationPolicy;
 use App\Enums\OrganizationCommunicationDeclineReasonCode;
+use App\Filament\Resources\ContentItemResource;
 use App\Models\OrganizationCommunicationAsset;
 use App\Models\OrganizationCommunicationDelivery;
+use App\Models\OrganizationCommunicationImport;
 use App\Models\OrganizationCommunicationMaterial;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
@@ -37,6 +42,10 @@ class OrganizationInboxDetail extends Page
     public string $delivery;
 
     private ?OrganizationCommunicationDelivery $deliveryCache = null;
+
+    private ?OrganizationCommunicationImportPlan $importPlanCache = null;
+
+    private bool $importPlanResolved = false;
 
     public function mount(): void
     {
@@ -138,6 +147,121 @@ class OrganizationInboxDetail extends Page
 
                 $this->respond(fn () => app(OrganizationCommunicationChurchResponseService::class)->decline($this->deliveryRecord(), $reason), 'Declined.');
             });
+    }
+
+    public function canImport(): bool
+    {
+        return auth()->user()?->can('import', $this->deliveryRecord()) ?? false;
+    }
+
+    /**
+     * Memoized (including the "not authorized" null case) — computing a
+     * plan is not free, and several accessors below each need it. §43:
+     * the preview and the execution both go through the same
+     * `OrganizationCommunicationImportService`/Planner, never a
+     * second, UI-only set of rules.
+     */
+    public function importPlan(): ?OrganizationCommunicationImportPlan
+    {
+        if ($this->importPlanResolved) {
+            return $this->importPlanCache;
+        }
+
+        $this->importPlanResolved = true;
+
+        if (! $this->canImport()) {
+            return $this->importPlanCache = null;
+        }
+
+        return $this->importPlanCache = app(OrganizationCommunicationImportService::class)->preview($this->deliveryRecord());
+    }
+
+    public function existingImport(): ?OrganizationCommunicationImport
+    {
+        return $this->importPlan()?->existingImport;
+    }
+
+    /** @return array<int, array{label: string, url: ?string}> */
+    public function postImportLinks(): array
+    {
+        $import = $this->existingImport();
+
+        if ($import === null) {
+            return [];
+        }
+
+        $results = $import->results;
+        $links = [];
+
+        $campaignId = $results->firstWhere('campaign_id', '!=', null)?->campaign_id;
+        if ($campaignId !== null) {
+            $links[] = ['label' => 'Open Campaign', 'url' => CampaignWorkspace::getUrl(['campaign' => $campaignId])];
+        }
+
+        if ($results->contains(fn ($result) => $result->content_item_id !== null)) {
+            $links[] = ['label' => 'Review Content', 'url' => ContentItemResource::getUrl('index')];
+        }
+
+        if ($results->contains(fn ($result) => $result->media_asset_id !== null)) {
+            $links[] = ['label' => 'Imported media is now available in Church Media', 'url' => null];
+        }
+
+        return $links;
+    }
+
+    public function importDeliveryAction(): Action
+    {
+        return Action::make('importDelivery')
+            ->label('Import to your Church')
+            ->color('primary')
+            ->visible(fn (): bool => ($this->importPlan()?->canExecute()) === true)
+            ->requiresConfirmation()
+            ->modalHeading('Import to your Church')
+            ->modalDescription(fn (): string => $this->importPreviewDescription())
+            ->modalSubmitActionLabel('Import')
+            ->action(function (): void {
+                try {
+                    app(OrganizationCommunicationImportService::class)->import($this->deliveryRecord());
+                } catch (OrganizationCommunicationImportException $e) {
+                    Notification::make()->danger()->title('This could not be imported')->body($e->getMessage())->send();
+
+                    return;
+                } catch (Throwable $e) {
+                    report($e);
+                    Notification::make()->danger()->title('This could not be imported')->send();
+
+                    return;
+                }
+
+                $this->deliveryCache = null;
+                $this->importPlanResolved = false;
+                $this->importPlanCache = null;
+                Notification::make()->success()->title('Imported to your Church')->send();
+            });
+    }
+
+    private function importPreviewDescription(): string
+    {
+        $plan = $this->importPlan();
+
+        if ($plan === null) {
+            return '';
+        }
+
+        $created = collect([
+            $plan->createsCampaign ? '1 Campaign' : null,
+            $plan->contentItemCount() > 0 ? $plan->contentItemCount().' Content '.str('draft')->plural($plan->contentItemCount()) : null,
+            $plan->assetCount() > 0 ? $plan->assetCount().' Media '.str('asset')->plural($plan->assetCount()) : null,
+        ])->filter()->implode(', ');
+
+        $description = "This will create: {$created}. Everything will be created as Church-owned working material — nothing will be published automatically. Your Church will own and control the imported copies. Organization approval does not become Church approval.";
+
+        if ($plan->excludedAssets->isNotEmpty()) {
+            $reasons = $plan->excludedAssets->pluck('reason')->unique()->implode(' ');
+            $description .= ' '.$plan->excludedAssets->count().' '.str('asset')->plural($plan->excludedAssets->count()).' will be skipped: '.$reasons;
+        }
+
+        return $description;
     }
 
     private function respond(callable $call, string $successMessage): void

@@ -112,7 +112,9 @@
 .kc-inbox-response { background: var(--kc-soft); border-radius: 1rem; padding: 1.5rem; }
 .kc-inbox-response-body p { color: var(--kc-ink); font-size: .9rem; line-height: 1.6; margin: 0 0 .5rem; }
 .kc-inbox-response-meta { color: var(--kc-muted); font-size: .8rem; }
-.kc-inbox-response-actions { display: flex; gap: .75rem; margin-top: .75rem; }
+.kc-inbox-response-actions { align-items: center; display: flex; flex-wrap: wrap; gap: .75rem; margin-top: .75rem; }
+.kc-inbox-imported { background: #fff; border-radius: .8rem; margin-top: 1rem; padding: 1.1rem 1.25rem; }
+.kc-inbox-imported .kc-inbox-response-actions { flex-wrap: wrap; }
 
 @media (max-width: 640px) {
     .kc-inbox-row { grid-template-columns: 1fr; }
