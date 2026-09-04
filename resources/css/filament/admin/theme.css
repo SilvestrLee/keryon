@@ -6,6 +6,7 @@
 @import './design-marketplace.css';
 @import './church-dashboard.css';
 @import './communications-hub.css';
+@import './organization-inbox.css';
 
 @source '../../../../app/Filament/**/*';
 @source '../../../../resources/views/filament/**/*';

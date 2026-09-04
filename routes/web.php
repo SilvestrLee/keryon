@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ChurchActivationController;
+use App\Http\Controllers\ChurchOrganizationCommunicationAssetController;
 use App\Http\Controllers\ChurchStaffInvitationController;
 use App\Http\Controllers\InvitationLandingController;
 use App\Http\Controllers\OrganizationCommunicationAssetController;
@@ -23,6 +24,14 @@ Route::get('/app/media/{asset}', PrivateMediaController::class)
 Route::get('/app/organization-assets/{asset}', OrganizationCommunicationAssetController::class)
     ->whereUuid('asset')
     ->name('organization-communications.assets.private');
+
+// K-ORG-COMMS-001D §21-§24 — the Church-side asset boundary. Deliberately
+// its own route/controller/policy path, not a reuse of the Organization
+// route above (see ChurchOrganizationCommunicationAssetDelivery docblock).
+Route::get('/app/organization-inbox/{delivery}/assets/{asset}', ChurchOrganizationCommunicationAssetController::class)
+    ->whereUuid('delivery')
+    ->whereUuid('asset')
+    ->name('organization-communications.church-inbox.assets.private');
 
 Route::middleware([SecureInvitationResponse::class])->group(function (): void {
     Route::get('/invitation/continue/{continuation}', [InvitationLandingController::class, 'show'])->name('invitations.continue');

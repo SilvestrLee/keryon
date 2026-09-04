@@ -63,6 +63,19 @@ enum Capability: string
     case StaffView = 'staff.view';
     case StaffManage = 'staff.manage';
 
+    /**
+     * K-ORG-COMMS-001D §4 — the Church-side capability family for
+     * receiving/responding to Organization-distributed communications.
+     * `OrganizationCommunicationsImport` is deliberately reserved now
+     * (declared, code-referenceable) but granted to no role's
+     * `capabilities()` yet — see K-ORG-COMMS-001D report, Product Office
+     * decision F. Do not activate import behavior against this case
+     * before K-ORG-COMMS-001E.
+     */
+    case OrganizationCommunicationsView = 'organization_communications.view';
+    case OrganizationCommunicationsRespond = 'organization_communications.respond';
+    case OrganizationCommunicationsImport = 'organization_communications.import';
+
     public function label(): string
     {
         return match ($this) {
@@ -90,6 +103,9 @@ enum Capability: string
             self::MediaManage => 'Manage Media',
             self::StaffView => 'View Staff',
             self::StaffManage => 'Manage Staff',
+            self::OrganizationCommunicationsView => 'View Organization Communications',
+            self::OrganizationCommunicationsRespond => 'Respond to Organization Communications',
+            self::OrganizationCommunicationsImport => 'Import Organization Communications',
         };
     }
 }
