@@ -14,6 +14,7 @@ use App\Enums\OrganizationRoleAssignmentStatus;
 use App\Enums\OrganizationUnitStatus;
 use App\Models\Organization;
 use App\Models\OrganizationMembership;
+use App\Organizations\Communications\Tracking\OrganizationCommunicationAttentionSignals;
 use App\Organizations\OrganizationScopeResolver;
 use App\Organizations\Read\Dto\OrganizationChurchSummary;
 use App\Organizations\Read\Dto\OrganizationDashboardSnapshot;
@@ -29,6 +30,7 @@ final class OrganizationWorkspaceQuery
     public function __construct(
         private readonly OrganizationContext $context,
         private readonly OrganizationScopeResolver $scope,
+        private readonly OrganizationCommunicationAttentionSignals $communicationAttention,
     ) {}
 
     public function dashboard(): OrganizationDashboardSnapshot
@@ -71,7 +73,7 @@ final class OrganizationWorkspaceQuery
             attentionItems: $attention,
             churchPreview: $churchPreview,
             unitPreview: $unitPreview,
-            communicationItems: [],
+            communicationItems: $this->communicationAttention->forDashboard(),
             campaignItems: [],
             recentActivity: $this->recentActivity(),
         );

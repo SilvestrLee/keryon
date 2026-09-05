@@ -511,6 +511,29 @@
 .org-badge--processing { background: var(--org-warm); color: #735a08; }
 .org-badge--failed { background: var(--org-alert-soft); color: var(--org-alert); }
 
+/* K-ORG-COMMS-001F — bounded delivery-outcome badges (Tracking tab). */
+.org-badge--available { background: var(--org-warm); color: #735a08; }
+.org-badge--accepted { background: #e5f2e9; color: #27633f; }
+.org-badge--declined { background: #f0f2f0; color: #69716c; }
+.org-badge--imported { background: #fbf1dc; color: var(--org-gold); }
+.org-badge--expired { background: var(--org-alert-soft); color: var(--org-alert); }
+.org-badge--withdrawn { background: #f0f2f0; color: #69716c; }
+
+.org-tracking-summary { display: grid; gap: 1.25rem; }
+.org-tracking-revision { border: 1px solid var(--org-line); border-radius: .85rem; padding: 1.1rem 1.25rem; }
+.org-tracking-revision__header { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.org-tracking-revision__header h4 { font-size: .92rem; font-weight: 750; margin: 0; }
+.org-tracking-revision__header span { color: var(--org-muted); font-size: .74rem; }
+.org-tracking-counts { display: flex; flex-wrap: wrap; gap: .5rem; margin: .75rem 0; }
+.org-tracking-counts .org-badge { font-weight: 700; }
+.org-tracking-decline-breakdown { color: var(--org-muted); font-size: .74rem; margin: .5rem 0 0; }
+.org-tracking-distributions { display: grid; gap: .4rem; margin-top: .75rem; }
+.org-tracking-distributions a { color: var(--org-gold); font-size: .78rem; font-weight: 700; text-decoration: none; }
+.org-recipient-table { width: 100%; border-collapse: collapse; margin-top: .5rem; }
+.org-recipient-table th { text-align: left; font-size: .68rem; text-transform: uppercase; letter-spacing: .04em; color: var(--org-muted); padding: .5rem .6rem; border-bottom: 1px solid var(--org-line); }
+.org-recipient-table td { padding: .65rem .6rem; border-bottom: 1px solid var(--org-line); font-size: .82rem; vertical-align: top; }
+.org-recipient-table td small { display: block; color: var(--org-muted); font-size: .7rem; margin-top: .15rem; }
+
 .org-tabs {
     display: flex;
     flex-wrap: wrap;

@@ -63,6 +63,7 @@
             <button type="button" class="org-tab" :class="tab === 'review' && 'is-active'" @click="tab = 'review'" role="tab">Review</button>
             @if ($canViewDistributions && $isApproved)
                 <button type="button" class="org-tab" :class="tab === 'distribution' && 'is-active'" @click="tab = 'distribution'" role="tab">Distribution</button>
+                <button type="button" class="org-tab" :class="tab === 'tracking' && 'is-active'" @click="tab = 'tracking'" role="tab">Tracking</button>
             @endif
             <button type="button" class="org-tab" :class="tab === 'history' && 'is-active'" @click="tab = 'history'" role="tab">History</button>
         </nav>
@@ -276,6 +277,147 @@
                             </div>
                         @endforeach
                     </div>
+                @endif
+            </div>
+        @endif
+
+        {{-- Tracking (K-ORG-COMMS-001F) — read-only, factual delivery-outcome
+             visibility only. Never Church-local content/state. --}}
+        @if ($canViewDistributions && $isApproved)
+            <div class="org-tab-panel" x-show="tab === 'tracking'" role="tabpanel" x-cloak>
+                @php($trackingSummary = $this->trackingSummary())
+                <div class="org-section__header org-section__header--compact" style="padding-left: 0; padding-right: 0;">
+                    <div>
+                        <h3>Tracking</h3>
+                        <p>Which Churches received this, and their bounded response outcome. Local Church content, edits, and reviewers are never visible here.</p>
+                    </div>
+                </div>
+
+                @if (empty($trackingSummary))
+                    <div class="org-empty org-empty--compact">
+                        <h3>This communication has not been distributed</h3>
+                        <p>Tracking will appear once at least one distribution has been requested.</p>
+                    </div>
+                @else
+                    <div class="org-tracking-summary">
+                        @foreach ($trackingSummary as $revisionSummary)
+                            <article class="org-tracking-revision">
+                                <div class="org-tracking-revision__header">
+                                    <h4>v{{ $revisionSummary->revisionVersion }}</h4>
+                                    <span>
+                                        {{ $revisionSummary->recipientCount }} {{ str('Church')->plural($revisionSummary->recipientCount) }}
+                                        @if ($revisionSummary->firstDistributedAt)
+                                            · Distributed {{ \Illuminate\Support\Carbon::parse($revisionSummary->firstDistributedAt)->format('j M Y') }}
+                                        @endif
+                                    </span>
+                                </div>
+
+                                @if ($revisionSummary->recipientCount === 0)
+                                    <div class="org-empty org-empty--compact">
+                                        <p>{{ $revisionSummary->recipientCount }} Churches received this communication. Responses have not been recorded yet.</p>
+                                    </div>
+                                @else
+                                    <div class="org-tracking-counts">
+                                        @foreach (['available', 'accepted', 'declined', 'imported', 'expired', 'withdrawn'] as $outcome)
+                                            <span class="org-badge org-badge--{{ $outcome }}">{{ $this->outcomeLabel($outcome) }}: {{ $revisionSummary->count($outcome) }}</span>
+                                        @endforeach
+                                    </div>
+
+                                    @if ($revisionSummary->count('declined') > 0 && count($revisionSummary->declineReasonCounts))
+                                        <p class="org-tracking-decline-breakdown">
+                                            Decline reasons:
+                                            @foreach ($revisionSummary->declineReasonCounts as $code => $count)
+                                                {{ $this->declineReasonLabel($code) }}: {{ $count }}@if (! $loop->last), @endif
+                                            @endforeach
+                                        </p>
+                                    @endif
+                                @endif
+
+                                <div class="org-tracking-distributions">
+                                    @foreach ($this->trackingDistributionsForRevision($revisionSummary->revisionId) as $distribution)
+                                        <a href="#" wire:click.prevent="selectTrackingDistribution({{ $distribution->id }})">
+                                            View Church list — {{ $this->distributionTargetSummary($distribution) }}
+                                            ({{ $this->distributionStateLabel($distribution->state) }}) →
+                                        </a>
+                                    @endforeach
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+
+                    @if ($this->trackingDistributionId)
+                        @php($distributionTracking = $this->selectedDistributionTracking())
+                        @php($recipients = $this->trackingRecipients())
+                        <section class="org-section" style="margin-top: 1.5rem;" aria-labelledby="tracking-recipients-heading">
+                            <div class="org-section__header org-section__header--compact" style="padding-left: 0; padding-right: 0;">
+                                <div>
+                                    <h3 id="tracking-recipients-heading">Church list — v{{ $distributionTracking->revisionVersion }}</h3>
+                                    <p>{{ $distributionTracking->targetSummary }} · {{ $distributionTracking->recipientCount }} {{ str('Church')->plural($distributionTracking->recipientCount) }}</p>
+                                </div>
+                            </div>
+
+                            <div class="org-filters" role="search" aria-label="Filter Church list">
+                                <label>
+                                    <span>Search</span>
+                                    <input type="search" wire:model.live.debounce.300ms="trackingSearch" placeholder="Church or Unit name">
+                                </label>
+                                <label>
+                                    <span>Outcome</span>
+                                    <select wire:model.live="trackingOutcomeFilter">
+                                        <option value="">All</option>
+                                        @foreach (['available', 'accepted', 'declined', 'imported', 'expired', 'withdrawn'] as $outcome)
+                                            <option value="{{ $outcome }}">{{ $this->outcomeLabel($outcome) }}</option>
+                                        @endforeach
+                                    </select>
+                                </label>
+                            </div>
+
+                            @if ($recipients->isEmpty())
+                                <div class="org-empty org-empty--compact">
+                                    <h3>No Churches match these tracking filters</h3>
+                                    <p>Clear or adjust the filters to see other recipients.</p>
+                                </div>
+                            @else
+                                <div style="overflow-x: auto;">
+                                    <table class="org-recipient-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Church</th>
+                                                <th>Outcome</th>
+                                                <th>Shared</th>
+                                                <th>Response</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($recipients as $row)
+                                                <tr>
+                                                    <td>
+                                                        {{ $row->churchName }}
+                                                        <small>{{ $row->snapshotUnitPath }}@if ($row->isDetached) · No longer assigned to this Organization @endif</small>
+                                                    </td>
+                                                    <td><span class="org-badge org-badge--{{ $row->outcome }}">{{ $row->outcomeLabel }}</span></td>
+                                                    <td>{{ $row->availableAt ? \Illuminate\Support\Carbon::parse($row->availableAt)->format('j M Y') : '—' }}</td>
+                                                    <td>
+                                                        @if ($row->outcome === 'imported' && $row->importedAt)
+                                                            Imported {{ \Illuminate\Support\Carbon::parse($row->importedAt)->format('j M Y') }}
+                                                        @elseif ($row->respondedAt)
+                                                            {{ $row->outcomeLabel }} {{ \Illuminate\Support\Carbon::parse($row->respondedAt)->format('j M Y') }}
+                                                            @if ($row->declineReasonLabel)
+                                                                <small>{{ $row->declineReasonLabel }}</small>
+                                                            @endif
+                                                        @else
+                                                            —
+                                                        @endif
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="org-pagination">{{ $recipients->links() }}</div>
+                            @endif
+                        </section>
+                    @endif
                 @endif
             </div>
         @endif

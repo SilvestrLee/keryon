@@ -114,7 +114,7 @@ class OrganizationDashboardTest extends TestCase
             ->assertSee($second->name)
             ->assertSee('1 live; 1 not published')
             ->assertDontSee($outside->name)
-            ->assertSee('No Organization communications are active')
+            ->assertSee('Nothing needs attention')
             ->assertSee('No Organization campaigns are in progress');
     }
 

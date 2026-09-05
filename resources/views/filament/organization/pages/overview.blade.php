@@ -176,14 +176,16 @@
             <section class="org-coordination-lane" aria-labelledby="communications-heading">
                 <div class="org-lane-heading">
                     <div><h3 id="communications-heading">Communications</h3><p>Organization-wide updates and packages</p></div>
-                    <span class="org-readiness-label">Awaiting capability</span>
+                    @if (count($dashboard->communicationItems))
+                        <span class="org-readiness-label">{{ count($dashboard->communicationItems) }} {{ str('item')->plural(count($dashboard->communicationItems)) }} need attention</span>
+                    @endif
                 </div>
                 @forelse ($dashboard->communicationItems as $item)
                     <article class="org-coordination-item"><strong>{{ $item['title'] }}</strong><p>{{ $item['detail'] }}</p><span>{{ $item['status'] }}</span></article>
                 @empty
                     <div class="org-zero-state org-zero-state--lane">
                         <span class="org-zero-state__mark" aria-hidden="true">↗</span>
-                        <div><strong>No Organization communications are active</strong><p>Approved updates, schedules and communication packages will populate this lane when the capability is introduced.</p></div>
+                        <div><strong>Nothing needs attention</strong><p>Approved communications awaiting distribution, and distributed communications past their recommended response date with Churches still unresponded, will appear here.</p></div>
                     </div>
                 @endforelse
             </section>

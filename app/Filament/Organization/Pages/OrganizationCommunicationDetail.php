@@ -4,6 +4,7 @@ namespace App\Filament\Organization\Pages;
 
 use App\Enums\OrganizationCommunicationAdaptationPolicy;
 use App\Enums\OrganizationCommunicationAssetRightsBasis;
+use App\Enums\OrganizationCommunicationDeclineReasonCode;
 use App\Enums\OrganizationCommunicationDistributionState;
 use App\Enums\OrganizationCommunicationKind;
 use App\Enums\OrganizationCommunicationMaterialType;
@@ -23,6 +24,10 @@ use App\Organizations\Communications\OrganizationCommunicationAssetManager;
 use App\Organizations\Communications\OrganizationCommunicationManager;
 use App\Organizations\Communications\OrganizationCommunicationWorkflow;
 use App\Organizations\Communications\Read\OrganizationCommunicationQuery;
+use App\Organizations\Communications\Tracking\Dto\OrganizationCommunicationDistributionTracking;
+use App\Organizations\Communications\Tracking\Dto\OrganizationCommunicationTrackingSummary;
+use App\Organizations\Communications\Tracking\OrganizationCommunicationDeliveryOutcomeResolver;
+use App\Organizations\Communications\Tracking\OrganizationCommunicationTrackingQuery;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
@@ -36,8 +41,10 @@ use Filament\Forms\Components\Toggle;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Wizard;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Livewire\WithPagination;
 use Throwable;
 
 /**
@@ -52,6 +59,7 @@ use Throwable;
 class OrganizationCommunicationDetail extends Page
 {
     use InteractsWithOrganizationWorkspace;
+    use WithPagination;
 
     protected string $view = 'filament.organization.pages.communication-detail';
 
@@ -688,6 +696,98 @@ class OrganizationCommunicationDetail extends Page
             OrganizationCommunicationTargetMode::UNIT_SUBTREE => 'Unit: '.($distribution->targetUnit?->name ?? '—'),
             OrganizationCommunicationTargetMode::EXPLICIT_CHURCHES => count($distribution->target_church_ids ?? []).' selected Churches',
         };
+    }
+
+    // ---------------------------------------------------------------
+    // K-ORG-COMMS-001F — Tracking (§18-§27). Read-only: factual
+    // delivery-outcome visibility only, never Church-local detail.
+    // ---------------------------------------------------------------
+
+    public ?int $trackingDistributionId = null;
+
+    public string $trackingOutcomeFilter = '';
+
+    public string $trackingSearch = '';
+
+    public function canViewTracking(): bool
+    {
+        return (bool) auth()->user()?->can('viewDistributions', $this->communication());
+    }
+
+    /** @return array<int, OrganizationCommunicationTrackingSummary> */
+    public function trackingSummary(): array
+    {
+        return app(OrganizationCommunicationTrackingQuery::class)->communicationSummary($this->communication());
+    }
+
+    /** @return Collection<int, OrganizationCommunicationDistribution> */
+    public function trackingDistributionsForRevision(int $revisionId): Collection
+    {
+        return $this->distributions()->where('organization_communication_revision_id', $revisionId)->values();
+    }
+
+    public function outcomeLabel(string $outcome): string
+    {
+        return app(OrganizationCommunicationDeliveryOutcomeResolver::class)->label($outcome);
+    }
+
+    public function declineReasonLabel(string $code): string
+    {
+        return OrganizationCommunicationDeclineReasonCode::tryFrom($code)?->label() ?? $code;
+    }
+
+    public function selectTrackingDistribution(int $distributionId): void
+    {
+        $this->trackingDistributionId = $distributionId;
+        $this->trackingOutcomeFilter = '';
+        $this->trackingSearch = '';
+        $this->resetPage('recipientsPage');
+    }
+
+    public function updatedTrackingOutcomeFilter(): void
+    {
+        $this->resetPage('recipientsPage');
+    }
+
+    public function updatedTrackingSearch(): void
+    {
+        $this->resetPage('recipientsPage');
+    }
+
+    public function selectedDistributionTracking(): ?OrganizationCommunicationDistributionTracking
+    {
+        $distribution = $this->selectedDistribution();
+
+        return $distribution === null
+            ? null
+            : app(OrganizationCommunicationTrackingQuery::class)->distributionTracking($distribution);
+    }
+
+    public function trackingRecipients(): ?LengthAwarePaginator
+    {
+        $distribution = $this->selectedDistribution();
+
+        if ($distribution === null) {
+            return null;
+        }
+
+        return app(OrganizationCommunicationTrackingQuery::class)->recipients(
+            $distribution,
+            $this->trackingOutcomeFilter,
+            $this->trackingSearch,
+        );
+    }
+
+    private function selectedDistribution(): ?OrganizationCommunicationDistribution
+    {
+        if ($this->trackingDistributionId === null) {
+            return null;
+        }
+
+        return OrganizationCommunicationDistribution::query()
+            ->where('organization_communication_id', $this->communication()->id)
+            ->with(['revision', 'communication'])
+            ->find($this->trackingDistributionId);
     }
 
     /** @return array<string, string> */
