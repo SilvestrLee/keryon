@@ -63,6 +63,8 @@ enum ChurchRole: string
                 Capability::StaffView,
                 Capability::StaffManage,
                 Capability::WebsiteDomainManage,
+                Capability::MediaView,
+                Capability::MediaManage,
                 Capability::OrganizationCommunicationsView,
                 Capability::OrganizationCommunicationsRespond,
                 Capability::OrganizationCommunicationsImport,

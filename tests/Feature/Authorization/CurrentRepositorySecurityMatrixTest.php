@@ -53,7 +53,10 @@ class CurrentRepositorySecurityMatrixTest extends TestCase
 
     public static function roleMatrix(): array
     {
-        $admin = self::expectations(congregation: true);
+        // K-MEDIA-V1-001B §46 — Administrator gained MediaView/MediaManage
+        // (Product Office-authorized capability-mapping decision from the
+        // K-MEDIA-V1-001A discovery report).
+        $admin = self::expectations(congregation: true, media: true);
         $communications = self::expectations(
             congregation: true,
             content: true,

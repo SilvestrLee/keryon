@@ -47,13 +47,32 @@ class CommunicationsHubTest extends TestCase
             ->assertDontSee('Prayer Requests');
     }
 
-    public function test_care_only_and_administrator_only_members_cannot_enter_hub(): void
+    public function test_care_only_member_cannot_enter_hub(): void
     {
         $this->actor([ChurchRole::CARE]);
         $this->assertFalse(CommunicationsHub::canAccess());
+    }
 
+    /**
+     * K-MEDIA-V1-001B §46 — Administrator gained `MediaView`/`MediaManage`
+     * (Product Office-authorized capability-mapping decision from the
+     * K-MEDIA-V1-001A discovery report), and `MediaView` is already one
+     * of `hasRelevantCapability()`'s own listed capabilities (§94-106
+     * above, unchanged by this milestone). Administrator-only correctly
+     * gains Hub access as a direct consequence — it is not given a
+     * special exemption from a capability list it already qualifies
+     * under — and still sees the same truthful empty workspace a
+     * Communications member with no other activity would see, since
+     * Administrator holds none of Content/Campaigns/Designs/Website/
+     * FaithFlow.
+     */
+    public function test_administrator_only_member_can_now_enter_hub_via_media_capability(): void
+    {
         $this->actor([ChurchRole::ADMINISTRATOR]);
-        $this->assertFalse(CommunicationsHub::canAccess());
+        $this->assertTrue(CommunicationsHub::canAccess());
+        Livewire::test(CommunicationsHub::class)
+            ->assertSuccessful()
+            ->assertSee('Your communications workspace is ready');
     }
 
     public function test_relevant_capabilities_are_composed_without_role_name_branching(): void
