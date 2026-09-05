@@ -66,6 +66,8 @@
                             {{ $domainSummary?->state === 'pending' ? 'Continue setup' : ($domainSummary?->state === 'degraded' ? 'Review domains' : 'Manage domains') }}
                             <span aria-hidden="true">→</span>
                         </a>
+                    @else
+                        <p class="mt-3 text-xs text-gray-400">Only your Primary Administrator can manage website domains.</p>
                     @endif
                 </div>
             </dl>
@@ -139,7 +141,7 @@
                         <x-filament::icon icon="heroicon-o-link" class="h-5 w-5 text-[#132E35]" />
                         <h3 class="mt-3 text-sm font-semibold text-gray-950">Domains</h3>
                         <p class="mt-1 break-words text-xs text-gray-500">{{ $domainSummary?->headline }}</p>
-                        <span class="mt-auto pt-3 text-xs text-gray-400">View only</span>
+                        <p class="mt-auto pt-3 text-xs text-gray-400">Only your Primary Administrator can manage website domains.</p>
                     </article>
                 @endif
             </div>

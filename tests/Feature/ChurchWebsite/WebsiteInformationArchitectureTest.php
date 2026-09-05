@@ -60,7 +60,11 @@ class WebsiteInformationArchitectureTest extends TestCase
         app(TenantContext::class)->forgetResolved();
         Livewire::test(WebsiteOverview::class)
             ->assertSee('Domains')
-            ->assertSee('View only')
+            // K-WEB-V1-001B §13 — the plain-language explanation replaces
+            // the earlier bare "View only" label so a Communications user
+            // understands *why* Domains is read-only, without exposing
+            // capability/policy terminology.
+            ->assertSee('Only your Primary Administrator can manage website domains.')
             ->assertDontSeeHtml('href="'.ManageDomains::getUrl().'"');
 
         foreach ([ChurchRole::CARE, ChurchRole::ADMINISTRATOR] as $role) {

@@ -6,6 +6,7 @@ use App\Models\Church;
 use App\Models\ChurchBrandProfile;
 use App\Models\ChurchServiceTime;
 use App\Models\ChurchSocialLink;
+use App\Models\MediaAsset;
 use App\Models\WebsiteAboutContent;
 use App\Models\WebsiteContactContent;
 use App\Models\WebsiteHomeContent;
@@ -65,8 +66,73 @@ class WebsiteSnapshot
             ->all();
     }
 
+    /**
+     * K-WEB-V1-001B §4 — the single canonical fingerprint path. Every
+     * caller (publication itself, and any later "has anything changed"
+     * recomputation) passes the *raw* `capture()` output here and gets
+     * back a fingerprint of the same canonical representation — there is
+     * no second, approximately-equivalent transformation for callers to
+     * keep in sync by hand. Callers never need to know that private
+     * Media identity is normalized before hashing.
+     */
     public function fingerprint(array $snapshot, string $theme): string
     {
-        return hash('sha256', json_encode(['theme' => $theme, 'snapshot' => $snapshot], JSON_THROW_ON_ERROR));
+        return hash('sha256', json_encode(['theme' => $theme, 'snapshot' => $this->canonicalize($snapshot)], JSON_THROW_ON_ERROR));
+    }
+
+    /**
+     * Replaces every private Media database ID in the snapshot with that
+     * asset's own stable `sha256` content hash, never the mutable row ID
+     * and never a public rendition UUID. This is deliberately a pure,
+     * read-only, side-effect-free substitution — computing a fingerprint
+     * (including the "has anything changed since publication" check)
+     * must never create a public rendition merely to find out. The
+     * publication's own stored `snapshot` column is unaffected by this
+     * method — it continues to carry the real `public_media` renditions
+     * needed for public rendering; only the fingerprint input changes.
+     *
+     * @param  array<string, mixed>  $snapshot
+     * @return array<string, mixed>
+     */
+    private function canonicalize(array $snapshot): array
+    {
+        if (isset($snapshot['brand']) && is_array($snapshot['brand'])) {
+            $snapshot['brand']['primary_logo_media_id'] = $this->mediaIdentity($snapshot['brand']['primary_logo_media_id'] ?? null);
+            $snapshot['brand']['mark_media_id'] = $this->mediaIdentity($snapshot['brand']['mark_media_id'] ?? null);
+        }
+
+        if (isset($snapshot['home']) && is_array($snapshot['home'])) {
+            $snapshot['home']['hero_image_id'] = $this->mediaIdentity($snapshot['home']['hero_image_id'] ?? null);
+        }
+
+        foreach ($snapshot['leadership'] ?? [] as $index => $profile) {
+            $snapshot['leadership'][$index]['photo_id'] = $this->mediaIdentity($profile['photo_id'] ?? null);
+        }
+
+        foreach ($snapshot['ministries'] ?? [] as $index => $ministry) {
+            $snapshot['ministries'][$index]['image_id'] = $this->mediaIdentity($ministry['image_id'] ?? null);
+        }
+
+        return $snapshot;
+    }
+
+    /**
+     * `null` means "no Media selected" and must stay distinct from "a
+     * Media ID was selected but its content identity could not be
+     * resolved" (e.g. a legacy asset with no recorded hash, or one that
+     * no longer exists) — the latter still carries the original ID
+     * forward as a fallback so it remains distinguishable from an
+     * unrelated missing asset, rather than silently collapsing every
+     * unresolvable reference to the same `null`.
+     */
+    private function mediaIdentity(?int $mediaAssetId): ?string
+    {
+        if ($mediaAssetId === null) {
+            return null;
+        }
+
+        $sha256 = MediaAsset::withoutGlobalScopes()->withTrashed()->find($mediaAssetId)?->sha256;
+
+        return $sha256 ?? "unresolved:{$mediaAssetId}";
     }
 }

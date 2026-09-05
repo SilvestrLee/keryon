@@ -35,8 +35,15 @@ class WebsitePublisher
         $church = Church::query()->findOrFail($membership->church_id);
 
         $settings = WebsiteSettings::query()->firstOrFail();
-        $snapshot = $this->snapshots->capture($church, $settings);
-        $assetIds = array_filter($this->mediaUsages($snapshot), fn (?int $assetId): bool => $assetId !== null);
+        // K-WEB-V1-001B §4 — the raw capture is kept, unmodified, as the
+        // canonical fingerprint input. `WebsiteSnapshot::fingerprint()`
+        // normalizes it internally; the *stored* snapshot below is a
+        // separate, storage/rendering-shaped transformation (public
+        // rendition UUIDs merged in, private IDs stripped) that never
+        // feeds the fingerprint directly — this is exactly what let the
+        // two diverge before.
+        $rawSnapshot = $this->snapshots->capture($church, $settings);
+        $assetIds = array_filter($this->mediaUsages($rawSnapshot), fn (?int $assetId): bool => $assetId !== null);
         $publicMedia = [];
         $prepared = [];
 
@@ -47,10 +54,11 @@ class WebsitePublisher
             $prepared[$usage] = $rendition;
         }
 
-        $snapshot['public_media'] = $publicMedia;
-        $snapshot = $this->withoutPrivateMediaIds($snapshot);
+        $storageSnapshot = $rawSnapshot;
+        $storageSnapshot['public_media'] = $publicMedia;
+        $storageSnapshot = $this->withoutPrivateMediaIds($storageSnapshot);
 
-        return DB::transaction(function () use ($membership, $church, $snapshot, $assetIds, $publicMedia, $prepared): WebsitePublication {
+        return DB::transaction(function () use ($membership, $church, $rawSnapshot, $storageSnapshot, $assetIds, $publicMedia, $prepared): WebsitePublication {
             $settings = WebsiteSettings::query()->lockForUpdate()->firstOrFail();
             $previousPublicationId = $settings->current_publication_id;
             $theme = (string) $settings->getRawOriginal('theme');
@@ -58,7 +66,7 @@ class WebsitePublisher
                 PublicationDestination::ChurchWebsite,
                 $membership,
                 $church,
-                $snapshot,
+                $storageSnapshot,
                 $assetIds,
                 $publicMedia,
             ));
@@ -66,8 +74,8 @@ class WebsitePublisher
             $publication = WebsitePublication::query()->create([
                 'destination' => PublicationDestination::ChurchWebsite,
                 'theme' => $theme,
-                'snapshot' => $snapshot,
-                'working_fingerprint' => $this->snapshots->fingerprint($snapshot, $theme),
+                'snapshot' => $storageSnapshot,
+                'working_fingerprint' => $this->snapshots->fingerprint($rawSnapshot, $theme),
                 'previous_publication_id' => $previousPublicationId,
                 'trust_evidence' => $decision->evidence,
                 'published_by' => $membership->user_id,
