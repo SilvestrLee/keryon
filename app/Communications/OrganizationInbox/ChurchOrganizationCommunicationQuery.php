@@ -55,6 +55,23 @@ final class ChurchOrganizationCommunicationQuery
             ->through(fn (OrganizationCommunicationDelivery $delivery): ChurchOrganizationCommunicationSummary => $this->summarize($delivery));
     }
 
+    /**
+     * K-ORG-COMMS-001G §7/§27-§29 — the single, cheap count behind the
+     * Church Dashboard's "Organization communications waiting" attention
+     * item. Reuses `applyStateFilter()`'s existing `STATE_AVAILABLE`
+     * definition unchanged — no second definition of "Available" is
+     * introduced here, and nothing beyond the row count (no materials,
+     * assets, Organization hierarchy, or import records) is ever loaded
+     * to produce this number.
+     */
+    public function availableCount(): int
+    {
+        $query = $this->scopedQuery();
+        $this->applyStateFilter($query, self::STATE_AVAILABLE);
+
+        return $query->count();
+    }
+
     public function findByUuid(string $uuid): OrganizationCommunicationDelivery
     {
         $delivery = OrganizationCommunicationDelivery::query()

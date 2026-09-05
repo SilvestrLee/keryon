@@ -3,6 +3,7 @@
 namespace App\Dashboard;
 
 use App\Commercial\Entitlements\EntitlementResolver;
+use App\Communications\OrganizationInbox\ChurchOrganizationCommunicationQuery;
 use App\Dashboard\Charts\CampaignActivityChartQuery;
 use App\Dashboard\Charts\CommunicationsActivityChartQuery;
 use App\Dashboard\Charts\CongregationTrendChartQuery;
@@ -21,6 +22,7 @@ use App\Filament\Pages\ChurchStaffAccess;
 use App\Filament\Pages\DesignStudio;
 use App\Filament\Pages\FaithFlow;
 use App\Filament\Pages\GuidedChurchSetup;
+use App\Filament\Pages\OrganizationInbox;
 use App\Filament\Resources\CongregationResource;
 use App\Filament\Resources\ContentItemResource;
 use App\Models\Church;
@@ -81,6 +83,28 @@ final class ChurchDashboardSnapshotBuilder
             $pending = $this->queries->pendingStaffInvitations();
             if ($pending > 0) {
                 $actions[] = new DashboardAction('staff.pending', 30, "{$pending} staff ".($pending === 1 ? 'invitation is' : 'invitations are').' pending', 'Review invitations that have not yet become active Church memberships.', ChurchStaffAccess::getUrl(), 'Staff', $pending, 'Manage invitations');
+            }
+        }
+
+        // K-ORG-COMMS-001G §7/§9 — resolved only inside this authorized
+        // branch, mirroring the Care query below: a user without
+        // OrganizationCommunicationsView never triggers this query at
+        // all, not merely "sees no result from it".
+        if ($has(Capability::OrganizationCommunicationsView)) {
+            $available = app(ChurchOrganizationCommunicationQuery::class)->availableCount();
+            if ($available > 0) {
+                $actions[] = new DashboardAction(
+                    'organization.communications.available',
+                    35,
+                    'Organization communications waiting',
+                    $available === 1
+                        ? '1 communication shared with your Church is waiting for a response.'
+                        : "{$available} communications shared with your Church are waiting for a response.",
+                    OrganizationInbox::getUrl(),
+                    'Organization',
+                    $available,
+                    'View inbox',
+                );
             }
         }
 

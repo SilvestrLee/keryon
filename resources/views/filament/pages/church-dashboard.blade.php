@@ -1,5 +1,5 @@
 @php
-    $categoryIcons = ['Content' => 'heroicon-o-document-check', 'Care' => 'heroicon-o-heart', 'Staff' => 'heroicon-o-user-plus', 'Website' => 'heroicon-o-globe-alt', 'Setup' => 'heroicon-o-sparkles'];
+    $categoryIcons = ['Content' => 'heroicon-o-document-check', 'Care' => 'heroicon-o-heart', 'Staff' => 'heroicon-o-user-plus', 'Website' => 'heroicon-o-globe-alt', 'Setup' => 'heroicon-o-sparkles', 'Organization' => 'heroicon-o-inbox-arrow-down'];
     $summaryIcons = ['campaigns' => 'heroicon-o-megaphone', 'congregation' => 'heroicon-o-user-group', 'care' => 'heroicon-o-heart'];
     $shortcutIcons = ['Campaigns' => 'heroicon-o-megaphone', 'Congregation' => 'heroicon-o-user-group', 'Care Center' => 'heroicon-o-heart', 'FaithFlow' => 'heroicon-o-sparkles', 'Design Studio' => 'heroicon-o-swatch', 'Website' => 'heroicon-o-globe-alt'];
 @endphp
