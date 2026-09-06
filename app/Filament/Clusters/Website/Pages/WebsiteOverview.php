@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\Website\Pages;
 
 use App\Enums\Capability;
+use App\Enums\WebsitePageType;
 use App\Filament\Clusters\Website;
 use App\Filament\Clusters\Website\Resources\WebsiteLeadershipResource;
 use App\Filament\Clusters\Website\Resources\WebsiteMinistryResource;
@@ -15,6 +16,7 @@ use App\Models\WebsiteLeadershipProfile;
 use App\Models\WebsiteMinistry;
 use App\Models\WebsitePublication;
 use App\Models\WebsiteSettings;
+use App\PublicWebsite\Themes\ThemeRegistry;
 use App\PublicWebsite\WebsitePublicationStatus;
 use App\PublicWebsite\WebsitePublisher;
 use App\Support\TenantContext;
@@ -117,47 +119,61 @@ class WebsiteOverview extends Page
         $leadershipCount = WebsiteLeadershipProfile::query()->count();
         $ministryCount = WebsiteMinistry::query()->count();
         $domainSummary = $church ? app(WebsiteDomainSummaryBuilder::class)->for($church) : null;
+        // K-WEB-V1-001D-B §29/§46 — a page type stored/started by the
+        // Church but not rendered by the *active* theme must read as
+        // "not available in the current theme," never as deleted. All
+        // five current types are supported by Proclaim (the only theme
+        // today), so this is architecture proven for a future theme
+        // switch, not something a Church can trigger yet.
+        $activeTheme = $settings ? app(ThemeRegistry::class)->resolve((string) $settings->getRawOriginal('theme')) : null;
+        $themeSupportedTypes = $activeTheme?->supportedPageTypes() ?? [];
+
+        $pages = [
+            [
+                'type' => WebsitePageType::Home,
+                'started' => filled($home?->hero_heading),
+                'url' => EditHome::getUrl(),
+            ],
+            [
+                'type' => WebsitePageType::About,
+                'started' => filled($about?->church_story),
+                'url' => EditAbout::getUrl(),
+            ],
+            [
+                'type' => WebsitePageType::Leadership,
+                'started' => $leadershipCount > 0,
+                'count' => $leadershipCount,
+                'url' => WebsiteLeadershipResource::getUrl(),
+            ],
+            [
+                'type' => WebsitePageType::Ministries,
+                'started' => $ministryCount > 0,
+                'count' => $ministryCount,
+                'url' => WebsiteMinistryResource::getUrl(),
+            ],
+            [
+                'type' => WebsitePageType::Contact,
+                'started' => filled($contact?->office_hours) || filled($contact?->map_embed_url),
+                'url' => EditContact::getUrl(),
+            ],
+        ];
 
         return [
-            'pages' => [
-                [
-                    'label' => 'Home',
-                    'description' => 'Hero, welcome message, and scripture highlight.',
-                    'started' => filled($home?->hero_heading),
-                    'url' => EditHome::getUrl(),
-                    'icon' => 'heroicon-o-home',
-                ],
-                [
-                    'label' => 'About',
-                    'description' => 'Church story, vision, mission, and leadership introduction.',
-                    'started' => filled($about?->church_story),
-                    'url' => EditAbout::getUrl(),
-                    'icon' => 'heroicon-o-book-open',
-                ],
-                [
-                    'label' => 'Leadership',
-                    'description' => 'Pastors, ministers, elders, and team profiles.',
-                    'started' => $leadershipCount > 0,
-                    'count' => $leadershipCount,
-                    'url' => WebsiteLeadershipResource::getUrl(),
-                    'icon' => 'heroicon-o-user-group',
-                ],
-                [
-                    'label' => 'Ministries',
-                    'description' => 'The ministries your church website shows to visitors.',
-                    'started' => $ministryCount > 0,
-                    'count' => $ministryCount,
-                    'url' => WebsiteMinistryResource::getUrl(),
-                    'icon' => 'heroicon-o-heart',
-                ],
-                [
-                    'label' => 'Contact',
-                    'description' => 'Office hours and map link, alongside your Church Information.',
-                    'started' => filled($contact?->office_hours) || filled($contact?->map_embed_url),
-                    'url' => EditContact::getUrl(),
-                    'icon' => 'heroicon-o-envelope',
-                ],
-            ],
+            // K-WEB-V1-001D-B §42 — the canonical label/description/icon
+            // for each page type now come from `WebsitePageType` itself
+            // (the one platform-owned source, shared with navigation and
+            // the sitemap), while the "started"/"count"/"url" values stay
+            // here — they depend on Filament page classes and live
+            // content presence, which are Website-Management concerns,
+            // not page-identity metadata (see that enum's own docblock
+            // and §43's explicit instruction against turning this into
+            // reflection-based dynamic page generation). §29/§46 —
+            // `supportedByTheme` lets the view show "not available in
+            // the current theme" instead of a broken/misleading action.
+            'pages' => array_map(
+                fn (array $page): array => $page + ['supportedByTheme' => in_array($page['type'], $themeSupportedTypes, true)],
+                $pages,
+            ),
             'churchInformationConfigured' => filled($church?->address)
                 || $church?->serviceTimes()->exists()
                 || $church?->socialLinks()->exists(),

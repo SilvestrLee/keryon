@@ -2,6 +2,7 @@
 
 namespace App\PublicWebsite\Themes\Proclaim;
 
+use App\Enums\WebsitePageType;
 use App\Models\Church;
 use App\Models\WebsitePublication;
 use App\PublicWebsite\PublicMedia;
@@ -38,11 +39,41 @@ class ProclaimTheme implements ThemeRenderer
         return $this->renderData($page, $publication->church_id, $this->content->published($publication), false);
     }
 
+    /**
+     * K-WEB-V1-001D-B §16 — Proclaim currently has a real template/render
+     * branch for exactly these five canonical types. Declaring support
+     * for Events/Messages/Publications/Giving here before their content
+     * models and templates actually exist would be exactly the
+     * "theme-misconfiguration" failure mode §79 warns against — this
+     * list grows only alongside real implementation work in
+     * K-WEB-V1-001D-C, never ahead of it.
+     *
+     * @return list<WebsitePageType>
+     */
+    public function supportedPageTypes(): array
+    {
+        return [
+            WebsitePageType::Home,
+            WebsitePageType::About,
+            WebsitePageType::Leadership,
+            WebsitePageType::Ministries,
+            WebsitePageType::Contact,
+        ];
+    }
+
     /** @param array<string, mixed> $data */
     private function renderData(string $page, int $churchId, array $data, bool $preview): View
     {
         $data['page'] = $page;
         $data['preview'] = $preview;
+        // K-WEB-V1-001D-B §40 — the one authoritative resolved
+        // navigation source. `proclaim-layout.blade.php` no longer
+        // maintains its own independent desktop/mobile/footer page
+        // arrays — it iterates this ordered list, built once, here, from
+        // the effective page configuration (already present on `$data`
+        // via `PublicWebsiteContent::shared()`/`published()`) filtered
+        // to exactly the page types *this* theme actually supports.
+        $data['navigation'] = $this->navigation($data['pageSettings'] ?? []);
 
         if ($page === 'home') {
             $data['content'] = array_key_exists('home', $data) ? $data['home'] : $this->content->home($churchId);
@@ -75,6 +106,43 @@ class ProclaimTheme implements ThemeRenderer
 
         $data['seo'] = $this->seo->forPage($page, $data, $preview);
 
+        // K-WEB-V1-001D-B §66/§100 — the one dynamic view-path
+        // construction in this class. Safe because both real call sites
+        // (`PublicWebsiteController::render()`, `WebsitePreviewController`)
+        // already reject any `$page` that fails `WebsitePageType::tryFrom()`
+        // or this theme's own `supportedPageTypes()` before ever reaching
+        // `renderData()` — `$page` here is always one of the five known,
+        // registered values, never raw unvalidated request input.
         return view("public-website.themes.proclaim.{$page}", $data);
+    }
+
+    /**
+     * K-WEB-V1-001D-B §24/§40 — a page appears in navigation only when
+     * it is (a) enabled per the effective page configuration, (b)
+     * navigation-capable (`WebsitePageType::navigationCapable()`), and
+     * (c) supported by this theme. Ordered by the effective `nav_order`.
+     * URL construction itself stays in the Blade layout (it already
+     * depends on `$preview`, a presentation concern) — this method's job
+     * is only to decide *which* pages appear and in *what order/label*,
+     * once, for every nav surface (desktop/mobile/footer) to share.
+     *
+     * @param  array<string, array{enabled: bool, nav_order: int, navigation_label: ?string}>  $pageSettings
+     * @return list<array{key: string, label: string}>
+     */
+    private function navigation(array $pageSettings): array
+    {
+        $supported = $this->supportedPageTypes();
+
+        $items = collect(WebsitePageType::navigable())
+            ->filter(fn (WebsitePageType $type): bool => in_array($type, $supported, true))
+            ->filter(fn (WebsitePageType $type): bool => $pageSettings[$type->value]['enabled'] ?? true)
+            ->sortBy(fn (WebsitePageType $type): int => $pageSettings[$type->value]['nav_order'] ?? $type->defaultNavOrder())
+            ->map(fn (WebsitePageType $type): array => [
+                'key' => $type->value,
+                'label' => $pageSettings[$type->value]['navigation_label'] ?? $type->label(),
+            ])
+            ->values();
+
+        return $items->all();
     }
 }

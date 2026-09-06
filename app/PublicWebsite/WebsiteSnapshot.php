@@ -17,12 +17,25 @@ use Illuminate\Database\Eloquent\Model;
 
 class WebsiteSnapshot
 {
+    public function __construct(private readonly WebsitePageConfiguration $pageConfiguration) {}
+
     /** @return array<string, mixed> */
     public function capture(Church $church, WebsiteSettings $settings): array
     {
         $churchId = $church->getKey();
 
         return [
+            // K-WEB-V1-001D-B §49 — the effective page configuration
+            // (enabled/order/navigation-label per canonical page type) is
+            // publication-relevant state, captured exactly like every
+            // other Website content concept: it becomes part of this
+            // immutable snapshot at publish time, and public rendering
+            // must consult this stored copy, never the live
+            // `website_page_settings` table. No Media identity is
+            // involved, so this key needs no entry in `canonicalize()`
+            // below — it already participates in the fingerprint as-is
+            // via the surrounding `json_encode()`.
+            'page_settings' => $this->pageConfiguration->effectiveForChurch($churchId),
             'church' => $church->only(['name', 'slug', 'email', 'phone', 'address']),
             'brand' => $this->one(ChurchBrandProfile::class, $churchId, [
                 'primary_logo_media_id', 'mark_media_id', 'primary_color', 'secondary_color',

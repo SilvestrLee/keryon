@@ -2,6 +2,7 @@
 
 namespace App\Trust\Publishing;
 
+use App\Enums\WebsitePageType;
 use Illuminate\Validation\ValidationException;
 
 class WebsitePublicSchema
@@ -27,8 +28,12 @@ class WebsitePublicSchema
     /** @param array<string, mixed> $snapshot */
     public function ensure(array $snapshot): void
     {
-        $allowedTopLevel = [...array_keys(self::FIELDS), 'public_media'];
+        // K-WEB-V1-001D-B §49 — `page_settings` is now a recognized,
+        // trust-gated top-level snapshot key, validated below with the
+        // same fail-closed discipline as every other section.
+        $allowedTopLevel = [...array_keys(self::FIELDS), 'public_media', 'page_settings'];
         $this->ensureKeys($snapshot, $allowedTopLevel);
+        $this->ensurePageSettings($snapshot['page_settings'] ?? null);
 
         foreach (self::FIELDS as $section => $fields) {
             $value = $snapshot[$section] ?? null;
@@ -71,6 +76,38 @@ class WebsitePublicSchema
     {
         if (array_diff(array_keys($values), $allowed) !== []) {
             $this->deny();
+        }
+    }
+
+    /**
+     * K-WEB-V1-001D-B §49 — every key must be a real, registered
+     * `WebsitePageType` value (never an arbitrary string a future bug
+     * could smuggle through), and every value must be exactly the three
+     * fields `WebsitePageConfiguration` ever produces — no free-form
+     * page configuration of any kind reaches a public snapshot.
+     */
+    private function ensurePageSettings(mixed $pageSettings): void
+    {
+        if ($pageSettings === null) {
+            return;
+        }
+
+        if (! is_array($pageSettings)) {
+            $this->deny();
+        }
+
+        foreach ($pageSettings as $key => $value) {
+            if (! is_string($key) || WebsitePageType::tryFrom($key) === null || ! is_array($value)) {
+                $this->deny();
+            }
+            $this->ensureKeys($value, ['enabled', 'nav_order', 'navigation_label']);
+
+            if (! is_bool($value['enabled'] ?? null) || ! is_int($value['nav_order'] ?? null)) {
+                $this->deny();
+            }
+            if (array_key_exists('navigation_label', $value) && $value['navigation_label'] !== null && ! is_string($value['navigation_label'])) {
+                $this->deny();
+            }
         }
     }
 

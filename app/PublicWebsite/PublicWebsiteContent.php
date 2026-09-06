@@ -2,6 +2,7 @@
 
 namespace App\PublicWebsite;
 
+use App\Enums\WebsitePageType;
 use App\Models\Church;
 use App\Models\ChurchBrandProfile;
 use App\Models\ChurchServiceTime;
@@ -21,6 +22,7 @@ class PublicWebsiteContent
     public function __construct(
         private readonly PublicMedia $media,
         private readonly PublicUrl $url,
+        private readonly WebsitePageConfiguration $pageConfiguration,
     ) {}
 
     public function settings(int $churchId): ?WebsiteSettings
@@ -51,6 +53,7 @@ class PublicWebsiteContent
                 })
                 ->filter(fn (ChurchSocialLink $social): bool => $social->publicUrl !== null),
             'palette' => $this->palette($brand),
+            'pageSettings' => $this->pageConfiguration->effectiveForChurch($church->id),
         ];
     }
 
@@ -118,7 +121,30 @@ class PublicWebsiteContent
             'contact' => $this->hydrateNullable(WebsiteContactContent::class, $snapshot['contact']),
             'leadership' => $this->collection(WebsiteLeadershipProfile::class, $snapshot['leadership']),
             'ministries' => $this->collection(WebsiteMinistry::class, $snapshot['ministries']),
+            // K-WEB-V1-001D-B §50/§51 — `$snapshot['page_settings']` is
+            // absent on every historical publication made before this
+            // milestone; `effectiveFromSnapshot(null)` resolves the exact
+            // same legacy "everything enabled, default order, no label
+            // override" defaults `effectiveForChurch()` already resolves
+            // for a Church with zero `website_page_settings` rows, so an
+            // old publication renders identically to how it always did.
+            'pageSettings' => $this->pageConfiguration->effectiveFromSnapshot($snapshot['page_settings'] ?? null),
         ];
+    }
+
+    /**
+     * K-WEB-V1-001D-B §56 — a cheap, standalone check the public
+     * controller uses to decide whether a requested page type is
+     * publicly reachable under *this* publication, without hydrating the
+     * full `published()` content array. Reads only the immutable
+     * snapshot's own stored page-settings — never the live working
+     * `website_page_settings` table.
+     */
+    public function pagePubliclyEnabled(WebsitePublication $publication, WebsitePageType $type): bool
+    {
+        $effective = $this->pageConfiguration->effectiveFromSnapshot($publication->snapshot['page_settings'] ?? null);
+
+        return $effective[$type->value]['enabled'] ?? true;
     }
 
     /** @param class-string<Model> $class */

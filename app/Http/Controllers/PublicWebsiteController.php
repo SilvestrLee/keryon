@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\WebsitePageType;
 use App\Models\WebsitePublication;
 use App\PublicWebsite\CanonicalChurchWebsiteUrl;
 use App\PublicWebsite\PublicWebsiteContent;
@@ -9,6 +10,7 @@ use App\PublicWebsite\PublicWebsiteContext;
 use App\PublicWebsite\Themes\ThemeRegistry;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 class PublicWebsiteController extends Controller
@@ -20,29 +22,43 @@ class PublicWebsiteController extends Controller
         private readonly CanonicalChurchWebsiteUrl $urls,
     ) {}
 
-    public function home(): View|RedirectResponse
+    /**
+     * K-WEB-V1-001D-B §18/§19 — one shared dispatch method behind the
+     * existing five named routes (`routes/public-website.php` passes
+     * each route's own canonical page value as a route default, so the
+     * URLs, route names, and per-page test/reference compatibility are
+     * completely unchanged — only the previously-duplicated five
+     * one-line methods collapse into this single, registry-driven
+     * implementation).
+     */
+    public function render(Request $request): View|RedirectResponse
     {
-        return $this->render('home');
-    }
+        // K-WEB-V1-001D-B — read the route's own bound `page` value
+        // explicitly rather than accepting it as a typed method
+        // parameter: this route's domain group already binds a `church`
+        // parameter ahead of `page` in `$route->parameters()`, and
+        // Laravel's controller method injection resolves untyped/
+        // primitive parameters *positionally* over that array, not by
+        // name — an implicit `string $page` argument would silently
+        // receive the church slug instead. Reading it via
+        // `$request->route('page')` is unambiguous.
+        $page = (string) $request->route('page');
+        $pageType = WebsitePageType::tryFrom($page);
+        abort_if($pageType === null, 404);
 
-    public function about(): View|RedirectResponse
-    {
-        return $this->render('about');
-    }
+        $publication = $this->publication();
+        if ($redirect = $this->aliasRedirect()) {
+            return $redirect;
+        }
+        $theme = $this->themes->resolve($publication->theme);
+        abort_if($theme === null, 404);
+        // §16/§56 — a canonical page type unsupported by the active
+        // theme, or disabled in the *published* snapshot, is publicly
+        // unreachable even by direct URL — never a generic CMS fallback.
+        abort_unless(in_array($pageType, $theme->supportedPageTypes(), true), 404);
+        abort_unless($this->content->pagePubliclyEnabled($publication, $pageType), 404);
 
-    public function leadership(): View|RedirectResponse
-    {
-        return $this->render('leadership');
-    }
-
-    public function ministries(): View|RedirectResponse
-    {
-        return $this->render('ministries');
-    }
-
-    public function contact(): View|RedirectResponse
-    {
-        return $this->render('contact');
+        return $theme->renderPublished($page, $publication);
     }
 
     public function sitemap(): Response|RedirectResponse
@@ -52,8 +68,16 @@ class PublicWebsiteController extends Controller
             return $redirect;
         }
         $church = $this->context->church();
-        $urls = collect(['home', 'about', 'leadership', 'ministries', 'contact'])
-            ->map(fn (string $page): string => $this->urls->page($church, $page));
+        $theme = $this->themes->resolve($publication->theme);
+        $supported = $theme?->supportedPageTypes() ?? [];
+        // K-WEB-V1-001D-B §55 — sitemap enumeration now derives from the
+        // immutable published page configuration (theme-supported,
+        // navigable, and enabled *in this publication*), never a
+        // hard-coded list and never live working settings.
+        $urls = collect(WebsitePageType::navigable())
+            ->filter(fn (WebsitePageType $type): bool => in_array($type, $supported, true))
+            ->filter(fn (WebsitePageType $type): bool => $this->content->pagePubliclyEnabled($publication, $type))
+            ->map(fn (WebsitePageType $type): string => $this->urls->page($church, $type->value));
 
         return response()
             ->view('public-website.sitemap', compact('urls', 'publication'))
@@ -69,19 +93,6 @@ class PublicWebsiteController extends Controller
 
         return response("User-agent: *\nAllow: /\nSitemap: ".$this->urls->page($this->context->church())."/sitemap.xml\n")
             ->header('Content-Type', 'text/plain; charset=UTF-8');
-    }
-
-    private function render(string $page): View|RedirectResponse
-    {
-        $publication = $this->publication();
-        if ($redirect = $this->aliasRedirect()) {
-            return $redirect;
-        }
-        $theme = $this->themes->resolve($publication->theme);
-
-        abort_if($theme === null, 404);
-
-        return $theme->renderPublished($page, $publication);
     }
 
     private function aliasRedirect(): ?RedirectResponse

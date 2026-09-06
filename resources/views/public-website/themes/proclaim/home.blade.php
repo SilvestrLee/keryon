@@ -1,5 +1,5 @@
 <x-public-website.proclaim-layout
-    :$church :$brand :$logo :$mark :$serviceTimes :$socialLinks :$palette :$page :$seo :$preview
+    :$church :$brand :$logo :$mark :$serviceTimes :$socialLinks :$palette :$page :$seo :$preview :$navigation
     title="Home"
     :description="$content?->hero_subheading ?: 'Welcome to '.$church->name"
 >

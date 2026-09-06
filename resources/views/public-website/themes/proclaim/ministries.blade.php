@@ -1,4 +1,4 @@
-<x-public-website.proclaim-layout :$church :$brand :$logo :$mark :$serviceTimes :$socialLinks :$palette :$page :$seo :$preview title="Ministries" :description="'Explore ministries at '.$church->name">
+<x-public-website.proclaim-layout :$church :$brand :$logo :$mark :$serviceTimes :$socialLinks :$palette :$page :$seo :$preview :$navigation title="Ministries" :description="'Explore ministries at '.$church->name">
     <section class="pw-page-hero">
         <div class="pw-shell">
             <p class="pw-kicker">Ministries</p>

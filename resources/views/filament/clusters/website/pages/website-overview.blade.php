@@ -81,22 +81,36 @@
 
             <div class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 @foreach ($pages as $page)
-                    <a href="{{ $page['url'] }}" class="group flex min-h-40 flex-col rounded-2xl border border-gray-200 bg-white p-5 transition duration-200 hover:-translate-y-0.5 hover:border-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700">
-                        <div class="flex items-start justify-between gap-3">
-                            <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-50 text-[#132E35]">
-                                <x-filament::icon :icon="$page['icon']" class="h-5 w-5" />
+                    @if ($page['supportedByTheme'])
+                        <a href="{{ $page['url'] }}" class="group flex min-h-40 flex-col rounded-2xl border border-gray-200 bg-white p-5 transition duration-200 hover:-translate-y-0.5 hover:border-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700">
+                            <div class="flex items-start justify-between gap-3">
+                                <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-50 text-[#132E35]">
+                                    <x-filament::icon :icon="$page['type']->icon()" class="h-5 w-5" />
+                                </span>
+                                <span class="text-xs font-medium {{ ($page['started'] ?? false) ? 'text-emerald-700' : 'text-gray-500' }}">
+                                    {{ ($page['started'] ?? false) ? 'In progress' : 'Not started' }}
+                                </span>
+                            </div>
+                            <h3 class="mt-4 text-sm font-semibold text-gray-950">
+                                {{ $page['type']->label() }}
+                                @if (isset($page['count']))<span class="font-medium text-gray-400">({{ $page['count'] }})</span>@endif
+                            </h3>
+                            <p class="mt-1 text-xs leading-5 text-gray-500">{{ $page['type']->description() }}</p>
+                            <span class="mt-auto pt-4 text-xs font-semibold text-amber-800">{{ ($page['started'] ?? false) ? 'Manage page' : 'Start page' }} <span aria-hidden="true">→</span></span>
+                        </a>
+                    @else
+                        {{-- K-WEB-V1-001D-B §29/§46/§47 — a page type the
+                        Church may already have content for, but which the
+                        active theme does not currently render. Never
+                        implies content was deleted. --}}
+                        <div class="flex min-h-40 flex-col rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-5">
+                            <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-gray-400">
+                                <x-filament::icon :icon="$page['type']->icon()" class="h-5 w-5" />
                             </span>
-                            <span class="text-xs font-medium {{ ($page['started'] ?? false) ? 'text-emerald-700' : 'text-gray-500' }}">
-                                {{ ($page['started'] ?? false) ? 'In progress' : 'Not started' }}
-                            </span>
+                            <h3 class="mt-4 text-sm font-semibold text-gray-500">{{ $page['type']->label() }}</h3>
+                            <p class="mt-1 text-xs leading-5 text-gray-500">This page is not available in the current theme.</p>
                         </div>
-                        <h3 class="mt-4 text-sm font-semibold text-gray-950">
-                            {{ $page['label'] }}
-                            @if (isset($page['count']))<span class="font-medium text-gray-400">({{ $page['count'] }})</span>@endif
-                        </h3>
-                        <p class="mt-1 text-xs leading-5 text-gray-500">{{ $page['description'] }}</p>
-                        <span class="mt-auto pt-4 text-xs font-semibold text-amber-800">{{ ($page['started'] ?? false) ? 'Manage page' : 'Start page' }} <span aria-hidden="true">→</span></span>
-                    </a>
+                    @endif
                 @endforeach
             </div>
         </section>

@@ -1,4 +1,4 @@
-@props(['church', 'brand', 'logo', 'mark', 'serviceTimes', 'socialLinks', 'palette', 'page', 'title', 'description', 'seo', 'preview' => false])
+@props(['church', 'brand', 'logo', 'mark', 'serviceTimes', 'socialLinks', 'palette', 'page', 'title', 'description', 'seo', 'preview' => false, 'navigation' => []])
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -47,8 +47,13 @@
             </a>
 
             <nav class="pw-desktop-nav" aria-label="Primary navigation">
-                @foreach (['home' => 'Home', 'about' => 'About', 'leadership' => 'Leadership', 'ministries' => 'Ministries', 'contact' => 'Contact'] as $route => $label)
-                    <a href="{{ $preview ? route('website.preview', ['page' => $route === 'home' ? null : $route]) : ($route === 'home' ? '/' : '/'.$route) }}" @class(['is-current' => $page === $route]) @if($page === $route) aria-current="page" @endif>{{ $label }}</a>
+                {{-- K-WEB-V1-001D-B §40 — desktop, mobile, and footer all
+                iterate this single resolved `$navigation` list (built once
+                in ProclaimTheme from the effective, theme-supported page
+                configuration) rather than each maintaining its own
+                independent page-identity array. --}}
+                @foreach ($navigation as $item)
+                    <a href="{{ $preview ? route('website.preview', ['page' => $item['key'] === 'home' ? null : $item['key']]) : ($item['key'] === 'home' ? '/' : '/'.$item['key']) }}" @class(['is-current' => $page === $item['key']]) @if($page === $item['key']) aria-current="page" @endif>{{ $item['label'] }}</a>
                 @endforeach
             </nav>
 
@@ -60,8 +65,8 @@
 
         <nav id="mobile-navigation" class="pw-mobile-nav" x-cloak x-show="menuOpen" x-transition.opacity.duration.200ms aria-label="Mobile navigation">
             <div class="pw-shell">
-                @foreach (['home' => 'Home', 'about' => 'About', 'leadership' => 'Leadership', 'ministries' => 'Ministries', 'contact' => 'Contact'] as $route => $label)
-                    <a href="{{ $preview ? route('website.preview', ['page' => $route === 'home' ? null : $route]) : ($route === 'home' ? '/' : '/'.$route) }}" @class(['is-current' => $page === $route]) @if($page === $route) aria-current="page" @endif>{{ $label }}</a>
+                @foreach ($navigation as $item)
+                    <a href="{{ $preview ? route('website.preview', ['page' => $item['key'] === 'home' ? null : $item['key']]) : ($item['key'] === 'home' ? '/' : '/'.$item['key']) }}" @class(['is-current' => $page === $item['key']]) @if($page === $item['key']) aria-current="page" @endif>{{ $item['label'] }}</a>
                 @endforeach
             </div>
         </nav>
@@ -104,8 +109,12 @@
             <div>
                 <h2>Explore</h2>
                 <nav aria-label="Footer navigation">
-                    @foreach (['about' => 'About', 'leadership' => 'Leadership', 'ministries' => 'Ministries', 'contact' => 'Contact'] as $footerRoute => $footerLabel)
-                        <a href="{{ $preview ? route('website.preview', ['page' => $footerRoute]) : '/'.$footerRoute }}">{{ $footerLabel }}</a>
+                    {{-- K-WEB-V1-001D-B §41 — the footer deliberately
+                    excludes Home (an intentional presentation rule over
+                    the same canonical `$navigation` source, not a second
+                    independent page-identity list). --}}
+                    @foreach (array_filter($navigation, fn ($item) => $item['key'] !== 'home') as $item)
+                        <a href="{{ $preview ? route('website.preview', ['page' => $item['key']]) : '/'.$item['key'] }}">{{ $item['label'] }}</a>
                     @endforeach
                 </nav>
             </div>
