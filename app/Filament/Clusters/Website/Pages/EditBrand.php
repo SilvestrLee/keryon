@@ -59,7 +59,13 @@ class EditBrand extends Page implements HasForms
                 Section::make('Logo')
                     ->schema([
                         MediaSelectField::make('primary_logo_media_id', 'Primary logo'),
-                        MediaSelectField::make('mark_media_id', 'Mark (square icon)'),
+                        // K-WEB-V1-001C-B §12 — helper text only, chained
+                        // on the Select that MediaSelectField::make()
+                        // already returns. No new field, no shared-component
+                        // signature change: every other MediaSelectField
+                        // caller is unaffected.
+                        MediaSelectField::make('mark_media_id', 'Mark (square icon)')
+                            ->helperText('Used as your compact brand mark and your website browser-tab icon.'),
                     ])
                     ->columns(2),
                 Section::make('Colors')

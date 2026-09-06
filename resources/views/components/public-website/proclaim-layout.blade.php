@@ -13,6 +13,17 @@
     <meta property="og:url" content="{{ $seo['canonical'] }}">
     @if ($mark)
         <meta property="og:image" content="{{ $mark['url'] }}">
+        {{-- K-WEB-V1-001C-B — the approved v1 favicon contract: the
+        Church's existing Brand mark, reused as-is (§2/§11 of the
+        directive). $mark is already resolved by the theme-independent
+        PublicWebsiteContent seam into a public rendition URL (never a
+        private Media route) for both preview and published rendering,
+        and is already rights-gated/immutable-per-publication via the
+        exact same mechanism that already protects the mark for
+        Open Graph above — no favicon-specific plumbing was added. No
+        fallback to the primary logo: absent a mark, no custom icon tag
+        is rendered at all. --}}
+        <link rel="icon" href="{{ $mark['url'] }}">
     @endif
     <script type="application/ld+json">{!! json_encode($seo['organization'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
     @vite(['resources/css/public-website.css', 'resources/js/app.js'])
