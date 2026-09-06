@@ -103,10 +103,10 @@ class PublicWebsiteContent
             'church' => $church,
             'brand' => $brand,
             'logo' => $hasRenditionMap
-                ? $this->media->rendition($publicMedia['brand.logo'] ?? null, $church->name)
+                ? $this->media->rendition($publication->church_id, $publicMedia['brand.logo'] ?? null, $church->name)
                 : $this->media->image($publication->church_id, $brand?->primary_logo_media_id, $church->name),
             'mark' => $hasRenditionMap
-                ? $this->media->rendition($publicMedia['brand.mark'] ?? null, '')
+                ? $this->media->rendition($publication->church_id, $publicMedia['brand.mark'] ?? null, '')
                 : $this->media->image($publication->church_id, $brand?->mark_media_id, ''),
             'publicMedia' => $hasRenditionMap ? $publicMedia : null,
             'serviceTimes' => $this->collection(ChurchServiceTime::class, $snapshot['service_times']),

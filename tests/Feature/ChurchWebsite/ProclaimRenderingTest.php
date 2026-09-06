@@ -20,6 +20,7 @@ use App\Models\WebsiteSettings;
 use App\PublicWebsite\WebsitePublisher;
 use App\Support\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -49,6 +50,19 @@ class ProclaimRenderingTest extends TestCase
         WebsiteSettings::create(['footer_note' => 'A church family in Lagos.']);
     }
 
+    /**
+     * K-WEB-P0-001 §21/§F — the previous version of this helper performed
+     * its `$this->get(...)` while the test's own `actingAs()` session was
+     * still active. Laravel's test HTTP client has no concept of
+     * cookie-domain isolation, so that authenticated identity silently
+     * satisfied `TenantContext::currentChurchId()` inside
+     * `PublicMedia::rendition()`'s tenant-scoped subquery — exactly the
+     * defect this milestone fixes. Every assertion in this file that
+     * claims to prove "public" rendering now does so genuinely
+     * anonymously: authenticated setup (publishing if needed) still runs
+     * first, then the identity is explicitly cleared before the request
+     * a real, logged-out visitor would make.
+     */
     private function publicGet(string $path = '/')
     {
         $settings = WebsiteSettings::query()->first();
@@ -57,7 +71,23 @@ class ProclaimRenderingTest extends TestCase
             app(WebsitePublisher::class)->publish();
         }
 
-        return $this->get("http://grace-and-hope.keryon.app{$path}");
+        // K-WEB-P0-001 — genuinely anonymous for the request itself, but
+        // restored afterward so the rest of the test method (which may
+        // assert against authenticated-only helpers like
+        // `$asset->renditions()`) keeps working exactly as before. Only
+        // the request/response cycle needs to prove anonymous behaviour.
+        $authenticated = Auth::user();
+        Auth::logout();
+        app(TenantContext::class)->forgetResolved();
+
+        $response = $this->get("http://grace-and-hope.keryon.app{$path}");
+
+        if ($authenticated !== null) {
+            Auth::login($authenticated);
+            app(TenantContext::class)->forgetResolved();
+        }
+
+        return $response;
     }
 
     private function image(string $filename, string $alt): MediaAsset

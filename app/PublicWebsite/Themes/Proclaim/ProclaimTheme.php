@@ -48,7 +48,7 @@ class ProclaimTheme implements ThemeRenderer
             $data['content'] = array_key_exists('home', $data) ? $data['home'] : $this->content->home($churchId);
             $data['heroCtaUrl'] = $this->url->link($data['content']?->hero_cta_url);
             $data['heroImage'] = is_array($data['publicMedia'] ?? null)
-                ? $this->media->rendition($data['publicMedia']['home.hero'] ?? null, $data['content']?->hero_image_alt_override)
+                ? $this->media->rendition($churchId, $data['publicMedia']['home.hero'] ?? null, $data['content']?->hero_image_alt_override)
                 : $this->media->image($churchId, $data['content']?->hero_image_id, $data['content']?->hero_image_alt_override);
         } elseif ($page === 'about') {
             $data['content'] = array_key_exists('about', $data) ? $data['about'] : $this->content->about($churchId);
@@ -58,7 +58,7 @@ class ProclaimTheme implements ThemeRenderer
         } elseif ($page === 'leadership') {
             $data['profiles'] = ($data['leadership'] ?? $this->content->leadership($churchId))->values()->map(function ($profile, int $index) use ($churchId, $data) {
                 $profile->publicImage = is_array($data['publicMedia'] ?? null)
-                    ? $this->media->rendition($data['publicMedia']["leadership.{$index}.photo"] ?? null, $profile->photo_alt_override)
+                    ? $this->media->rendition($churchId, $data['publicMedia']["leadership.{$index}.photo"] ?? null, $profile->photo_alt_override)
                     : $this->media->image($churchId, $profile->photo_id, $profile->photo_alt_override);
 
                 return $profile;
@@ -66,7 +66,7 @@ class ProclaimTheme implements ThemeRenderer
         } elseif ($page === 'ministries') {
             $data['ministries'] = ($data['ministries'] ?? $this->content->ministries($churchId))->values()->map(function ($ministry, int $index) use ($churchId, $data) {
                 $ministry->publicImage = is_array($data['publicMedia'] ?? null)
-                    ? $this->media->rendition($data['publicMedia']["ministries.{$index}.image"] ?? null, $ministry->image_alt_override)
+                    ? $this->media->rendition($churchId, $data['publicMedia']["ministries.{$index}.image"] ?? null, $ministry->image_alt_override)
                     : $this->media->image($churchId, $ministry->image_id, $ministry->image_alt_override);
 
                 return $ministry;
