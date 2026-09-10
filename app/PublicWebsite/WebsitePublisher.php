@@ -161,6 +161,24 @@ class WebsitePublisher
             $usages["ministries.{$index}.image"] = $ministry['image_id'] ?? null;
         }
 
+        // K-WEB-V1-001D-C §63/§65 — the same rendition-creation path,
+        // extended to the four new Media-bearing fields. Rights/trust
+        // enforcement is entirely inherited from `PublicMediaRenditionManager
+        // ::rendition()`, called identically below for every usage key.
+        foreach ($snapshot['events'] ?? [] as $index => $event) {
+            $usages["events.{$index}.image"] = $event['image_id'] ?? null;
+        }
+
+        foreach ($snapshot['messages'] ?? [] as $index => $message) {
+            $usages["messages.{$index}.image"] = $message['image_id'] ?? null;
+        }
+
+        foreach ($snapshot['publications'] ?? [] as $index => $publication) {
+            $usages["publications.{$index}.cover"] = $publication['cover_id'] ?? null;
+        }
+
+        $usages['giving.image'] = $snapshot['giving']['image_id'] ?? null;
+
         return $usages;
     }
 
@@ -177,6 +195,20 @@ class WebsitePublisher
         foreach ($snapshot['ministries'] ?? [] as $index => $_ministry) {
             unset($snapshot['ministries'][$index]['image_id']);
         }
+
+        foreach ($snapshot['events'] ?? [] as $index => $_event) {
+            unset($snapshot['events'][$index]['image_id']);
+        }
+
+        foreach ($snapshot['messages'] ?? [] as $index => $_message) {
+            unset($snapshot['messages'][$index]['image_id']);
+        }
+
+        foreach ($snapshot['publications'] ?? [] as $index => $_publication) {
+            unset($snapshot['publications'][$index]['cover_id']);
+        }
+
+        unset($snapshot['giving']['image_id']);
 
         return $snapshot;
     }

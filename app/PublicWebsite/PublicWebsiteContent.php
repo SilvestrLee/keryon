@@ -5,12 +5,16 @@ namespace App\PublicWebsite;
 use App\Enums\WebsitePageType;
 use App\Models\Church;
 use App\Models\ChurchBrandProfile;
+use App\Models\ChurchPublication;
 use App\Models\ChurchServiceTime;
 use App\Models\ChurchSocialLink;
 use App\Models\WebsiteAboutContent;
 use App\Models\WebsiteContactContent;
+use App\Models\WebsiteEvent;
+use App\Models\WebsiteGivingContent;
 use App\Models\WebsiteHomeContent;
 use App\Models\WebsiteLeadershipProfile;
+use App\Models\WebsiteMessage;
 use App\Models\WebsiteMinistry;
 use App\Models\WebsitePublication;
 use App\Models\WebsiteSettings;
@@ -84,6 +88,52 @@ class PublicWebsiteContent
         return WebsiteMinistry::withoutGlobalScope('church_tenant')->where('church_id', $churchId)->orderBy('sort_order')->get();
     }
 
+    /**
+     * K-WEB-V1-001D-C §83 — upcoming-first is the public Events
+     * ordering; `sort_order` is only a secondary tie-breaker for events
+     * sharing the same start time, never the primary key.
+     *
+     * @return Collection<int, WebsiteEvent>
+     */
+    public function events(int $churchId): Collection
+    {
+        return WebsiteEvent::withoutGlobalScope('church_tenant')
+            ->where('church_id', $churchId)
+            ->orderBy('starts_at')
+            ->orderBy('sort_order')
+            ->get();
+    }
+
+    /**
+     * K-WEB-V1-001D-C §84 — newest message date first, with `id`
+     * (creation order) as the stable fallback for messages sharing the
+     * same date or having none.
+     *
+     * @return Collection<int, WebsiteMessage>
+     */
+    public function messages(int $churchId): Collection
+    {
+        return WebsiteMessage::withoutGlobalScope('church_tenant')
+            ->where('church_id', $churchId)
+            ->orderByDesc('message_date')
+            ->orderByDesc('id')
+            ->get();
+    }
+
+    /** @return Collection<int, ChurchPublication> */
+    public function publications(int $churchId): Collection
+    {
+        return ChurchPublication::withoutGlobalScope('church_tenant')
+            ->where('church_id', $churchId)
+            ->orderBy('sort_order')
+            ->get();
+    }
+
+    public function giving(int $churchId): ?WebsiteGivingContent
+    {
+        return WebsiteGivingContent::withoutGlobalScope('church_tenant')->where('church_id', $churchId)->first();
+    }
+
     /** @return array<string, mixed> */
     public function published(WebsitePublication $publication): array
     {
@@ -121,6 +171,15 @@ class PublicWebsiteContent
             'contact' => $this->hydrateNullable(WebsiteContactContent::class, $snapshot['contact']),
             'leadership' => $this->collection(WebsiteLeadershipProfile::class, $snapshot['leadership']),
             'ministries' => $this->collection(WebsiteMinistry::class, $snapshot['ministries']),
+            // K-WEB-V1-001D-C §67/§118 — a publication made before this
+            // milestone has none of these four keys at all; `?? []`/
+            // `?? null` resolve them to the same empty state a Church
+            // with no content of that type already produces, so an old
+            // snapshot renders exactly as it always did.
+            'events' => $this->collection(WebsiteEvent::class, $snapshot['events'] ?? []),
+            'messages' => $this->collection(WebsiteMessage::class, $snapshot['messages'] ?? []),
+            'publications' => $this->collection(ChurchPublication::class, $snapshot['publications'] ?? []),
+            'giving' => $this->hydrateNullable(WebsiteGivingContent::class, $snapshot['giving'] ?? null),
             // K-WEB-V1-001D-B §50/§51 — `$snapshot['page_settings']` is
             // absent on every historical publication made before this
             // milestone; `effectiveFromSnapshot(null)` resolves the exact

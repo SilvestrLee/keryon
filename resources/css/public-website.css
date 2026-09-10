@@ -140,9 +140,51 @@ body.proclaim {
 .pw-socials { display: flex; flex-wrap: wrap; gap: 1rem 1.75rem; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #43504a; }
 .pw-socials a { min-height: 2.75rem; display: inline-flex; align-items: center; }
 
+/* K-WEB-V1-001D-C — Events, Messages, Publications, Giving. Deliberately
+   reuse the existing visual language (--church-accent, --pw-ink,
+   --pw-radius, --pw-muted, pw-shell/pw-page-hero/pw-section/pw-empty/
+   pw-prose/pw-button) rather than introducing a parallel design system —
+   this is not the K-PROCLAIM-V1-001 visual-refinement pass. */
+.pw-event-list { display: grid; gap: 2rem; }
+.pw-event-card { display: grid; overflow: hidden; border-radius: var(--pw-radius); background: var(--pw-white); }
+.pw-event-card img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.pw-event-card.is-featured { outline: 2px solid var(--church-accent); outline-offset: -2px; }
+.pw-event-copy { padding: 2rem; }
+.pw-event-copy h2 { font-size: clamp(1.6rem, 3.5vw, 2.4rem); }
+.pw-event-when { margin-top: .5rem; color: var(--church-accent); font-weight: 700; }
+.pw-event-venue { color: var(--pw-muted); font-weight: 600; }
+.pw-event-copy .pw-prose { margin-top: 1rem; }
+
+.pw-message-grid { display: grid; gap: 2rem; }
+.pw-message-card { overflow: hidden; border-radius: var(--pw-radius); background: var(--pw-white); }
+.pw-message-card img, .pw-message-card .pw-image-fallback { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.pw-message-copy { padding: 1.5rem; }
+.pw-message-copy h2 { font-size: 1.5rem; }
+.pw-message-meta { margin-top: .35rem; color: var(--pw-muted); font-size: .92rem; font-weight: 650; }
+.pw-message-copy .pw-prose { margin-top: .75rem; font-size: .98rem; }
+
+.pw-publications-section { background: color-mix(in srgb, var(--church-accent) 6%, var(--pw-white)); }
+.pw-publication-grid { display: grid; gap: 2.5rem; }
+.pw-publication-card { display: grid; gap: 1.5rem; }
+.pw-publication-cover { border-radius: var(--pw-radius); overflow: hidden; box-shadow: 0 1.5rem 3rem -1.5rem rgb(15 24 20 / .35); }
+.pw-publication-cover img, .pw-publication-cover-fallback { width: 100%; aspect-ratio: 2 / 3; object-fit: cover; }
+.pw-publication-cover-fallback { display: grid; place-items: center; background: color-mix(in srgb, var(--church-accent) 13%, var(--pw-white)); color: var(--church-accent); font-family: var(--church-heading); }
+.pw-publication-cover-fallback span { font-size: clamp(2.5rem, 8vw, 4.5rem); font-weight: 800; }
+.pw-publication-card.is-featured .pw-publication-cover { outline: 3px solid var(--church-accent); outline-offset: 4px; }
+.pw-publication-copy h2 { margin-top: .35rem; font-size: 1.5rem; }
+.pw-publication-copy .pw-prose { margin-top: .75rem; font-size: .95rem; }
+.pw-publication-footer { display: flex; align-items: center; gap: 1rem; margin-top: 1.25rem; }
+.pw-publication-price { font-weight: 750; }
+.pw-publication-footer .pw-button { margin-top: 0; }
+
+.pw-giving-grid { display: grid; gap: 3rem; align-items: start; }
+.pw-giving-instructions { margin-top: 1.5rem; }
+.pw-giving-image { width: 100%; border-radius: var(--pw-radius); object-fit: cover; aspect-ratio: 4 / 3; }
+
 @media (min-width: 640px) {
     .pw-shell { width: calc(100% - 3rem); }
     .pw-service-grid, .pw-people-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .pw-message-grid, .pw-publication-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (min-width: 768px) {
@@ -154,12 +196,16 @@ body.proclaim {
     .pw-ministry { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: clamp(3rem, 7vw, 7rem); }
     .pw-contact-grid { grid-template-columns: minmax(0, 1.15fr) minmax(18rem, .85fr); }
     .pw-footer-grid { grid-template-columns: minmax(0, 1.3fr) repeat(2, minmax(10rem, .7fr)); }
+    .pw-event-card { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); }
+    .pw-event-card img { aspect-ratio: auto; height: 100%; }
+    .pw-giving-grid { grid-template-columns: minmax(0, 1.15fr) minmax(18rem, .85fr); }
 }
 
 @media (min-width: 1024px) {
     .pw-shell { width: calc(100% - 5rem); }
     .pw-service-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .pw-people-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .pw-publication-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (max-width: 767px) {

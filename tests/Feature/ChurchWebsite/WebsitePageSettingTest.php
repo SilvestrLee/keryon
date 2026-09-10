@@ -98,7 +98,16 @@ class WebsitePageSettingTest extends TestCase
         $this->assertTrue($effective[WebsitePageType::Home->value]['enabled']);
     }
 
-    public function test_zero_settings_rows_resolve_the_legacy_all_enabled_default(): void
+    /**
+     * K-WEB-V1-001D-C §10/§102 — the critical, differentiated backward-
+     * compatibility invariant: the five page types that predate
+     * K-WEB-V1-001D-B still default to enabled with zero rows (unchanged
+     * from that milestone), but the four page types K-WEB-V1-001D-C adds
+     * must NOT silently appear on any existing or new Church merely
+     * because the enum now contains them — they default to disabled
+     * until explicitly configured.
+     */
+    public function test_zero_settings_rows_resolve_legacy_enabled_and_new_types_disabled(): void
     {
         $church = Church::create(['name' => 'Legacy Default Church', 'slug' => 'legacy-default-church']);
         $this->actingAs(User::factory()->forChurch($church, [ChurchRole::COMMUNICATIONS])->create());
@@ -106,8 +115,15 @@ class WebsitePageSettingTest extends TestCase
 
         $effective = app(WebsitePageConfiguration::class)->effectiveForChurch($church->id);
 
+        foreach ([WebsitePageType::Home, WebsitePageType::About, WebsitePageType::Leadership, WebsitePageType::Ministries, WebsitePageType::Contact] as $type) {
+            $this->assertTrue($effective[$type->value]['enabled'], "{$type->value} must default to enabled with zero stored rows (legacy behavior preserved).");
+        }
+
+        foreach ([WebsitePageType::Events, WebsitePageType::Messages, WebsitePageType::Publications, WebsitePageType::Giving] as $type) {
+            $this->assertFalse($effective[$type->value]['enabled'], "{$type->value} must default to disabled with zero stored rows — it must never silently appear.");
+        }
+
         foreach (WebsitePageType::cases() as $type) {
-            $this->assertTrue($effective[$type->value]['enabled'], "{$type->value} must default to enabled with zero stored rows.");
             $this->assertSame($type->defaultNavOrder(), $effective[$type->value]['nav_order']);
             $this->assertNull($effective[$type->value]['navigation_label']);
         }

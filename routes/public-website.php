@@ -30,6 +30,12 @@ $websiteRoutes = function (): void {
     Route::get('/about', [PublicWebsiteController::class, 'render'])->defaults('page', WebsitePageType::About->value)->name('about');
     Route::get('/leadership', [PublicWebsiteController::class, 'render'])->defaults('page', WebsitePageType::Leadership->value)->name('leadership');
     Route::get('/ministries', [PublicWebsiteController::class, 'render'])->defaults('page', WebsitePageType::Ministries->value)->name('ministries');
+    // K-WEB-V1-001D-C §12/§22/§58 — four new stable v1 slugs, extended
+    // through the exact same registry-driven dispatch, no detail routes.
+    Route::get('/events', [PublicWebsiteController::class, 'render'])->defaults('page', WebsitePageType::Events->value)->name('events');
+    Route::get('/messages', [PublicWebsiteController::class, 'render'])->defaults('page', WebsitePageType::Messages->value)->name('messages');
+    Route::get('/publications', [PublicWebsiteController::class, 'render'])->defaults('page', WebsitePageType::Publications->value)->name('publications');
+    Route::get('/giving', [PublicWebsiteController::class, 'render'])->defaults('page', WebsitePageType::Giving->value)->name('giving');
     Route::get('/contact', [PublicWebsiteController::class, 'render'])->defaults('page', WebsitePageType::Contact->value)->name('contact');
     Route::get('/sitemap.xml', [PublicWebsiteController::class, 'sitemap'])->name('sitemap');
     Route::get('/robots.txt', [PublicWebsiteController::class, 'robots'])->name('robots');

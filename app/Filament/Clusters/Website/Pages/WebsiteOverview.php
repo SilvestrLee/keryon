@@ -5,14 +5,21 @@ namespace App\Filament\Clusters\Website\Pages;
 use App\Enums\Capability;
 use App\Enums\WebsitePageType;
 use App\Filament\Clusters\Website;
+use App\Filament\Clusters\Website\Resources\ChurchPublicationResource;
+use App\Filament\Clusters\Website\Resources\WebsiteEventResource;
 use App\Filament\Clusters\Website\Resources\WebsiteLeadershipResource;
+use App\Filament\Clusters\Website\Resources\WebsiteMessageResource;
 use App\Filament\Clusters\Website\Resources\WebsiteMinistryResource;
 use App\Models\ChurchBrandProfile;
+use App\Models\ChurchPublication;
 use App\Models\WebsiteAboutContent;
 use App\Models\WebsiteContactContent;
 use App\Models\WebsiteContentProvenance;
+use App\Models\WebsiteEvent;
+use App\Models\WebsiteGivingContent;
 use App\Models\WebsiteHomeContent;
 use App\Models\WebsiteLeadershipProfile;
+use App\Models\WebsiteMessage;
 use App\Models\WebsiteMinistry;
 use App\Models\WebsitePublication;
 use App\Models\WebsiteSettings;
@@ -118,6 +125,10 @@ class WebsiteOverview extends Page
         $brand = ChurchBrandProfile::query()->first();
         $leadershipCount = WebsiteLeadershipProfile::query()->count();
         $ministryCount = WebsiteMinistry::query()->count();
+        $eventCount = WebsiteEvent::query()->count();
+        $messageCount = WebsiteMessage::query()->count();
+        $publicationCount = ChurchPublication::query()->count();
+        $giving = WebsiteGivingContent::query()->first();
         $domainSummary = $church ? app(WebsiteDomainSummaryBuilder::class)->for($church) : null;
         // K-WEB-V1-001D-B §29/§46 — a page type stored/started by the
         // Church but not rendered by the *active* theme must read as
@@ -150,6 +161,33 @@ class WebsiteOverview extends Page
                 'started' => $ministryCount > 0,
                 'count' => $ministryCount,
                 'url' => WebsiteMinistryResource::getUrl(),
+            ],
+            [
+                'type' => WebsitePageType::Events,
+                'started' => $eventCount > 0,
+                'count' => $eventCount,
+                'url' => WebsiteEventResource::getUrl(),
+            ],
+            [
+                'type' => WebsitePageType::Messages,
+                'started' => $messageCount > 0,
+                'count' => $messageCount,
+                'url' => WebsiteMessageResource::getUrl(),
+            ],
+            [
+                'type' => WebsitePageType::Publications,
+                'started' => $publicationCount > 0,
+                'count' => $publicationCount,
+                'url' => ChurchPublicationResource::getUrl(),
+            ],
+            [
+                // K-WEB-V1-001D-C §55 — Giving is "started" only once it
+                // has meaningful content, not merely once a row exists —
+                // avoids flagging an enabled-but-empty Giving page as
+                // ready when it would publish a blank experience.
+                'type' => WebsitePageType::Giving,
+                'started' => filled($giving?->headline) || filled($giving?->body),
+                'url' => EditGiving::getUrl(),
             ],
             [
                 'type' => WebsitePageType::Contact,

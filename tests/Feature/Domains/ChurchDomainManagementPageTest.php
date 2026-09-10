@@ -290,7 +290,14 @@ class ChurchDomainManagementPageTest extends TestCase
         $queries = DB::getQueryLog();
         DB::disableQueryLog();
 
-        $this->assertLessThanOrEqual(18, count($queries));
+        // K-WEB-V1-001D-C: the Website panel now includes four additional
+        // capability-gated curated Website destinations (Events, Messages,
+        // Publications, Giving). Filament evaluates their navigation
+        // authorization during panel rendering, adding four bounded
+        // capability queries under the current authorization implementation.
+        // Tracked as K-AUTH-PERF-001 (capability-resolution deduplication);
+        // not this milestone's concern to fix.
+        $this->assertLessThanOrEqual(22, count($queries));
         $this->assertSame(0, collect($queries)->filter(fn (array $query) => str_contains(strtolower($query['query']), 'church_domain_events'))->count());
     }
 

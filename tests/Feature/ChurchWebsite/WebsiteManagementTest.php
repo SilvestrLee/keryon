@@ -14,6 +14,7 @@ use App\Filament\Clusters\Website\Pages\WebsiteOverview;
 use App\Filament\Clusters\Website\Resources\WebsiteLeadershipResource\Pages\ListWebsiteLeadershipProfiles;
 use App\Filament\Clusters\Website\Resources\WebsiteMinistryResource\Pages\ListWebsiteMinistries;
 use App\Models\Church;
+use App\Models\ChurchBrandProfile;
 use App\Models\User;
 use App\Models\WebsiteAboutContent;
 use App\Models\WebsiteContactContent;
@@ -283,5 +284,46 @@ class WebsiteManagementTest extends TestCase
             ->call('save');
 
         $this->assertSame('Unchanged Hero', WebsiteHomeContent::first()->hero_heading);
+    }
+
+    // ===== K-WEB-P0-002 regression =====
+
+    /**
+     * K-WEB-P0-002 — before the fix, `ManagesSingletonRecord::save()`
+     * trusted a protected `$record` property that `mount()` set on the
+     * page's initial load but that Livewire never rehydrates for the
+     * separate request a `save()` call fires as. That made every save
+     * after the first take the `create()` branch instead of `update()`,
+     * crashing with a unique-constraint violation (`church_id` is
+     * unique on every one of these tables) the moment a Church saved
+     * already-existing content a second time. Each assertion below is
+     * its own `Livewire::test()` chain — matching an editor loading the
+     * page fresh, then saving — since that is what actually distinguishes
+     * the bug from the passing single-save tests elsewhere in this file.
+     */
+    public function test_saving_already_existing_singleton_content_a_second_time_updates_instead_of_crashing(): void
+    {
+        $church = Church::create(['name' => 'Resave Church', 'slug' => 'resave-church']);
+        $this->actingAs($this->commsUserFor($church));
+
+        Livewire::test(EditHome::class)->fillForm(['hero_heading' => 'First Save'])->call('save');
+        Livewire::test(EditHome::class)->fillForm(['hero_heading' => 'Second Save'])->call('save')->assertHasNoFormErrors();
+        $this->assertSame(1, WebsiteHomeContent::query()->count());
+        $this->assertSame('Second Save', WebsiteHomeContent::first()->hero_heading);
+
+        Livewire::test(EditAbout::class)->fillForm(['church_story' => 'First'])->call('save');
+        Livewire::test(EditAbout::class)->fillForm(['church_story' => 'Second'])->call('save')->assertHasNoFormErrors();
+        $this->assertSame(1, WebsiteAboutContent::query()->count());
+        $this->assertSame('Second', WebsiteAboutContent::first()->church_story);
+
+        Livewire::test(EditContact::class)->fillForm(['office_hours' => 'First'])->call('save');
+        Livewire::test(EditContact::class)->fillForm(['office_hours' => 'Second'])->call('save')->assertHasNoFormErrors();
+        $this->assertSame(1, WebsiteContactContent::query()->count());
+        $this->assertSame('Second', WebsiteContactContent::first()->office_hours);
+
+        Livewire::test(EditBrand::class)->fillForm(['primary_color' => '#111111'])->call('save');
+        Livewire::test(EditBrand::class)->fillForm(['primary_color' => '#222222'])->call('save')->assertHasNoFormErrors();
+        $this->assertSame(1, ChurchBrandProfile::query()->count());
+        $this->assertSame('#222222', ChurchBrandProfile::first()->primary_color);
     }
 }

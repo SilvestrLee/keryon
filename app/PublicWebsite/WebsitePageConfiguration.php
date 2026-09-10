@@ -27,10 +27,13 @@ use Closure;
  * legacy-compatible state (§33/§34/§50/§51): a required page type always
  * resolves `enabled = true` regardless of any stored value (defense in
  * depth — the management UI never even offers a way to store `false`
- * for one), and every other page type defaults to `enabled = true` too,
- * preserving the exact pre-K-WEB-V1-001D-B behavior for a Church with no
- * `website_page_settings` rows at all and no `page_settings` key in an
- * old publication snapshot.
+ * for one). Every other page type's default when no row exists comes
+ * from `WebsitePageType::defaultEnabledWhenUnconfigured()` — `true` for
+ * the five page types that predate K-WEB-V1-001D-B (preserving their
+ * exact pre-existing behavior for a Church with zero rows or an old
+ * publication snapshot), `false` for the four page types K-WEB-V1-001D-C
+ * introduces (so they never silently appear on an existing or new
+ * Church's Website merely because the enum now contains them).
  */
 class WebsitePageConfiguration
 {
@@ -71,7 +74,13 @@ class WebsitePageConfiguration
             $stored = $lookup($type);
 
             $effective[$type->value] = [
-                'enabled' => $type->required() ? true : (bool) ($stored['enabled'] ?? true),
+                // K-WEB-V1-001D-C §10 — the fallback when no row exists
+                // is no longer a blanket `true`: it is
+                // `defaultEnabledWhenUnconfigured()`, which preserves the
+                // legacy five's existing enabled-by-default behavior
+                // while keeping the four new K-WEB-V1-001D-C page types
+                // disabled until a Church explicitly configures them.
+                'enabled' => $type->required() ? true : (bool) ($stored['enabled'] ?? $type->defaultEnabledWhenUnconfigured()),
                 'nav_order' => $stored['nav_order'] ?? $type->defaultNavOrder(),
                 'navigation_label' => $stored['navigation_label'] ?? null,
             ];

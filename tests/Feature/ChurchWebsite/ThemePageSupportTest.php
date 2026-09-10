@@ -45,12 +45,17 @@ class ThemePageSupportTest extends TestCase
         WebsiteHomeContent::create(['hero_heading' => 'Welcome']);
     }
 
-    public function test_proclaim_declares_exactly_the_five_currently_implemented_page_types(): void
+    /**
+     * K-WEB-V1-001D-C §103 — updated from K-WEB-V1-001D-B's "exactly the
+     * five" expectation now that Events/Messages/Publications/Giving
+     * have real templates/renderers too.
+     */
+    public function test_proclaim_declares_exactly_the_nine_currently_implemented_page_types(): void
     {
         $supported = app(ProclaimTheme::class)->supportedPageTypes();
 
         $this->assertEqualsCanonicalizing(
-            ['home', 'about', 'leadership', 'ministries', 'contact'],
+            ['home', 'about', 'leadership', 'ministries', 'events', 'messages', 'publications', 'giving', 'contact'],
             array_map(fn (WebsitePageType $type): string => $type->value, $supported),
         );
     }

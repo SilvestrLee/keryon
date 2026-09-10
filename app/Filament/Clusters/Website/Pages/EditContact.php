@@ -34,7 +34,10 @@ class EditContact extends Page implements HasForms
 
     protected static ?string $title = 'Contact';
 
-    protected static ?int $navigationSort = 5;
+    // K-WEB-V1-001D-C — bumped from 5 to 9 to make room for
+    // Events(5)/Messages(6)/Publications(7)/Giving(8) between Ministries
+    // and Contact in the Content navigation group.
+    protected static ?int $navigationSort = 9;
 
     protected string $view = 'filament.clusters.website.pages.edit-contact';
 

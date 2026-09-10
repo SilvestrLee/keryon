@@ -70,7 +70,7 @@ class PageSettings extends Page implements HasForms
         foreach (self::optionalPageTypes() as $type) {
             $row = $existing->get($type->value);
             $state[$type->value] = [
-                'enabled' => $row->enabled ?? true,
+                'enabled' => $row->enabled ?? $type->defaultEnabledWhenUnconfigured(),
                 'nav_order' => $row->nav_order ?? $type->defaultNavOrder(),
                 'navigation_label' => $row->navigation_label ?? null,
             ];
@@ -115,7 +115,7 @@ class PageSettings extends Page implements HasForms
             WebsitePageSetting::query()->updateOrCreate(
                 ['church_id' => $churchId, 'page_type' => $type->value],
                 [
-                    'enabled' => (bool) ($row['enabled'] ?? true),
+                    'enabled' => (bool) ($row['enabled'] ?? $type->defaultEnabledWhenUnconfigured()),
                     'nav_order' => $row['nav_order'] !== null && $row['nav_order'] !== '' ? (int) $row['nav_order'] : $type->defaultNavOrder(),
                     'navigation_label' => filled($row['navigation_label'] ?? null) ? $row['navigation_label'] : null,
                 ],

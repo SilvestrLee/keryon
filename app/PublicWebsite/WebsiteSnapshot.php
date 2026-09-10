@@ -4,13 +4,17 @@ namespace App\PublicWebsite;
 
 use App\Models\Church;
 use App\Models\ChurchBrandProfile;
+use App\Models\ChurchPublication;
 use App\Models\ChurchServiceTime;
 use App\Models\ChurchSocialLink;
 use App\Models\MediaAsset;
 use App\Models\WebsiteAboutContent;
 use App\Models\WebsiteContactContent;
+use App\Models\WebsiteEvent;
+use App\Models\WebsiteGivingContent;
 use App\Models\WebsiteHomeContent;
 use App\Models\WebsiteLeadershipProfile;
+use App\Models\WebsiteMessage;
 use App\Models\WebsiteMinistry;
 use App\Models\WebsiteSettings;
 use Illuminate\Database\Eloquent\Model;
@@ -56,6 +60,23 @@ class WebsiteSnapshot
             'ministries' => $this->many(WebsiteMinistry::class, $churchId, [
                 'name', 'description', 'image_id', 'image_alt_override', 'sort_order',
             ]),
+            // K-WEB-V1-001D-C §61 — same generic one()/many() pattern,
+            // no snapshot-architecture change needed.
+            'events' => $this->many(WebsiteEvent::class, $churchId, [
+                'title', 'summary', 'starts_at', 'ends_at', 'venue',
+                'image_id', 'image_alt_override', 'cta_label', 'cta_url', 'is_featured', 'sort_order',
+            ], [['starts_at', 'asc'], ['sort_order', 'asc']]),
+            'messages' => $this->many(WebsiteMessage::class, $churchId, [
+                'title', 'speaker', 'message_date', 'scripture_reference', 'summary',
+                'image_id', 'image_alt_override', 'media_url', 'is_featured',
+            ], [['message_date', 'desc'], ['id', 'desc']]),
+            'publications' => $this->many(ChurchPublication::class, $churchId, [
+                'title', 'author', 'publication_type', 'description',
+                'cover_id', 'cover_alt_override', 'price_text', 'purchase_url', 'is_featured', 'sort_order',
+            ]),
+            'giving' => $this->one(WebsiteGivingContent::class, $churchId, [
+                'headline', 'body', 'image_id', 'image_alt_override', 'cta_label', 'giving_url', 'additional_instructions',
+            ]),
             'service_times' => $this->many(ChurchServiceTime::class, $churchId, ['label', 'day_of_week', 'time', 'sort_order']),
             'social_links' => $this->many(ChurchSocialLink::class, $churchId, ['platform', 'url', 'sort_order']),
         ];
@@ -67,13 +88,28 @@ class WebsiteSnapshot
         return $model::withoutGlobalScope('church_tenant')->where('church_id', $churchId)->first()?->only($fields);
     }
 
-    /** @param class-string<Model> $model */
-    private function many(string $model, int $churchId, array $fields): array
+    /**
+     * K-WEB-V1-001D-C §61/§83/§84 — `$orderBy` defaults to the existing
+     * `sort_order`-only behavior (every K-WEB-V1-001D-B-era caller is
+     * unaffected), but now accepts an explicit ordered list of
+     * `[column, direction]` pairs so a collection whose *public*
+     * ordering genuinely isn't manual (Events: upcoming-first by
+     * `starts_at`; Messages: newest `message_date` first) can capture
+     * its snapshot in that same order, since `PublicWebsiteContent::
+     * published()` renders a snapshot's stored array order as-is.
+     *
+     * @param  class-string<Model>  $model
+     * @param  list<array{0: string, 1: string}>  $orderBy
+     */
+    private function many(string $model, int $churchId, array $fields, array $orderBy = [['sort_order', 'asc']]): array
     {
-        return $model::withoutGlobalScope('church_tenant')
-            ->where('church_id', $churchId)
-            ->orderBy('sort_order')
-            ->get()
+        $query = $model::withoutGlobalScope('church_tenant')->where('church_id', $churchId);
+
+        foreach ($orderBy as [$column, $direction]) {
+            $query->orderBy($column, $direction);
+        }
+
+        return $query->get()
             ->map(fn ($record): array => $record->only($fields))
             ->values()
             ->all();
@@ -124,6 +160,26 @@ class WebsiteSnapshot
 
         foreach ($snapshot['ministries'] ?? [] as $index => $ministry) {
             $snapshot['ministries'][$index]['image_id'] = $this->mediaIdentity($ministry['image_id'] ?? null);
+        }
+
+        // K-WEB-V1-001D-C §65 — the same content-identity substitution,
+        // extended to the four new Media-bearing fields. No new
+        // fingerprint mechanism — this is the one existing canonicalize
+        // path, mechanically extended.
+        foreach ($snapshot['events'] ?? [] as $index => $event) {
+            $snapshot['events'][$index]['image_id'] = $this->mediaIdentity($event['image_id'] ?? null);
+        }
+
+        foreach ($snapshot['messages'] ?? [] as $index => $message) {
+            $snapshot['messages'][$index]['image_id'] = $this->mediaIdentity($message['image_id'] ?? null);
+        }
+
+        foreach ($snapshot['publications'] ?? [] as $index => $publication) {
+            $snapshot['publications'][$index]['cover_id'] = $this->mediaIdentity($publication['cover_id'] ?? null);
+        }
+
+        if (isset($snapshot['giving']) && is_array($snapshot['giving'])) {
+            $snapshot['giving']['image_id'] = $this->mediaIdentity($snapshot['giving']['image_id'] ?? null);
         }
 
         return $snapshot;

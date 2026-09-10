@@ -21,6 +21,24 @@ class WebsitePublicSchema
         'contact' => ['office_hours', 'map_embed_url'],
         'leadership' => ['name', 'category', 'role_title', 'bio', 'photo_alt_override', 'sort_order'],
         'ministries' => ['name', 'description', 'image_alt_override', 'sort_order'],
+        // K-WEB-V1-001D-C §62 — explicit allow-lists, exactly like every
+        // other section. Never `church_id`, never a raw Media ID (those
+        // are stripped by `WebsitePublisher::withoutPrivateMediaIds()`
+        // before this gate ever runs), never a timestamp not needed
+        // publicly.
+        'events' => [
+            'title', 'summary', 'starts_at', 'ends_at', 'venue',
+            'image_alt_override', 'cta_label', 'cta_url', 'is_featured', 'sort_order',
+        ],
+        'messages' => [
+            'title', 'speaker', 'message_date', 'scripture_reference', 'summary',
+            'image_alt_override', 'media_url', 'is_featured',
+        ],
+        'publications' => [
+            'title', 'author', 'publication_type', 'description',
+            'cover_alt_override', 'price_text', 'purchase_url', 'is_featured', 'sort_order',
+        ],
+        'giving' => ['headline', 'body', 'image_alt_override', 'cta_label', 'giving_url', 'additional_instructions'],
         'service_times' => ['label', 'day_of_week', 'time', 'sort_order'],
         'social_links' => ['platform', 'url', 'sort_order'],
     ];
@@ -38,7 +56,7 @@ class WebsitePublicSchema
         foreach (self::FIELDS as $section => $fields) {
             $value = $snapshot[$section] ?? null;
 
-            if (in_array($section, ['leadership', 'ministries', 'service_times', 'social_links'], true)) {
+            if (in_array($section, ['leadership', 'ministries', 'events', 'messages', 'publications', 'service_times', 'social_links'], true)) {
                 if (! is_array($value)) {
                     $this->deny();
                 }
@@ -63,7 +81,7 @@ class WebsitePublicSchema
 
         foreach ($snapshot['public_media'] ?? [] as $usage => $uuid) {
             if (! is_string($usage)
-                || ! preg_match('/^(brand\.(logo|mark)|home\.hero|leadership\.\d+\.photo|ministries\.\d+\.image)$/', $usage)
+                || ! preg_match('/^(brand\.(logo|mark)|home\.hero|leadership\.\d+\.photo|ministries\.\d+\.image|events\.\d+\.image|messages\.\d+\.image|publications\.\d+\.cover|giving\.image)$/', $usage)
                 || ! is_string($uuid)
                 || ! preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $uuid)) {
                 $this->deny();

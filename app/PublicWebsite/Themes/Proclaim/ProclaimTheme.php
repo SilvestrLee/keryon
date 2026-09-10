@@ -40,13 +40,12 @@ class ProclaimTheme implements ThemeRenderer
     }
 
     /**
-     * K-WEB-V1-001D-B §16 — Proclaim currently has a real template/render
-     * branch for exactly these five canonical types. Declaring support
-     * for Events/Messages/Publications/Giving here before their content
-     * models and templates actually exist would be exactly the
-     * "theme-misconfiguration" failure mode §79 warns against — this
-     * list grows only alongside real implementation work in
-     * K-WEB-V1-001D-C, never ahead of it.
+     * K-WEB-V1-001D-C §13 — Proclaim now has a real template/render
+     * branch for all nine canonical types. Events/Messages/Publications/
+     * Giving were deliberately withheld from this list in K-WEB-V1-001D-B
+     * until their content models and templates actually existed (§79's
+     * "theme-misconfiguration" guard) — that work is complete as of this
+     * milestone.
      *
      * @return list<WebsitePageType>
      */
@@ -57,6 +56,10 @@ class ProclaimTheme implements ThemeRenderer
             WebsitePageType::About,
             WebsitePageType::Leadership,
             WebsitePageType::Ministries,
+            WebsitePageType::Events,
+            WebsitePageType::Messages,
+            WebsitePageType::Publications,
+            WebsitePageType::Giving,
             WebsitePageType::Contact,
         ];
     }
@@ -102,6 +105,42 @@ class ProclaimTheme implements ThemeRenderer
 
                 return $ministry;
             });
+        } elseif ($page === 'events') {
+            // K-WEB-V1-001D-C §21/§83 — the snapshot/live collection is
+            // already ordered upcoming-first; this branch only resolves
+            // Media per item, exactly like Leadership/Ministries above.
+            $data['events'] = ($data['events'] ?? $this->content->events($churchId))->values()->map(function ($event, int $index) use ($churchId, $data) {
+                $event->publicImage = is_array($data['publicMedia'] ?? null)
+                    ? $this->media->rendition($churchId, $data['publicMedia']["events.{$index}.image"] ?? null, $event->image_alt_override)
+                    : $this->media->image($churchId, $event->image_id, $event->image_alt_override);
+                $event->ctaUrl = $this->url->external($event->cta_url);
+
+                return $event;
+            });
+        } elseif ($page === 'messages') {
+            $data['messages'] = ($data['messages'] ?? $this->content->messages($churchId))->values()->map(function ($message, int $index) use ($churchId, $data) {
+                $message->publicImage = is_array($data['publicMedia'] ?? null)
+                    ? $this->media->rendition($churchId, $data['publicMedia']["messages.{$index}.image"] ?? null, $message->image_alt_override)
+                    : $this->media->image($churchId, $message->image_id, $message->image_alt_override);
+                $message->mediaUrl = $this->url->external($message->media_url);
+
+                return $message;
+            });
+        } elseif ($page === 'publications') {
+            $data['publications'] = ($data['publications'] ?? $this->content->publications($churchId))->values()->map(function ($publication, int $index) use ($churchId, $data) {
+                $publication->publicCover = is_array($data['publicMedia'] ?? null)
+                    ? $this->media->rendition($churchId, $data['publicMedia']["publications.{$index}.cover"] ?? null, $publication->cover_alt_override)
+                    : $this->media->image($churchId, $publication->cover_id, $publication->cover_alt_override);
+                $publication->purchaseUrl = $this->url->external($publication->purchase_url);
+
+                return $publication;
+            });
+        } elseif ($page === 'giving') {
+            $data['content'] = array_key_exists('giving', $data) ? $data['giving'] : $this->content->giving($churchId);
+            $data['givingImage'] = is_array($data['publicMedia'] ?? null)
+                ? $this->media->rendition($churchId, $data['publicMedia']['giving.image'] ?? null, $data['content']?->image_alt_override)
+                : $this->media->image($churchId, $data['content']?->image_id, $data['content']?->image_alt_override);
+            $data['givingUrl'] = $this->url->external($data['content']?->giving_url);
         }
 
         $data['seo'] = $this->seo->forPage($page, $data, $preview);
