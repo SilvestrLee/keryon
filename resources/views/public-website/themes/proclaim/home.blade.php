@@ -60,4 +60,29 @@
             </div>
         </section>
     @endif
+
+    {{-- K-PROCLAIM-V1-001A §9/§19 — each teaser below is already fully
+    gated (effective page enablement AND eligible content) inside
+    ProclaimTheme::renderData(); this template only decides whether the
+    already-resolved collection/singleton is non-empty, never a second
+    enablement check, so Home can never disagree with Page Settings. --}}
+    @if ($homeEvents->isNotEmpty())
+        @include('public-website.themes.proclaim.home.upcoming-events')
+    @endif
+
+    @if ($homeMessage)
+        @include('public-website.themes.proclaim.home.latest-message')
+    @endif
+
+    @if ($homeMinistries->isNotEmpty())
+        @include('public-website.themes.proclaim.home.ministries')
+    @endif
+
+    @if ($homePublication)
+        @include('public-website.themes.proclaim.home.featured-publication')
+    @endif
+
+    @if ($homeGiving)
+        @include('public-website.themes.proclaim.home.giving')
+    @endif
 </x-public-website.proclaim-layout>

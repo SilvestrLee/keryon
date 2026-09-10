@@ -30,6 +30,7 @@
 </head>
 <body
     class="proclaim"
+    data-page="{{ $page }}"
     style="--church-accent: {{ $palette['accent'] }}; --church-heading: {{ $palette['heading'] }}; --church-body: {{ $palette['body'] }}"
     x-data="{ menuOpen: false }"
     @keydown.escape.window="menuOpen = false"

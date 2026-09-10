@@ -218,3 +218,63 @@ body.proclaim {
     html { scroll-behavior: auto; }
     .proclaim *, .proclaim *::before, .proclaim *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
+
+/* K-PROCLAIM-V1-001A — Home content teasers (Events, Messages, Ministries,
+   Publications, Giving). Deliberately reuse the existing tokens/patterns
+   (--pw-radius, --church-accent, .pw-empty's visual family, the
+   letter-initial fallback) rather than introducing a parallel system —
+   see the CSS system note above this stylesheet's own §001D-C block. */
+.pw-home-section-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 1rem 2rem; margin-bottom: 2rem; }
+.pw-home-section-head h2 { font-size: clamp(1.5rem, 3vw, 2rem); }
+.pw-home-section-head .pw-text-link { margin-top: 0; }
+
+.pw-home-event-list { display: grid; gap: 1.25rem; }
+.pw-home-event-card { grid-template-columns: 1fr !important; }
+.pw-home-event-card img { aspect-ratio: 16 / 9 !important; height: auto !important; }
+.pw-home-event-card .pw-event-copy { padding: 1.5rem; }
+.pw-home-event-card h3 { font-size: 1.3rem; }
+
+.pw-home-message-grid { display: grid; gap: 2rem; align-items: center; }
+.pw-home-message-grid img, .pw-home-message-grid .pw-image-fallback { width: 100%; border-radius: var(--pw-radius); object-fit: cover; }
+
+.pw-home-ministry-grid { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
+.pw-home-ministry-card img, .pw-home-ministry-card .pw-ministry-mark { width: 100%; aspect-ratio: 4 / 3; border-radius: var(--pw-radius); object-fit: cover; }
+.pw-home-ministry-card h3 { margin-top: .75rem; font-size: 1.1rem; }
+
+.pw-home-publication-card { max-width: 40rem; }
+
+.pw-home-giving { background: color-mix(in srgb, var(--church-accent) 6%, var(--pw-white)); }
+.pw-home-giving-grid { display: grid; gap: 2rem; align-items: center; }
+
+@media (min-width: 640px) {
+    .pw-home-ministry-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (min-width: 768px) {
+    .pw-home-event-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .pw-home-message-grid { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); }
+    .pw-home-publication-card { grid-template-columns: minmax(0, .5fr) minmax(0, 1fr); max-width: none; }
+    .pw-home-giving-grid { grid-template-columns: minmax(0, 1.15fr) minmax(18rem, .85fr); }
+}
+
+/* K-PROCLAIM-V1-001A — restrained entrance/reveal. CSS-first: the hero
+   plays once on load; every other section is revealed by `app.js`'s tiny,
+   progressively-enhanced IntersectionObserver toggling `.is-visible`
+   (native browser API, no new package). Without JS, `.pw-reveal` simply
+   has no starting opacity/transform applied below, so content is fully
+   visible immediately — see the no-JS rule directly above the
+   `prefers-reduced-motion` block already governing this stylesheet. */
+.pw-hero-content { animation: pw-fade-up 500ms cubic-bezier(.16,1,.3,1) both; }
+
+.pw-reveal { opacity: 0; transform: translateY(1.25rem); transition: opacity 500ms cubic-bezier(.16,1,.3,1), transform 500ms cubic-bezier(.16,1,.3,1); }
+.pw-reveal.is-visible { opacity: 1; transform: none; }
+
+@keyframes pw-fade-up {
+    from { opacity: 0; transform: translateY(1rem); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pw-hero-content { animation: none; }
+    .pw-reveal { opacity: 1; transform: none; transition: none; }
+}
