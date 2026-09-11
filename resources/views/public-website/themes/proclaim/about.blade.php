@@ -36,4 +36,18 @@
             </div>
         </section>
     @endif
+
+    {{-- K-PROCLAIM-V1-001B §7 — the discovery audit's confirmed defect:
+    unlike every other optional/collection page, About previously had no
+    empty-state branch at all, falling straight from hero to footer when
+    church_story/vision/mission/leadership_introduction are all absent.
+    Matches the established `.pw-empty` grammar and warm, Church-named
+    tone used by Leadership/Ministries/Events/Messages/Publications. --}}
+    @if (! $content?->church_story && ! $content?->vision && ! $content?->mission && ! $content?->leadership_introduction)
+        <section class="pw-section">
+            <div class="pw-shell">
+                <div class="pw-empty"><h2>Our story is coming soon.</h2><p>Please check back to learn more about {{ $church->name }}.</p></div>
+            </div>
+        </section>
+    @endif
 </x-public-website.proclaim-layout>
