@@ -178,7 +178,14 @@ body.proclaim {
 .pw-publication-footer .pw-button { margin-top: 0; }
 
 .pw-giving-grid { display: grid; gap: 3rem; align-items: start; }
-.pw-giving-instructions { margin-top: 1.5rem; }
+/* K-PROCLAIM-V1-001D §25 — the main body and the practical "other ways
+   to give" logistics previously shared identical .pw-prose styling with
+   only a top margin between them, making the two read as one
+   undifferentiated block. A `.pw-kicker` label (the same primitive
+   already used for hero sections and Publication type labels) plus a
+   `--pw-line` divider group this content as its own distinct section,
+   using only existing Proclaim tokens — no new card language. */
+.pw-giving-instructions { margin-top: 2rem; padding-top: 1.75rem; border-top: 1px solid var(--pw-line); }
 .pw-giving-image { width: 100%; border-radius: var(--pw-radius); object-fit: cover; aspect-ratio: 4 / 3; }
 
 @media (min-width: 640px) {

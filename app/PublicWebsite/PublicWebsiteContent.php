@@ -136,12 +136,27 @@ class PublicWebsiteContent
             ->get();
     }
 
-    /** @return Collection<int, ChurchPublication> */
+    /**
+     * K-PROCLAIM-V1-001D-R — `sort_order` defaults to `0` for every new
+     * Publication (see the migration), so a Church that never drags the
+     * Filament reorder handle has every record tied. `ORDER BY
+     * sort_order` alone has no contractual secondary order for ties —
+     * only `id` (a persistent, monotonically-assigned column) does.
+     * This is deterministic content ordering, not a render-time/clock
+     * concern (contrast `WebsiteEvent`'s current/upcoming-vs-past
+     * partition, which belongs in `ProclaimTheme::resolveEvents()`
+     * instead — see that method's own docblock) — it belongs here, at
+     * the content-query layer, exactly like `sort_order` itself already
+     * does.
+     *
+     * @return Collection<int, ChurchPublication>
+     */
     public function publications(int $churchId): Collection
     {
         return ChurchPublication::withoutGlobalScope('church_tenant')
             ->where('church_id', $churchId)
             ->orderBy('sort_order')
+            ->orderBy('id')
             ->get();
     }
 

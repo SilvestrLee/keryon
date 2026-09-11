@@ -11,7 +11,10 @@
             <div class="pw-giving-copy">
                 @if ($content?->body)<div class="pw-prose">{!! nl2br(e($content->body)) !!}</div>@endif
                 @if ($content?->additional_instructions)
-                    <div class="pw-prose pw-giving-instructions">{!! nl2br(e($content->additional_instructions)) !!}</div>
+                    <div class="pw-giving-instructions">
+                        <p class="pw-kicker">More ways to give</p>
+                        <div class="pw-prose">{!! nl2br(e($content->additional_instructions)) !!}</div>
+                    </div>
                 @endif
                 @if (($content?->cta_label ?? null) && $givingUrl)
                     <a class="pw-button" href="{{ $givingUrl }}" rel="noopener noreferrer">{{ $content->cta_label }}</a>

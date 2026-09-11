@@ -83,10 +83,17 @@ class WebsiteSnapshot
                 'title', 'speaker', 'message_date', 'scripture_reference', 'summary',
                 'image_id', 'image_alt_override', 'media_url', 'is_featured',
             ], [['message_date', 'desc'], ['id', 'desc']]),
+            // K-PROCLAIM-V1-001D-R — `sort_order` defaults to `0` for
+            // every new Publication; `id` is the deterministic secondary
+            // tie-break (see `PublicWebsiteContent::publications()`'s
+            // identical contract and docblock). This is deterministic
+            // content ordering — no clock dependency, no render-time
+            // concern — so it belongs in the immutable snapshot capture
+            // itself, unlike Events' current/upcoming-vs-past partition.
             'publications' => $this->many(ChurchPublication::class, $churchId, [
                 'title', 'author', 'publication_type', 'description',
                 'cover_id', 'cover_alt_override', 'price_text', 'purchase_url', 'is_featured', 'sort_order',
-            ]),
+            ], [['sort_order', 'asc'], ['id', 'asc']]),
             'giving' => $this->one(WebsiteGivingContent::class, $churchId, [
                 'headline', 'body', 'image_id', 'image_alt_override', 'cta_label', 'giving_url', 'additional_instructions',
             ]),
@@ -107,7 +114,9 @@ class WebsiteSnapshot
      * unaffected), but now accepts an explicit ordered list of
      * `[column, direction]` pairs so a collection whose *deterministic
      * content* ordering genuinely isn't manual (Events: `starts_at`
-     * ascending; Messages: newest `message_date` first) can capture its
+     * ascending; Messages: newest `message_date` first; Publications:
+     * `sort_order` then `id`, since every new record defaults to the
+     * same `sort_order` — K-PROCLAIM-V1-001D-R) can capture its
      * snapshot in that same order, since `PublicWebsiteContent::
      * published()` renders a snapshot's stored array order as-is.
      *

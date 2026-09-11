@@ -4,20 +4,27 @@ namespace Tests\Feature\ChurchWebsite;
 
 use App\Enums\ChurchRole;
 use App\Enums\PublicationType;
+use App\Enums\WebsitePageType;
 use App\Filament\Clusters\Website\Resources\ChurchPublicationResource\Pages\ListChurchPublications;
 use App\Models\Church;
 use App\Models\ChurchPublication;
 use App\Models\MediaAsset;
 use App\Models\User;
+use App\Models\WebsiteHomeContent;
+use App\Models\WebsitePageSetting;
 use App\Models\WebsitePublication;
+use App\Models\WebsiteSettings;
 use App\PublicWebsite\PublicWebsiteContent;
+use App\PublicWebsite\WebsitePublisher;
 use App\Support\TenantContext;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Testing\TestResponse;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -182,5 +189,120 @@ class ChurchPublicationTest extends TestCase
         $ordered = app(PublicWebsiteContent::class)->publications($this->church->id);
 
         $this->assertSame(['First', 'Second'], $ordered->pluck('title')->all());
+    }
+
+    // ---------------------------------------------------------------
+    // K-PROCLAIM-V1-001D-R — deterministic tie-break. `sort_order`
+    // defaults to `0` for every new Publication; a Church that never
+    // drags the Filament reorder handle has every record tied.
+    // `ORDER BY sort_order` alone has no contractual secondary order —
+    // only `id` does. These tests would fail if that secondary
+    // `orderBy('id')` were ever removed.
+    // ---------------------------------------------------------------
+
+    public function test_publications_with_a_tied_sort_order_fall_back_to_ascending_id_in_working_content(): void
+    {
+        $a = ChurchPublication::create(['title' => 'Tied Alpha', 'sort_order' => 0]);
+        $b = ChurchPublication::create(['title' => 'Tied Beta', 'sort_order' => 0]);
+        $c = ChurchPublication::create(['title' => 'Tied Gamma', 'sort_order' => 0]);
+        $this->assertTrue($a->id < $b->id && $b->id < $c->id, 'Fixture must produce a known ascending-ID sequence.');
+
+        $ordered = app(PublicWebsiteContent::class)->publications($this->church->id);
+
+        $this->assertSame(['Tied Alpha', 'Tied Beta', 'Tied Gamma'], $ordered->pluck('title')->all());
+    }
+
+    public function test_publications_with_a_tied_sort_order_are_captured_in_ascending_id_order_in_the_published_snapshot(): void
+    {
+        ChurchPublication::create(['title' => 'Tied Alpha', 'sort_order' => 0]);
+        ChurchPublication::create(['title' => 'Tied Beta', 'sort_order' => 0]);
+        ChurchPublication::create(['title' => 'Tied Gamma', 'sort_order' => 0]);
+        WebsiteSettings::create(['theme' => 'proclaim']);
+        WebsiteHomeContent::create(['hero_heading' => 'Welcome']);
+
+        $publication = app(WebsitePublisher::class)->publish();
+
+        $this->assertSame(['Tied Alpha', 'Tied Beta', 'Tied Gamma'], array_column($publication->snapshot['publications'], 'title'));
+    }
+
+    public function test_publications_with_a_tied_sort_order_render_in_ascending_id_order_on_the_anonymous_public_page(): void
+    {
+        ChurchPublication::create(['title' => 'Tied Alpha', 'sort_order' => 0]);
+        ChurchPublication::create(['title' => 'Tied Beta', 'sort_order' => 0]);
+        ChurchPublication::create(['title' => 'Tied Gamma', 'sort_order' => 0]);
+
+        $response = $this->publicGet('/publications');
+
+        $response->assertOk();
+        $body = $response->getContent();
+        $this->assertTrue(
+            strpos($body, 'Tied Alpha') < strpos($body, 'Tied Beta') && strpos($body, 'Tied Beta') < strpos($body, 'Tied Gamma'),
+            'Tied publications must render in ascending-id order on the real anonymous public page.'
+        );
+    }
+
+    // ---------------------------------------------------------------
+    // K-PROCLAIM-V1-001D — dedicated public page rendering, empty
+    // state, long content, and cross-Church isolation. Same anonymity
+    // contract as {@see ProclaimRenderingTest::publicGet()}.
+    // ---------------------------------------------------------------
+
+    /** Same anonymity contract as {@see ProclaimRenderingTest::publicGet()}. */
+    private function publicGet(string $path): TestResponse
+    {
+        WebsiteSettings::firstOrCreate(['church_id' => $this->church->id], ['theme' => 'proclaim']);
+        WebsiteHomeContent::firstOrCreate(['church_id' => $this->church->id], ['hero_heading' => 'Welcome']);
+        WebsitePageSetting::updateOrCreate(
+            ['church_id' => $this->church->id, 'page_type' => WebsitePageType::Publications->value],
+            ['enabled' => true],
+        );
+        app(WebsitePublisher::class)->publish();
+
+        Auth::logout();
+        app(TenantContext::class)->forgetResolved();
+
+        return $this->get("http://{$this->church->slug}.keryon.app{$path}");
+    }
+
+    public function test_a_very_long_title_and_author_render_safely_on_the_public_page(): void
+    {
+        $longTitle = 'The Long Walk Home: Stories of Grace, Endurance, and Everyday Faith from Members of Our Congregation';
+        $longAuthor = 'Compiled by the Publication Test Church Writers Circle and Congregational Storytelling Ministry';
+        ChurchPublication::create(['title' => $longTitle, 'author' => $longAuthor]);
+
+        $this->publicGet('/publications')->assertOk()->assertSee($longTitle)->assertSee($longAuthor);
+    }
+
+    public function test_the_public_page_shows_a_visitor_appropriate_empty_state_with_zero_publications(): void
+    {
+        $response = $this->publicGet('/publications');
+
+        $response->assertOk()
+            ->assertSee('No publications are available yet.')
+            ->assertSee('Please check back for updates from Publication Test Church.')
+            ->assertDontSee('No records')
+            ->assertDontSee('Nothing configured')
+            ->assertDontSee('0 items');
+    }
+
+    public function test_another_churchs_publications_never_appear_on_this_churchs_public_page(): void
+    {
+        $this->publicGet('/publications');
+
+        $other = Church::create(['name' => 'Other Publication Church', 'slug' => 'publication-other-church-public']);
+        app(TenantContext::class)->forgetResolved();
+        $this->actingAs(User::factory()->forChurch($other, [ChurchRole::COMMUNICATIONS])->create());
+        app(TenantContext::class)->forgetResolved();
+        WebsiteSettings::create(['theme' => 'proclaim']);
+        WebsiteHomeContent::create(['hero_heading' => 'Welcome']);
+        WebsitePageSetting::updateOrCreate(['page_type' => WebsitePageType::Publications->value], ['enabled' => true]);
+        ChurchPublication::create(['title' => "Other Church's Secret Publication"]);
+        app(WebsitePublisher::class)->publish();
+
+        Auth::logout();
+        app(TenantContext::class)->forgetResolved();
+
+        $this->get('http://publication-test-church.keryon.app/publications')
+            ->assertOk()->assertDontSee("Other Church's Secret Publication");
     }
 }

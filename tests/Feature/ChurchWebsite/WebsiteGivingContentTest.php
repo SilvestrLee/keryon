@@ -3,17 +3,24 @@
 namespace Tests\Feature\ChurchWebsite;
 
 use App\Enums\ChurchRole;
+use App\Enums\WebsitePageType;
 use App\Filament\Clusters\Website\Pages\EditGiving;
 use App\Models\Church;
 use App\Models\MediaAsset;
 use App\Models\User;
 use App\Models\WebsiteGivingContent;
+use App\Models\WebsiteHomeContent;
+use App\Models\WebsitePageSetting;
+use App\Models\WebsiteSettings;
+use App\PublicWebsite\WebsitePublisher;
 use App\Support\TenantContext;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Testing\TestResponse;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -145,5 +152,108 @@ class WebsiteGivingContentTest extends TestCase
 
         $this->expectException(\LogicException::class);
         WebsiteGivingContent::create(['headline' => 'x', 'image_id' => $foreignImage->id]);
+    }
+
+    // ---------------------------------------------------------------
+    // K-PROCLAIM-V1-001D — dedicated public page rendering: populated,
+    // empty/absent, additional-instructions grouping, CTA safety, and
+    // cross-Church isolation. Same anonymity contract as
+    // {@see ProclaimRenderingTest::publicGet()}.
+    // ---------------------------------------------------------------
+
+    /** Same anonymity contract as {@see ProclaimRenderingTest::publicGet()}. */
+    private function publicGet(string $path = '/giving'): TestResponse
+    {
+        WebsiteSettings::firstOrCreate(['church_id' => $this->church->id], ['theme' => 'proclaim']);
+        WebsiteHomeContent::firstOrCreate(['church_id' => $this->church->id], ['hero_heading' => 'Welcome']);
+        WebsitePageSetting::updateOrCreate(
+            ['church_id' => $this->church->id, 'page_type' => WebsitePageType::Giving->value],
+            ['enabled' => true],
+        );
+        app(WebsitePublisher::class)->publish();
+
+        Auth::logout();
+        app(TenantContext::class)->forgetResolved();
+
+        return $this->get("http://{$this->church->slug}.keryon.app{$path}");
+    }
+
+    public function test_populated_giving_content_renders_headline_body_and_cta_on_the_public_page(): void
+    {
+        WebsiteGivingContent::create([
+            'headline' => 'Give Generously',
+            'body' => 'Your generosity fuels our mission.',
+            'cta_label' => 'Give Now',
+            'giving_url' => 'https://giving.example.org',
+        ]);
+
+        $this->publicGet()->assertOk()
+            ->assertSee('Give Generously')
+            ->assertSee('Your generosity fuels our mission.')
+            ->assertSee('href="https://giving.example.org"', false)
+            ->assertSee('Give Now');
+    }
+
+    public function test_additional_instructions_render_grouped_beneath_a_more_ways_to_give_label(): void
+    {
+        WebsiteGivingContent::create([
+            'headline' => 'Give Generously',
+            'body' => 'Your generosity fuels our mission.',
+            'additional_instructions' => 'You can also give by texting HOPE to 55555.',
+        ]);
+
+        $this->publicGet()->assertOk()
+            ->assertSee('More ways to give')
+            ->assertSee('You can also give by texting HOPE to 55555.');
+    }
+
+    public function test_giving_page_shows_a_visitor_appropriate_empty_state_when_no_content_row_exists(): void
+    {
+        $response = $this->publicGet();
+
+        $response->assertOk()
+            ->assertSee('Giving information is coming soon.')
+            ->assertSee('Please check back for updates from Giving Test Church.')
+            ->assertDontSee('No records')
+            ->assertDontSee('Nothing configured');
+    }
+
+    public function test_giving_page_shows_the_empty_state_when_a_content_row_exists_but_headline_and_body_are_both_blank(): void
+    {
+        WebsiteGivingContent::create(['giving_url' => 'https://giving.example.org']);
+
+        $response = $this->publicGet();
+
+        $response->assertOk()
+            ->assertSee('Giving information is coming soon.')
+            ->assertDontSee('Give Now');
+    }
+
+    public function test_the_cta_never_renders_when_giving_url_is_absent_even_with_a_cta_label_set(): void
+    {
+        WebsiteGivingContent::create(['headline' => 'Give Generously', 'body' => 'Body copy.', 'cta_label' => 'Give Now']);
+
+        $this->publicGet()->assertOk()->assertDontSee('Give Now');
+    }
+
+    public function test_another_churchs_giving_content_never_appears_on_this_churchs_public_page(): void
+    {
+        $this->publicGet();
+
+        $other = Church::create(['name' => 'Other Giving Church', 'slug' => 'giving-other-church-public']);
+        app(TenantContext::class)->forgetResolved();
+        $this->actingAs(User::factory()->forChurch($other, [ChurchRole::COMMUNICATIONS])->create());
+        app(TenantContext::class)->forgetResolved();
+        WebsiteSettings::create(['theme' => 'proclaim']);
+        WebsiteHomeContent::create(['hero_heading' => 'Welcome']);
+        WebsitePageSetting::updateOrCreate(['page_type' => WebsitePageType::Giving->value], ['enabled' => true]);
+        WebsiteGivingContent::create(['headline' => "Other Church's Secret Giving Pitch"]);
+        app(WebsitePublisher::class)->publish();
+
+        Auth::logout();
+        app(TenantContext::class)->forgetResolved();
+
+        $this->get('http://giving-test-church.keryon.app/giving')
+            ->assertOk()->assertDontSee("Other Church's Secret Giving Pitch");
     }
 }
