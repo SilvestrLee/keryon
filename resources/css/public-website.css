@@ -197,6 +197,30 @@ body.proclaim {
 @media (min-width: 768px) {
     .pw-desktop-nav { display: flex; }
     .pw-menu-button, .pw-mobile-nav { display: none !important; }
+    /* K-PROCLAIM-V1-001F — `.pw-brand`'s `min-width: 0` (needed so a
+       long Church name can wrap onto multiple lines instead of
+       overflowing) combined with flex's own default `min-width: auto`
+       on `.pw-desktop-nav` (which never shrinks below its natural
+       content width) meant 100% of the squeeze at this breakpoint
+       landed on the brand alone. With a genuinely long Church name and
+       a full nine-page desktop nav, the brand's available width could
+       collapse to under 20px between 768px and roughly 950px — at that
+       width `overflow-wrap: anywhere` has no choice but to break every
+       single character onto its own line, producing a header dozens
+       of lines tall. A real minimum width restores word-level
+       wrapping; allowing the row itself to wrap means that on the
+       (already-narrow) 768px–950px range, where a long name and a
+       full nine-page nav genuinely cannot both fit on one line at any
+       reasonable size, the nav simply continues on a second line
+       instead of either crushing the brand or overflowing the shell —
+       the same graceful trade-off `.pw-mobile-nav` already makes by
+       existing as a separate row below the header on narrow
+       viewports, just resolved with flexbox instead of a breakpoint
+       swap. Below 950px-ish nothing changes from before except the
+       word-wrap fix; above it, both already fit on one line and this
+       rule has no visible effect. */
+    .pw-nav-shell { flex-wrap: wrap; row-gap: .75rem; }
+    .pw-brand { min-width: 12rem; }
     .pw-welcome-grid, .pw-story-grid { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 5rem; align-items: start; }
     .pw-belief-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .pw-invitation { flex-direction: row; justify-content: space-between; align-items: end; }
