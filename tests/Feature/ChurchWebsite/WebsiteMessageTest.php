@@ -157,4 +157,20 @@ class WebsiteMessageTest extends TestCase
     {
         $this->assertFalse(Schema::hasColumn('website_messages', 'sort_order'));
     }
+
+    public function test_a_message_with_no_date_sorts_after_every_dated_message(): void
+    {
+        // K-PROCLAIM-V1-001C §9 — a message added without a date (an
+        // editorial choice the form explicitly allows, since
+        // `message_date` isn't required) must not be treated as "most
+        // recent" by a NULLS-FIRST default; it should read as the
+        // least-recent item instead. Verified live against fixture
+        // data before being formalized here.
+        WebsiteMessage::create(['title' => 'Dated Message', 'message_date' => now()->subMonth()]);
+        WebsiteMessage::create(['title' => 'Undated Message']);
+
+        $ordered = app(PublicWebsiteContent::class)->messages($this->church->id);
+
+        $this->assertSame(['Dated Message', 'Undated Message'], $ordered->pluck('title')->all());
+    }
 }

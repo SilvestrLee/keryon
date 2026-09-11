@@ -137,9 +137,11 @@ class ProclaimTheme implements ThemeRenderer
         } elseif ($page === 'ministries') {
             $data['ministries'] = $this->resolveMinistries($churchId, $data);
         } elseif ($page === 'events') {
-            // K-WEB-V1-001D-C §21/§83 — the snapshot/live collection is
-            // already ordered upcoming-first; this branch only resolves
-            // Media per item, exactly like Leadership/Ministries above.
+            // K-WEB-V1-001D-C §21/§83, corrected by K-PROCLAIM-V1-001C
+            // §9 and re-placed by K-PROCLAIM-V1-001C-R §5/§6 —
+            // `resolveEvents()` below both resolves Media per item and
+            // applies the one, single, request-time upcoming-first
+            // partition shared by Preview and the published snapshot.
             $data['events'] = $this->resolveEvents($churchId, $data);
         } elseif ($page === 'messages') {
             $data['messages'] = $this->resolveMessages($churchId, $data);
@@ -184,6 +186,35 @@ class ProclaimTheme implements ThemeRenderer
         });
     }
 
+    /**
+     * K-PROCLAIM-V1-001C §9 found that the public Events page rendered
+     * past events ahead of upcoming ones. K-PROCLAIM-V1-001C-R corrected
+     * *where* that fix lives: both `PublicWebsiteContent::events()`
+     * (Preview/working-state content) and `WebsiteSnapshot::capture()`
+     * (published-snapshot content) deliberately stay deterministic and
+     * time-independent — neither partitions by current/past — so that
+     * recomputing either later, with no editorial change, never produces
+     * a different result merely because `now()` moved on (which would
+     * otherwise falsely mark an untouched Website as having "pending
+     * changes," since `WebsitePublicationStatus::current()` recomputes
+     * and re-fingerprints the snapshot on every check).
+     *
+     * The current/upcoming-vs-past partition instead lives here, once,
+     * at request/render time — the one seam both `renderWorking()`
+     * (Preview) and `renderPublished()` (public) funnel through via
+     * `renderData()`. This means the dedicated Events page reorders
+     * itself correctly as real time passes, with no republish required,
+     * while the stored snapshot itself never changes shape or fingerprint
+     * from that passage of time alone.
+     *
+     * The stable partition is applied AFTER the Media-resolution `map()`
+     * below, never before: `publicImage` is looked up by each event's
+     * *original* collection index (matching the index `publicMedia` keys
+     * were built against, in `PublicWebsiteContent::events()`'s or
+     * `WebsiteSnapshot::capture()`'s query order) — partitioning first
+     * would shift indices and look up the wrong Media, the same bug
+     * class already avoided in `resolveMinistries()`.
+     */
     private function resolveEvents(int $churchId, array $data): Collection
     {
         return ($data['events'] ?? $this->content->events($churchId))->values()->map(function ($event, int $index) use ($churchId, $data) {
@@ -193,7 +224,7 @@ class ProclaimTheme implements ThemeRenderer
             $event->ctaUrl = $this->url->external($event->cta_url);
 
             return $event;
-        });
+        })->sortBy(fn ($event): bool => ($event->ends_at ?? $event->starts_at)->isPast())->values();
     }
 
     private function resolveMessages(int $churchId, array $data): Collection

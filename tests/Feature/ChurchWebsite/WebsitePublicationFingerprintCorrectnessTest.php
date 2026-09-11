@@ -10,12 +10,15 @@ use App\Models\ChurchBrandProfile;
 use App\Models\MediaAsset;
 use App\Models\MediaRendition;
 use App\Models\User;
+use App\Models\WebsiteEvent;
 use App\Models\WebsiteHomeContent;
+use App\Models\WebsitePublication;
 use App\Models\WebsiteSettings;
 use App\PublicWebsite\WebsitePublicationStatus;
 use App\PublicWebsite\WebsitePublisher;
 use App\Support\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -255,6 +258,61 @@ class WebsitePublicationFingerprintCorrectnessTest extends TestCase
         app(WebsitePublisher::class)->publish();
 
         $this->assertSame($firstFingerprint, $first->fresh()->working_fingerprint, 'A historical publication\'s own fingerprint must never be rewritten.');
+    }
+
+    // ---------------------------------------------------------------
+    // K-PROCLAIM-V1-001C-R §4/§14/§16 — an Event crossing from
+    // current/upcoming to past, with the clock alone advancing and no
+    // editorial change, must never mark the Website as having pending
+    // changes, and must never rewrite the already-stored, immutable
+    // publication snapshot. This is the exact regression the original
+    // K-PROCLAIM-V1-001C fix would have introduced had the
+    // current/upcoming-vs-past partition been left inside
+    // `WebsiteSnapshot::capture()` instead of moved to
+    // `ProclaimTheme::resolveEvents()`.
+    // ---------------------------------------------------------------
+
+    public function test_an_event_crossing_from_upcoming_to_past_does_not_mark_the_website_pending(): void
+    {
+        $t1 = Carbon::parse('2026-01-01 09:00:00');
+        $this->travelTo($t1);
+
+        WebsiteEvent::create(['title' => 'Crosses The Boundary', 'starts_at' => $t1->copy()->subHour(), 'ends_at' => $t1->copy()->addHours(2)]);
+        app(WebsitePublisher::class)->publish();
+        $this->assertFalse($this->publicationStatus()['pending'], 'A fresh publish must not itself report pending.');
+
+        // Advance real test time past the Event's `ends_at` — it is now
+        // classified past. No content was edited.
+        $this->travelTo($t1->copy()->addHours(4));
+
+        $this->assertFalse(
+            $this->publicationStatus()['pending'],
+            'An Event crossing from current/upcoming to past, with no editorial change, must not report pending changes — the snapshot and its fingerprint must stay time-independent.'
+        );
+
+        $this->travelBack();
+    }
+
+    public function test_the_stored_publication_snapshot_is_not_rewritten_when_an_event_crosses_into_the_past(): void
+    {
+        $t1 = Carbon::parse('2026-01-01 09:00:00');
+        $this->travelTo($t1);
+
+        WebsiteEvent::create(['title' => 'Crosses The Boundary', 'starts_at' => $t1->copy()->subHour(), 'ends_at' => $t1->copy()->addHours(2)]);
+        $publication = app(WebsitePublisher::class)->publish();
+        $storedEventsBefore = $publication->fresh()->snapshot['events'];
+
+        $this->travelTo($t1->copy()->addHours(4));
+
+        $storedEventsAfter = WebsitePublication::query()->findOrFail($publication->id)->snapshot['events'];
+
+        $this->assertSame(
+            $storedEventsBefore,
+            $storedEventsAfter,
+            'The stored, immutable publication snapshot must not change shape or order merely because real time advanced — only rendering may reorder, never the stored evidence.'
+        );
+
+        $this->travelBack();
     }
 
     // ---------------------------------------------------------------

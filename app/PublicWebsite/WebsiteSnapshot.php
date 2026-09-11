@@ -60,8 +60,21 @@ class WebsiteSnapshot
             'ministries' => $this->many(WebsiteMinistry::class, $churchId, [
                 'name', 'description', 'image_id', 'image_alt_override', 'sort_order',
             ]),
-            // K-WEB-V1-001D-C §61 — same generic one()/many() pattern,
-            // no snapshot-architecture change needed.
+            // K-WEB-V1-001D-C §61, revised by K-PROCLAIM-V1-001C-R §3 —
+            // same generic one()/many() pattern; deliberately captures
+            // deterministic chronological order only. The
+            // current/upcoming-vs-past presentation partition must NOT
+            // live here: the snapshot must stay immutable and
+            // reproducible from editorial state alone, never dependent
+            // on what `now()` happens to be at capture time — otherwise
+            // recapturing this same, unedited content later (as
+            // `WebsitePublicationStatus::current()` does on every
+            // "pending changes" check) would compute a different array
+            // order than what was actually published, producing a
+            // different fingerprint and a false "pending" state purely
+            // from the clock advancing. Presentation-time ordering is
+            // applied once, downstream, in
+            // `ProclaimTheme::resolveEvents()`.
             'events' => $this->many(WebsiteEvent::class, $churchId, [
                 'title', 'summary', 'starts_at', 'ends_at', 'venue',
                 'image_id', 'image_alt_override', 'cta_label', 'cta_url', 'is_featured', 'sort_order',
@@ -92,11 +105,19 @@ class WebsiteSnapshot
      * K-WEB-V1-001D-C §61/§83/§84 — `$orderBy` defaults to the existing
      * `sort_order`-only behavior (every K-WEB-V1-001D-B-era caller is
      * unaffected), but now accepts an explicit ordered list of
-     * `[column, direction]` pairs so a collection whose *public*
-     * ordering genuinely isn't manual (Events: upcoming-first by
-     * `starts_at`; Messages: newest `message_date` first) can capture
-     * its snapshot in that same order, since `PublicWebsiteContent::
+     * `[column, direction]` pairs so a collection whose *deterministic
+     * content* ordering genuinely isn't manual (Events: `starts_at`
+     * ascending; Messages: newest `message_date` first) can capture its
+     * snapshot in that same order, since `PublicWebsiteContent::
      * published()` renders a snapshot's stored array order as-is.
+     *
+     * K-PROCLAIM-V1-001C-R §3 — this is deliberately a *content*
+     * ordering only. Any presentation-time rule that depends on `now()`
+     * (such as Events' current/upcoming-vs-past partition) must never be
+     * folded into this method or into `capture()` — it belongs
+     * downstream, in the theme's own render path
+     * (`ProclaimTheme::resolveEvents()`), which runs fresh on every
+     * request rather than being frozen at publish time.
      *
      * @param  class-string<Model>  $model
      * @param  list<array{0: string, 1: string}>  $orderBy

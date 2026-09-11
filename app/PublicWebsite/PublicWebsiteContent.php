@@ -89,9 +89,25 @@ class PublicWebsiteContent
     }
 
     /**
-     * K-WEB-V1-001D-C §83 — upcoming-first is the public Events
-     * ordering; `sort_order` is only a secondary tie-breaker for events
-     * sharing the same start time, never the primary key.
+     * K-WEB-V1-001D-C §83 — deterministic content-layer order:
+     * chronological ascending by `starts_at`, with `sort_order` as the
+     * secondary tie-breaker for events sharing the same start time. This
+     * is content data, not presentation — it deliberately does NOT
+     * partition by current/past. `now()` advancing must never change
+     * what this method returns for otherwise-unedited content, or a
+     * Church's publication would drift into a false "pending changes"
+     * state purely from the passage of time (see
+     * `WebsiteSnapshot::capture()`'s identical contract for the
+     * published/snapshot path).
+     *
+     * K-PROCLAIM-V1-001C §9 first found that the public Events page
+     * rendered past events ahead of upcoming ones; K-PROCLAIM-V1-001C-R
+     * corrected the fix's placement — the upcoming-first partition now
+     * lives once, at request/render time, in
+     * `ProclaimTheme::resolveEvents()`, which both this method's
+     * Preview/working-state callers and the published-snapshot path
+     * funnel through. This method itself only needs to stay
+     * deterministic.
      *
      * @return Collection<int, WebsiteEvent>
      */
