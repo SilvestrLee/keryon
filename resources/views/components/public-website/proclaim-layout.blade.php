@@ -27,6 +27,25 @@
     @endif
     <script type="application/ld+json">{!! json_encode($seo['organization'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
     @vite(['resources/css/public-website.css', 'resources/js/app.js'])
+    {{-- K-PROCLAIM-V1-001E §33 — the mobile menu is Alpine-controlled
+    (`x-show`/`@click`); below the 768px desktop-nav breakpoint, a
+    visitor with JavaScript unavailable could never open it, making
+    every enabled page except Home unreachable on a narrow no-JS
+    device — the desktop nav itself needs no JS at all (plain CSS
+    `display:flex` at 768px+), so only the mobile case degrades. No
+    second navigation list is introduced: this reuses the exact same
+    `#mobile-navigation` markup already in the page, simply forcing it
+    permanently open and hiding the now-inert menu button, scoped to
+    `<noscript>` (never seen or loaded when JS runs) and to the same
+    mobile breakpoint the real menu already uses. --}}
+    <noscript>
+        <style>
+            @media (max-width: 767px) {
+                .pw-menu-button { display: none !important; }
+                .pw-mobile-nav { display: block !important; }
+            }
+        </style>
+    </noscript>
 </head>
 <body
     class="proclaim"

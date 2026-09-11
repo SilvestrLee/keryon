@@ -5,6 +5,7 @@ namespace Tests\Feature\ChurchWebsite;
 use App\Enums\BrandFontChoice;
 use App\Enums\ChurchRole;
 use App\Enums\LeadershipCategory;
+use App\Enums\WebsitePageType;
 use App\Models\Church;
 use App\Models\ChurchBrandProfile;
 use App\Models\ChurchServiceTime;
@@ -16,6 +17,7 @@ use App\Models\WebsiteContactContent;
 use App\Models\WebsiteHomeContent;
 use App\Models\WebsiteLeadershipProfile;
 use App\Models\WebsiteMinistry;
+use App\Models\WebsitePageSetting;
 use App\Models\WebsiteSettings;
 use App\PublicWebsite\WebsitePublisher;
 use App\Support\TenantContext;
@@ -274,5 +276,80 @@ class ProclaimRenderingTest extends TestCase
         $this->publicGet()->assertOk()
             ->assertDontSee('javascript:alert', false)
             ->assertDontSee('Unsafe action');
+    }
+
+    // ---------------------------------------------------------------
+    // K-PROCLAIM-V1-001E — shared shell: no-JS mobile reachability,
+    // Header/Footer navigation agreement, sparse Footer collapse.
+    // ---------------------------------------------------------------
+
+    public function test_every_enabled_page_remains_reachable_without_javascript_on_mobile(): void
+    {
+        // §33 — the mobile menu is Alpine-controlled and invisible below
+        // the 768px desktop-nav breakpoint without JS. The fix forces
+        // the *same* server-rendered mobile-navigation markup open via a
+        // <noscript> stylesheet, rather than duplicating the link list —
+        // so proving the fix means proving both pieces are present
+        // together: the noscript override, and the real links it reveals.
+        WebsitePageSetting::updateOrCreate(['page_type' => WebsitePageType::Events->value], ['enabled' => true]);
+
+        $body = $this->publicGet()->assertOk()->getContent();
+
+        $this->assertStringContainsString('<noscript>', $body);
+        $this->assertMatchesRegularExpression(
+            '/<noscript>\s*<style>.*\.pw-mobile-nav\s*\{\s*display:\s*block\s*!important;.*<\/style>\s*<\/noscript>/s',
+            $body,
+            'A <noscript> rule must force the real mobile navigation panel open when JavaScript is unavailable.'
+        );
+        $this->assertStringContainsString('id="mobile-navigation"', $body);
+        $this->assertStringContainsString('href="/about"', $body);
+        $this->assertStringContainsString('href="/events"', $body);
+        $this->assertStringContainsString('href="/contact"', $body);
+    }
+
+    public function test_header_and_footer_navigation_never_diverge(): void
+    {
+        WebsitePageSetting::updateOrCreate(['page_type' => WebsitePageType::Events->value], ['enabled' => true]);
+        WebsitePageSetting::updateOrCreate(['page_type' => WebsitePageType::Messages->value], ['enabled' => true, 'navigation_label' => 'Sermons']);
+
+        $body = $this->publicGet()->assertOk()->getContent();
+
+        preg_match('/<nav class="pw-desktop-nav"[^>]*>(.*?)<\/nav>/s', $body, $desktop);
+        preg_match('/<nav aria-label="Footer navigation">(.*?)<\/nav>/s', $body, $footer);
+        preg_match_all('/href="(\/[a-z]*)"/', $desktop[1] ?? '', $desktopHrefs);
+        preg_match_all('/href="(\/[a-z]*)"/', $footer[1] ?? '', $footerHrefs);
+
+        // Footer deliberately excludes Home (§20's own documented rule) —
+        // every other enabled route must match exactly, in the same order.
+        $desktopWithoutHome = array_values(array_filter($desktopHrefs[1], fn (string $href): bool => $href !== '/'));
+
+        $this->assertNotEmpty($desktopWithoutHome);
+        $this->assertSame($desktopWithoutHome, $footerHrefs[1], 'Header and Footer navigation must expose the exact same enabled-page routes, in the same order.');
+        $this->assertStringContainsString('Sermons', $desktop[1]);
+        $this->assertStringContainsString('Sermons', $footer[1]);
+    }
+
+    public function test_footer_collapses_gracefully_for_a_sparse_church(): void
+    {
+        $sparse = Church::create(['name' => 'Elm Chapel', 'slug' => 'elm-chapel-sparse', 'phone' => '0801 234 5678']);
+        $this->actingAs(User::factory()->forChurch($sparse, [ChurchRole::COMMUNICATIONS])->create());
+        app(TenantContext::class)->forgetResolved();
+        WebsiteSettings::create(['footer_note' => null]);
+        WebsiteHomeContent::create(['hero_heading' => 'Welcome to Elm Chapel']);
+        app(WebsitePublisher::class)->publish();
+
+        Auth::logout();
+        app(TenantContext::class)->forgetResolved();
+        $body = $this->get('http://elm-chapel-sparse.keryon.app/')->assertOk()->getContent();
+
+        // No logo → plain name, no address, no email, no service times
+        // heading, no socials block — every one of these must collapse
+        // silently, never as an empty heading or blank separator.
+        $this->assertStringContainsString('Elm Chapel', $body);
+        $this->assertStringContainsString('href="tel:08012345678"', $body);
+        $this->assertStringNotContainsString('mailto:', $body);
+        $this->assertStringNotContainsString('Gather with us', $body);
+        $this->assertStringNotContainsString('pw-socials', $body);
+        $this->assertStringContainsString('aria-label="Footer navigation"', $body);
     }
 }
