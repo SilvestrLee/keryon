@@ -28,7 +28,13 @@ class RejectUnsupportedKeryonHost
         }
 
         if ($host === 'central.'.$baseDomain) {
-            abort_unless(filled(config('central.domain')) && hash_equals(strtolower((string) config('central.domain')), $host) && $request->routeIs('filament.central.*'), 404);
+            // K-WEB-P2-ROBOTS-001C — `platform-central.robots` is the one
+            // exact, narrowly-named exception to the Filament-only rule
+            // below: Central's own crawler policy, nothing else. This is
+            // not a general Central route exception — any other route
+            // name on this host still 404s.
+            abort_unless(filled(config('central.domain')) && hash_equals(strtolower((string) config('central.domain')), $host)
+                && ($request->routeIs('filament.central.*') || $request->routeIs('platform-central.robots')), 404);
 
             return $next($request);
         }
