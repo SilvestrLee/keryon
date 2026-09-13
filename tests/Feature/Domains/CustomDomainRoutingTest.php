@@ -116,7 +116,7 @@ class CustomDomainRoutingTest extends TestCase
     {
         $church = $this->publishedChurch('Degraded Church', 'degraded-church', 'Published truth');
         $domain = $this->activeDomain($church, 'degraded.org', primary: true);
-        $domain->forceFill(['consecutive_failures' => 3, 'last_checked_at' => now()->subDay()->subMinute()])->save();
+        $domain->forceFill(['consecutive_failures' => 3, 'failure_streak_started_at' => now()->subDay()->subMinute()])->save();
         app(ChurchDomainLifecycle::class)->degrade($domain, DomainFailureCode::DnsMismatch);
 
         $this->get('http://degraded.org')->assertNotFound();

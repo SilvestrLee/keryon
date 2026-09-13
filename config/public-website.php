@@ -24,5 +24,14 @@ return [
         'provisioner' => env('CHURCH_DOMAIN_PROVISIONER', 'unavailable'),
         'quarantine_days' => 30,
         'claim_limit' => 2,
+
+        // K-DOMAIN-001E operational cadence — safe V1 defaults, not
+        // Cloudflare limits. See config/cloudflare.php for provider config.
+        'health_check_interval_hours' => (int) env('CHURCH_DOMAIN_HEALTH_INTERVAL_HOURS', 12),
+        'tls_poll_interval_minutes' => (int) env('CHURCH_DOMAIN_TLS_POLL_INTERVAL_MINUTES', 5),
+        'dispatch_batch_size' => (int) env('CHURCH_DOMAIN_DISPATCH_BATCH_SIZE', 50),
+        // Keryon-internal safety bound on provider-consuming domain jobs —
+        // see AppServiceProvider's 'domain-provider' rate limiter.
+        'provider_rate_limit_per_minute' => (int) env('CHURCH_DOMAIN_PROVIDER_RATE_LIMIT_PER_MINUTE', 30),
     ],
 ];

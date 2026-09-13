@@ -16,6 +16,8 @@ enum ChurchDomainEventType: string
     case Activated = 'activated';
     case PrimaryChanged = 'primary_changed';
     case Degraded = 'degraded';
+    case Recovered = 'recovered';
+    case HealthCheckFailed = 'health_check_failed';
     case Disabled = 'disabled';
     case Released = 'released';
 }

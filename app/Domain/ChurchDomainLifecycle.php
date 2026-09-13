@@ -67,9 +67,15 @@ final class ChurchDomainLifecycle
         });
     }
 
-    public function tlsReady(ChurchDomain $domain, ?string $correlationId = null): ChurchDomain
+    /**
+     * $recordCheck: set only by PollChurchDomainTls (K-DOMAIN-001E-R1 §3) —
+     * a real provider TLS-status check occurred, so last_checked_at moves.
+     * The initial-verification call site (VerifyChurchDomain) leaves this
+     * false, preserving its existing behaviour exactly.
+     */
+    public function tlsReady(ChurchDomain $domain, ?string $correlationId = null, bool $recordCheck = false): ChurchDomain
     {
-        return $this->transition($domain, function (ChurchDomain $locked) use ($correlationId): void {
+        return $this->transition($domain, function (ChurchDomain $locked) use ($correlationId, $recordCheck): void {
             if ($locked->ownership_verified_at === null || $locked->routing_verified_at === null) {
                 throw ValidationException::withMessages(['domain' => 'Ownership and routing must be verified before TLS can become ready.']);
             }
@@ -78,16 +84,35 @@ final class ChurchDomainLifecycle
                 'tls_ready_at' => now(),
                 'failure_code' => null,
                 'consecutive_failures' => 0,
+                ...($recordCheck ? ['last_checked_at' => now()] : []),
             ])->save();
             $this->record($locked, ChurchDomainEventType::TlsReady, null, null, $correlationId);
         });
     }
 
-    public function tlsFailed(ChurchDomain $domain, DomainFailureCode $code = DomainFailureCode::CertificateFailed, ?string $correlationId = null): ChurchDomain
+    /** @see tlsReady() for $recordCheck */
+    public function tlsFailed(ChurchDomain $domain, DomainFailureCode $code = DomainFailureCode::CertificateFailed, ?string $correlationId = null, bool $recordCheck = false): ChurchDomain
     {
-        return $this->transition($domain, function (ChurchDomain $locked) use ($code, $correlationId): void {
-            $locked->forceFill(['tls_status' => DomainTlsStatus::Failed, 'failure_code' => $code->value])->save();
+        return $this->transition($domain, function (ChurchDomain $locked) use ($code, $correlationId, $recordCheck): void {
+            $locked->forceFill([
+                'tls_status' => DomainTlsStatus::Failed,
+                'failure_code' => $code->value,
+                ...($recordCheck ? ['last_checked_at' => now()] : []),
+            ])->save();
             $this->record($locked, ChurchDomainEventType::TlsFailed, null, $code, $correlationId);
+        });
+    }
+
+    /**
+     * TLS polling performed a real provider check that changed nothing else
+     * — provider status is still Pending, or the provider API itself was
+     * Unavailable. Only last_checked_at moves; the confirmed-failure streak
+     * is untouched in either direction. See K-DOMAIN-001E-R1 §3.
+     */
+    public function recordTlsCheck(ChurchDomain $domain, ?string $correlationId = null): ChurchDomain
+    {
+        return $this->transition($domain, function (ChurchDomain $locked): void {
+            $locked->forceFill(['last_checked_at' => now()])->save();
         });
     }
 
@@ -112,11 +137,65 @@ final class ChurchDomainLifecycle
     public function degrade(ChurchDomain $domain, DomainFailureCode $code, ?string $correlationId = null): ChurchDomain
     {
         return $this->transition($domain, function (ChurchDomain $locked) use ($code, $correlationId): void {
-            if ($locked->consecutive_failures < 3 || $locked->last_checked_at?->gt(now()->subDay())) {
+            if (! $locked->isDueForAutomaticDegradation()) {
                 throw ValidationException::withMessages(['domain' => 'A domain requires three confirmed failures spanning at least 24 hours before degradation.']);
             }
             $locked->forceFill(['status' => DomainStatus::Degraded, 'is_primary' => false, 'failure_code' => $code->value])->save();
             $this->record($locked, ChurchDomainEventType::Degraded, null, $code, $correlationId);
+        });
+    }
+
+    /**
+     * One whole-cycle outcome, exactly one persistence mutation — see
+     * K-DOMAIN-001E §7. Never call this alongside per-sub-check mutations
+     * for the same cycle.
+     */
+    public function healthCycleSucceeded(ChurchDomain $domain, ?string $correlationId = null): ChurchDomain
+    {
+        return $this->transition($domain, function (ChurchDomain $locked) use ($correlationId): void {
+            $wasDegraded = $locked->status === DomainStatus::Degraded;
+
+            $locked->forceFill([
+                'status' => $wasDegraded ? DomainStatus::Active : $locked->status,
+                'last_checked_at' => now(),
+                'consecutive_failures' => 0,
+                'failure_streak_started_at' => null,
+                'failure_code' => null,
+            ])->save();
+
+            // is_primary is deliberately untouched — recovery never
+            // restores it automatically (§13); a different domain may have
+            // become primary while this one was degraded.
+            if ($wasDegraded) {
+                $this->record($locked, ChurchDomainEventType::Recovered, null, null, $correlationId);
+            }
+        });
+    }
+
+    public function healthCycleFailed(ChurchDomain $domain, DomainFailureCode $code, ?string $correlationId = null): ChurchDomain
+    {
+        return $this->transition($domain, function (ChurchDomain $locked) use ($code, $correlationId): void {
+            $startingNewStreak = $locked->failure_streak_started_at === null;
+
+            $locked->forceFill([
+                'last_checked_at' => now(),
+                'failure_streak_started_at' => $startingNewStreak ? now() : $locked->failure_streak_started_at,
+                'consecutive_failures' => $startingNewStreak ? 1 : min(65535, $locked->consecutive_failures + 1),
+                'failure_code' => $code->value,
+            ])->save();
+            $this->record($locked, ChurchDomainEventType::HealthCheckFailed, null, $code, $correlationId);
+        });
+    }
+
+    /**
+     * An indeterminate cycle proves neither health nor failure — only the
+     * fact that a check was attempted is recorded. Do not touch the
+     * failure streak in either direction (§10).
+     */
+    public function healthCycleIndeterminate(ChurchDomain $domain, ?string $correlationId = null): ChurchDomain
+    {
+        return $this->transition($domain, function (ChurchDomain $locked): void {
+            $locked->forceFill(['last_checked_at' => now()])->save();
         });
     }
 

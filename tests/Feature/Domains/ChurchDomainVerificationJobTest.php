@@ -68,4 +68,31 @@ class ChurchDomainVerificationJobTest extends TestCase
         $this->assertSame(DomainFailureCode::ProviderUnavailable->value, $domain->failure_code);
         $this->assertNull($domain->activated_at);
     }
+
+    public function test_provider_unavailable_during_initial_tls_request_remains_provisioning_not_terminally_failed(): void
+    {
+        // K-DOMAIN-001E §17 — a Cloudflare management API outage during the
+        // initial requestTlsProvisioning() call must not be treated as a
+        // certificate failure. It must remain retriable (PollChurchDomainTls
+        // picks it up later), exactly like a later poll's Unavailable result.
+        config()->set('public-website.custom_domains.dns_ingress_target', 'ingress.keryon.app');
+        $church = Church::create(['name' => 'Retriable Church', 'slug' => 'retriable-church', 'activated_at' => now()]);
+        $user = User::factory()->forChurch($church, [ChurchRole::ADMINISTRATOR], primary: true)->create();
+        $this->actingAs($user);
+        $claim = app(RequestChurchCustomDomain::class)->execute($church, 'retriable-church.org');
+
+        $dns = (new FakeDnsResolver)
+            ->setTxt($claim->verificationHostname, [$claim->verificationToken])
+            ->setCname($claim->domain->normalized_hostname, ['ingress.keryon.app']);
+        $provisioner = (new FakeDomainProvisioner)->advanceTo(ProvisioningStatus::Unavailable);
+        $this->app->instance(DnsResolver::class, $dns);
+        $this->app->instance(DomainProvisioner::class, $provisioner);
+
+        $this->app->call([new VerifyChurchDomain($claim->domain->id), 'handle']);
+
+        $domain = $claim->domain->fresh();
+        $this->assertSame(DomainTlsStatus::Provisioning, $domain->tls_status);
+        $this->assertNotSame(DomainFailureCode::CertificateFailed->value, $domain->failure_code);
+        $this->assertNull($domain->activated_at);
+    }
 }

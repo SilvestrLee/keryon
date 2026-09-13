@@ -30,7 +30,9 @@ use App\PublicWebsite\Themes\ThemeRegistry;
 use App\Support\OrganizationContext;
 use App\Support\PlatformContext;
 use App\Support\TenantContext;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -94,5 +96,14 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::policy(PlatformMembership::class, PlatformStaffPolicy::class);
         Gate::policy(PlatformAuditEvent::class, PlatformAuditPolicy::class);
+
+        // Keryon-internal safety bound on provider-consuming domain jobs
+        // (initial verification, TLS polling, ongoing health checks) — not
+        // an attempt to mirror Cloudflare's own published quota. A job
+        // rate-limited here is released, not failed: it must never count
+        // as a domain-health failure. See K-DOMAIN-001E §23.
+        RateLimiter::for('domain-provider', fn () => Limit::perMinute(
+            (int) config('public-website.custom_domains.provider_rate_limit_per_minute', 30)
+        ));
     }
 }

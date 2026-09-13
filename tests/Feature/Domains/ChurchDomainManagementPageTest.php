@@ -203,7 +203,7 @@ class ChurchDomainManagementPageTest extends TestCase
         $domain = $lifecycle->tlsProvisioning($domain);
         $domain = $lifecycle->tlsReady($domain);
         $domain = $lifecycle->activate($domain);
-        $domain->forceFill(['consecutive_failures' => 3, 'last_checked_at' => now()->subDay()->subMinute()])->save();
+        $domain->forceFill(['consecutive_failures' => 3, 'failure_streak_started_at' => now()->subDay()->subMinute()])->save();
         app(ChurchDomainLifecycle::class)->degrade($domain, DomainFailureCode::DnsMismatch);
 
         Livewire::test(ManageDomains::class)

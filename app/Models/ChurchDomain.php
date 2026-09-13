@@ -20,8 +20,8 @@ class ChurchDomain extends Model
         'normalized_hostname', 'display_hostname', 'status', 'verification_method',
         'verification_token_hash', 'ownership_verified_at', 'routing_verified_at',
         'tls_status', 'tls_ready_at', 'is_primary', 'last_checked_at',
-        'consecutive_failures', 'failure_code', 'activated_at', 'disabled_at',
-        'released_at', 'created_by_church_membership_id',
+        'consecutive_failures', 'failure_streak_started_at', 'failure_code',
+        'activated_at', 'disabled_at', 'released_at', 'created_by_church_membership_id',
     ];
 
     protected static function booted(): void
@@ -44,6 +44,7 @@ class ChurchDomain extends Model
             'routing_verified_at' => 'immutable_datetime',
             'tls_ready_at' => 'immutable_datetime',
             'last_checked_at' => 'immutable_datetime',
+            'failure_streak_started_at' => 'immutable_datetime',
             'activated_at' => 'immutable_datetime',
             'disabled_at' => 'immutable_datetime',
             'released_at' => 'immutable_datetime',
@@ -80,5 +81,18 @@ class ChurchDomain extends Model
             && $this->tls_ready_at !== null
             && $this->disabled_at === null
             && $this->released_at === null;
+    }
+
+    /**
+     * The single source of truth for the 3-failures / 24-hour degradation
+     * rule (K-DOMAIN-001E §11) — anchored on failure_streak_started_at, not
+     * last_checked_at, which moves on every check including the failing
+     * one and so cannot represent when the streak began (§2).
+     */
+    public function isDueForAutomaticDegradation(): bool
+    {
+        return $this->consecutive_failures >= 3
+            && $this->failure_streak_started_at !== null
+            && $this->failure_streak_started_at->lte(now()->subDay());
     }
 }

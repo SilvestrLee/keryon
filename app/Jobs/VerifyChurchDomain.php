@@ -15,7 +15,9 @@ use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class VerifyChurchDomain implements ShouldBeUnique, ShouldQueue
@@ -37,6 +39,12 @@ class VerifyChurchDomain implements ShouldBeUnique, ShouldQueue
     public function backoff(): array
     {
         return [60, 300, 900];
+    }
+
+    /** @return array<int, object> */
+    public function middleware(): array
+    {
+        return [new RateLimited('domain-provider')];
     }
 
     public function handle(
@@ -67,7 +75,17 @@ class VerifyChurchDomain implements ShouldBeUnique, ShouldQueue
         } elseif ($status === ProvisioningStatus::Failed) {
             $lifecycle->tlsFailed($domain->refresh(), DomainFailureCode::CertificateFailed, $correlation);
         } elseif ($status === ProvisioningStatus::Unavailable) {
-            $lifecycle->tlsFailed($domain->refresh(), DomainFailureCode::ProviderUnavailable, $correlation);
+            // A provider outage is not a certificate failure (K-DOMAIN-001E
+            // §17). Remain in Provisioning — PollChurchDomainTls retries.
+            $domain = $domain->refresh();
+            Log::warning('domain.tls_provisioning.provider_unavailable', [
+                'church_domain_id' => $domain->id,
+                'church_domain_uuid' => $domain->uuid,
+                'church_id' => $domain->church_id,
+                'normalized_hostname' => $domain->normalized_hostname,
+                'correlation_id' => $correlation,
+            ]);
         }
+        // Pending: remain in Provisioning — PollChurchDomainTls retries.
     }
 }
