@@ -18,6 +18,8 @@ return [
         'dns_ingress_target' => env('CHURCH_DOMAIN_INGRESS_TARGET'),
         'apex_ipv4' => array_values(array_filter(array_map('trim', explode(',', env('CHURCH_DOMAIN_APEX_IPV4', ''))))),
         'apex_ipv6' => array_values(array_filter(array_map('trim', explode(',', env('CHURCH_DOMAIN_APEX_IPV6', ''))))),
+        // Accepted values: 'unavailable' (default, fail-closed), 'fake'
+        // (non-production only), 'cloudflare' (see config/cloudflare.php).
         'dns_resolver' => env('CHURCH_DOMAIN_DNS_RESOLVER', 'unavailable'),
         'provisioner' => env('CHURCH_DOMAIN_PROVISIONER', 'unavailable'),
         'quarantine_days' => 30,
