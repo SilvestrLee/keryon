@@ -127,9 +127,12 @@ final class CloudflareDomainProvisioner implements DomainProvisioner
 
     private function create(array $config, string $hostname): ProvisioningStatus
     {
+        // Deliberately no custom_origin_server / custom_origin_sni: this
+        // hostname routes through the zone's Fallback Origin (Cloudflare for
+        // SaaS), zone-level infrastructure this adapter does not configure.
+        // See K-DOMAIN-001G-A §2/§5/§7.
         $payload = [
             'hostname' => $hostname,
-            'custom_origin_server' => $config['custom_origin_server'],
             'ssl' => [
                 'method' => $config['validation_method'],
                 'type' => 'dv',
@@ -293,12 +296,12 @@ final class CloudflareDomainProvisioner implements DomainProvisioner
         return rtrim(strtolower(trim($hostname)), '.');
     }
 
-    /** @return array{api_base_url: string, zone_id: string, api_token: string, custom_origin_server: string, validation_method: string, min_tls_version: string, connect_timeout: int, timeout: int} */
+    /** @return array{api_base_url: string, zone_id: string, api_token: string, validation_method: string, min_tls_version: string, connect_timeout: int, timeout: int} */
     private function configuration(): array
     {
         $config = config('cloudflare.provisioner');
 
-        foreach (['zone_id', 'api_token', 'custom_origin_server', 'api_base_url'] as $key) {
+        foreach (['zone_id', 'api_token', 'api_base_url'] as $key) {
             if (! is_string($config[$key] ?? null) || trim((string) $config[$key]) === '') {
                 throw new ProvisioningConfigurationException("Cloudflare provisioner configuration is missing [{$key}].");
             }
@@ -322,7 +325,6 @@ final class CloudflareDomainProvisioner implements DomainProvisioner
             'api_base_url' => (string) $config['api_base_url'],
             'zone_id' => (string) $config['zone_id'],
             'api_token' => (string) $config['api_token'],
-            'custom_origin_server' => (string) $config['custom_origin_server'],
             'validation_method' => $method,
             'min_tls_version' => $minTlsVersion,
             'connect_timeout' => (int) ($config['connect_timeout'] ?? 5),

@@ -18,10 +18,11 @@ return [
         'api_base_url' => env('CLOUDFLARE_API_BASE_URL', 'https://api.cloudflare.com/client/v4'),
         'zone_id' => env('CLOUDFLARE_ZONE_ID'),
         'api_token' => env('CLOUDFLARE_API_TOKEN'),
-        // Keryon-owned origin Cloudflare should connect to for these custom
-        // hostnames. Production must set its own value — never hardcode
-        // origin.staging.keryon.app or any other origin in adapter code.
-        'custom_origin_server' => env('CLOUDFLARE_CUSTOM_ORIGIN_SERVER'),
+        // No custom_origin_server / custom_origin_sni here by design — V1
+        // custom hostnames route through the zone's Fallback Origin
+        // (Cloudflare for SaaS), which is zone-level infrastructure owned
+        // outside this adapter, not a per-hostname API field. See
+        // K-DOMAIN-001G-A §2/§5/§6.
         'validation_method' => env('CLOUDFLARE_SSL_VALIDATION_METHOD', 'http'),
         'min_tls_version' => env('CLOUDFLARE_MIN_TLS_VERSION', '1.2'),
         'connect_timeout' => (int) env('CLOUDFLARE_API_CONNECT_TIMEOUT', 5),

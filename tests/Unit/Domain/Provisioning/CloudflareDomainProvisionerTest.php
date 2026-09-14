@@ -20,7 +20,6 @@ class CloudflareDomainProvisionerTest extends TestCase
             'api_base_url' => 'https://api.cloudflare.com/client/v4',
             'zone_id' => 'zone-123',
             'api_token' => 'secret-token-value',
-            'custom_origin_server' => 'origin.staging.keryon.app',
             'validation_method' => 'http',
             'min_tls_version' => '1.2',
             'connect_timeout' => 5,
@@ -77,13 +76,86 @@ class CloudflareDomainProvisionerTest extends TestCase
             $this->assertSame('https://api.cloudflare.com/client/v4/zones/zone-123/custom_hostnames', $request->url());
             $this->assertSame('Bearer secret-token-value', $request->header('Authorization')[0]);
             $this->assertSame('church.example.org', $request->data()['hostname']);
-            $this->assertSame('origin.staging.keryon.app', $request->data()['custom_origin_server']);
+            $this->assertArrayNotHasKey('custom_origin_server', $request->data());
+            $this->assertArrayNotHasKey('custom_origin_sni', $request->data());
             $this->assertSame('dv', $request->data()['ssl']['type']);
             $this->assertSame('http', $request->data()['ssl']['method']);
             $this->assertSame('1.2', $request->data()['ssl']['settings']['min_tls_version']);
 
             return true;
         });
+    }
+
+    public function test_create_payload_relies_on_zone_fallback_origin_not_per_hostname_custom_origin(): void
+    {
+        // K-DOMAIN-001G-A §2/§5: V1 routes every custom hostname through the
+        // zone's Fallback Origin, never a per-hostname Custom Origin.
+        Http::fake([
+            '*/zones/zone-123/custom_hostnames?*' => Http::response($this->listResponse([])),
+            '*/zones/zone-123/custom_hostnames' => Http::response([
+                'success' => true,
+                'result' => $this->hostnameObject('church.example.org', 'pending', 'initializing'),
+            ]),
+        ]);
+
+        (new CloudflareDomainProvisioner)->requestTlsProvisioning($this->domain(), 'key-1');
+
+        Http::assertSent(function ($request) {
+            if ($request->method() !== 'POST') {
+                return false;
+            }
+            $keys = array_keys($request->data());
+            $this->assertNotContains('custom_origin_server', $keys);
+            $this->assertNotContains('custom_origin_sni', $keys);
+
+            return true;
+        });
+    }
+
+    public function test_absence_of_custom_origin_configuration_does_not_fail_the_provisioner(): void
+    {
+        // The V1 configuration schema has no custom_origin_server key at
+        // all — its absence must never itself be treated as missing
+        // configuration (contrast with zone_id/api_token/api_base_url,
+        // which remain mandatory).
+        config()->set('cloudflare.provisioner', [
+            'api_base_url' => 'https://api.cloudflare.com/client/v4',
+            'zone_id' => 'zone-123',
+            'api_token' => 'secret-token-value',
+        ]);
+
+        Http::fake([
+            '*/zones/zone-123/custom_hostnames?*' => Http::response($this->listResponse([])),
+            '*/zones/zone-123/custom_hostnames' => Http::response([
+                'success' => true,
+                'result' => $this->hostnameObject('church.example.org', 'pending', 'initializing'),
+            ]),
+        ]);
+
+        $status = (new CloudflareDomainProvisioner)->requestTlsProvisioning($this->domain(), 'key-1');
+
+        $this->assertSame(ProvisioningStatus::Pending, $status);
+    }
+
+    public function test_default_validation_method_is_http_when_unspecified(): void
+    {
+        config()->set('cloudflare.provisioner', [
+            'api_base_url' => 'https://api.cloudflare.com/client/v4',
+            'zone_id' => 'zone-123',
+            'api_token' => 'secret-token-value',
+        ]);
+
+        Http::fake([
+            '*/zones/zone-123/custom_hostnames?*' => Http::response($this->listResponse([])),
+            '*/zones/zone-123/custom_hostnames' => Http::response([
+                'success' => true,
+                'result' => $this->hostnameObject('church.example.org', 'pending', 'initializing'),
+            ]),
+        ]);
+
+        (new CloudflareDomainProvisioner)->requestTlsProvisioning($this->domain(), 'key-1');
+
+        Http::assertSent(fn ($request) => $request->method() !== 'POST' || $request->data()['ssl']['method'] === 'http');
     }
 
     // --- Exact lookup --------------------------------------------------------
@@ -418,43 +490,16 @@ class CloudflareDomainProvisionerTest extends TestCase
         (new CloudflareDomainProvisioner)->deactivate($this->domain());
     }
 
-    public function test_blank_custom_origin_server_fails_closed_for_request_and_check(): void
+    public function test_config_file_has_no_custom_origin_configuration_at_all(): void
     {
-        config()->set('cloudflare.provisioner.custom_origin_server', '');
-
-        $this->assertSame(ProvisioningStatus::Unavailable, (new CloudflareDomainProvisioner)->requestTlsProvisioning($this->domain(), 'key-1'));
-        $this->assertSame(ProvisioningStatus::Unavailable, (new CloudflareDomainProvisioner)->checkTlsStatus($this->domain()));
-    }
-
-    public function test_null_custom_origin_server_fails_closed_for_request_and_check(): void
-    {
-        // env('CLOUDFLARE_CUSTOM_ORIGIN_SERVER') is null, not '', when unset.
-        config()->set('cloudflare.provisioner.custom_origin_server', null);
-
-        $this->assertSame(ProvisioningStatus::Unavailable, (new CloudflareDomainProvisioner)->requestTlsProvisioning($this->domain(), 'key-1'));
-    }
-
-    public function test_missing_custom_origin_server_raises_for_deactivate(): void
-    {
-        config()->set('cloudflare.provisioner.custom_origin_server', '');
-
-        $this->expectException(ProvisioningConfigurationException::class);
-
-        (new CloudflareDomainProvisioner)->deactivate($this->domain());
-    }
-
-    public function test_config_file_has_no_environment_specific_custom_origin_fallback(): void
-    {
+        // K-DOMAIN-001G-A §5/§6: the V1 architecture never configures a
+        // per-hostname Custom Origin, so the config file must not declare
+        // custom_origin_server / custom_origin_sni as a canonical setting.
         $source = file_get_contents(config_path('cloudflare.php'));
-
-        // The executable default must be env() with no second argument —
-        // an environment hostname may only ever appear in a comment.
-        $this->assertMatchesRegularExpression(
-            '/\'custom_origin_server\'\s*=>\s*env\(\'CLOUDFLARE_CUSTOM_ORIGIN_SERVER\'\),/',
-            $source,
-        );
-
         $codeWithoutComments = preg_replace('#//.*#', '', $source);
+
+        $this->assertStringNotContainsString('custom_origin_server', $codeWithoutComments);
+        $this->assertStringNotContainsString('custom_origin_sni', $codeWithoutComments);
         $this->assertStringNotContainsString('origin.staging.keryon.app', $codeWithoutComments);
     }
 
