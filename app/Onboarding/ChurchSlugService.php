@@ -8,8 +8,6 @@ use Illuminate\Support\Str;
 
 class ChurchSlugService
 {
-    private const RESERVED = ['www', 'app', 'central'];
-
     public function available(string $source, bool $explicit = false): string
     {
         $base = Str::slug(Str::lower(trim($source)));
@@ -17,7 +15,7 @@ class ChurchSlugService
             throw new DomainException('The requested Church slug is not a valid hostname label.');
         }
         $base = substr($base, 0, 63);
-        if (in_array($base, self::RESERVED, true)) {
+        if (in_array($base, $this->reserved(), true)) {
             if ($explicit) {
                 throw new DomainException('The requested Church slug is reserved.');
             }
@@ -34,5 +32,16 @@ class ChurchSlugService
             }
         }
         throw new DomainException('Unable to allocate a unique Church slug.');
+    }
+
+    /**
+     * K-DOMAIN-001F §15 — config('public-website.reserved_subdomains') is
+     * the single canonical reserved-label source; do not duplicate it here.
+     *
+     * @return list<string>
+     */
+    private function reserved(): array
+    {
+        return array_map('strtolower', config('public-website.reserved_subdomains', []));
     }
 }

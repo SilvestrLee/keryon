@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Domains;
 
+use App\Commercial\Entitlements\EntitlementResolver;
 use App\Domain\ChurchDomainLifecycle;
 use App\Domain\Dns\DnsLookupResult;
 use App\Domain\Dns\DnsResolver;
@@ -30,11 +31,25 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
+use Mockery;
 use Tests\TestCase;
 
 class ChurchDomainGovernanceTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // This file exercises authorization/lifecycle/rate-limit behaviour,
+        // not entitlement gating — allow every entitlement so claim/activate
+        // fixtures succeed. Entitlement enforcement itself is covered by
+        // CustomDomainEntitlementTest (K-DOMAIN-001F).
+        $entitlements = Mockery::mock(EntitlementResolver::class);
+        $entitlements->shouldReceive('allows')->andReturnTrue();
+        $this->app->instance(EntitlementResolver::class, $entitlements);
+    }
 
     public function test_hostname_normalization_and_platform_protection_are_bounded(): void
     {

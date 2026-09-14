@@ -7,9 +7,18 @@ return [
     'base_domain' => env('PUBLIC_WEBSITE_BASE_DOMAIN', 'keryon.app'),
     'scheme' => env('PUBLIC_WEBSITE_SCHEME', 'https'),
     'asset_origin' => rtrim(env('PUBLIC_MEDIA_ORIGIN', env('APP_URL', 'http://localhost')), '/'),
+    // The single canonical reserved-label source (K-DOMAIN-001F §15) — both
+    // Church slug validation (App\Onboarding\ChurchSlugService) and the
+    // custom-domain platform-host guard (App\Domain\DomainNameNormalizer)
+    // read this list rather than duplicating it. Only real, approved
+    // platform infrastructure belongs here — not merely attractive words.
     'reserved_subdomains' => [
         'www', 'app', 'central', 'api', 'admin', 'mail', 'support', 'status',
         'assets', 'static', 'cdn',
+        // K-DOMAIN-001D/001E infrastructure: staging.keryon.app is the
+        // staging environment host; origin.staging.keryon.app is the
+        // Keryon-owned Cloudflare custom-origin host (see config/cloudflare.php).
+        'staging', 'origin',
     ],
     'marketing_hosts' => array_values(array_filter(array_map('trim', explode(',', env('KERYON_MARKETING_HOSTS', 'keryon.app,www.keryon.app'))))),
     'application_hosts' => array_values(array_filter(array_map('trim', explode(',', env('KERYON_APPLICATION_HOSTS', 'app.keryon.app'))))),
@@ -22,7 +31,9 @@ return [
         // (non-production only), 'cloudflare' (see config/cloudflare.php).
         'dns_resolver' => env('CHURCH_DOMAIN_DNS_RESOLVER', 'unavailable'),
         'provisioner' => env('CHURCH_DOMAIN_PROVISIONER', 'unavailable'),
-        'quarantine_days' => 30,
+        // K-DOMAIN-001F §21 — no 30-day quarantine/expiry exists. A released
+        // hostname's normalized_hostname stays globally unique and is not
+        // self-service reclaimable in V1 (see ChurchDomainReleaseTest).
         'claim_limit' => 2,
 
         // K-DOMAIN-001E operational cadence — safe V1 defaults, not

@@ -232,7 +232,7 @@ class ChurchDomainManagementPageTest extends TestCase
         $this->assertSame(1, WebsitePublication::query()->count());
 
         Livewire::test(ManageDomains::class)->call('release', $domain->id)
-            ->assertSee('Previous domains')->assertSee('30-day quarantine');
+            ->assertSee('Previous domains')->assertDontSee('30-day')->assertDontSee('quarantine');
         $this->assertDatabaseHas('church_domains', ['id' => $domain->id, 'status' => DomainStatus::Released->value]);
     }
 

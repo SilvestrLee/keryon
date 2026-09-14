@@ -11,11 +11,16 @@ use Illuminate\Validation\ValidationException;
 
 final readonly class RegenerateChurchDomainToken
 {
-    public function __construct(private DomainMutationAuthorizer $authorizer, private ChurchDomainLifecycle $lifecycle) {}
+    public function __construct(
+        private DomainMutationAuthorizer $authorizer,
+        private CustomDomainEntitlementGuard $entitlementGuard,
+        private ChurchDomainLifecycle $lifecycle,
+    ) {}
 
     public function execute(ChurchDomain $domain): DomainClaimResult
     {
         $membership = $this->authorizer->authorize($domain);
+        $this->entitlementGuard->assertAllowed($domain);
         $token = Str::random(64);
 
         $domain = DB::transaction(function () use ($domain, $membership, $token): ChurchDomain {

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Domains;
 
+use App\Commercial\Entitlements\EntitlementResolver;
 use App\Domain\ChurchDomainLifecycle;
 use App\Domain\Provisioning\DomainProvisioner;
 use App\Domain\Provisioning\FakeDomainProvisioner;
@@ -16,6 +17,7 @@ use App\Models\Church;
 use App\Models\ChurchDomain;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Mockery;
 use Tests\TestCase;
 
 class ChurchDomainTlsPollingTest extends TestCase
@@ -27,6 +29,13 @@ class ChurchDomainTlsPollingTest extends TestCase
         parent::setUp();
 
         config()->set('public-website.custom_domains.dns_ingress_target', 'ingress.keryon.app');
+        // This file exercises domain lifecycle/health/scheduling behaviour,
+        // not entitlement gating — allow every entitlement so claim/activate
+        // fixtures succeed. Entitlement enforcement itself is covered by
+        // CustomDomainEntitlementTest (K-DOMAIN-001F).
+        $entitlements = Mockery::mock(EntitlementResolver::class);
+        $entitlements->shouldReceive('allows')->andReturnTrue();
+        $this->app->instance(EntitlementResolver::class, $entitlements);
     }
 
     public function test_pending_leaves_domain_in_provisioning(): void

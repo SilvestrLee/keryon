@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Domains;
 
+use App\Commercial\Entitlements\EntitlementResolver;
 use App\Domain\ChurchDomainLifecycle;
 use App\Domain\RequestChurchCustomDomain;
 use App\Enums\ChurchRole;
@@ -15,11 +16,25 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Support\Facades\RateLimiter;
+use Mockery;
 use Tests\TestCase;
 
 class ChurchDomainProviderRateLimitTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // This file exercises authorization/lifecycle/rate-limit behaviour,
+        // not entitlement gating — allow every entitlement so claim/activate
+        // fixtures succeed. Entitlement enforcement itself is covered by
+        // CustomDomainEntitlementTest (K-DOMAIN-001F).
+        $entitlements = Mockery::mock(EntitlementResolver::class);
+        $entitlements->shouldReceive('allows')->andReturnTrue();
+        $this->app->instance(EntitlementResolver::class, $entitlements);
+    }
 
     public function test_the_domain_provider_limiter_is_registered_with_the_configured_rate(): void
     {

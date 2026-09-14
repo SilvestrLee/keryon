@@ -18,12 +18,16 @@ final readonly class RequestChurchCustomDomain
     public function __construct(
         private DomainNameNormalizer $normalizer,
         private DomainMutationAuthorizer $authorizer,
+        private CustomDomainEntitlementGuard $entitlementGuard,
         private ChurchDomainLifecycle $lifecycle,
     ) {}
 
     public function execute(Church $church, string $hostname): DomainClaimResult
     {
         $membership = $this->authorizer->authorize($church);
+        // Entitlement denial must create no ChurchDomain row and generate
+        // no verification token — checked before either happens (§27).
+        $this->entitlementGuard->assertAllowed($church);
 
         try {
             $normalized = $this->normalizer->normalize($hostname);
@@ -64,7 +68,11 @@ final readonly class RequestChurchCustomDomain
             }, 3);
         } catch (QueryException $exception) {
             if (str_contains(strtolower($exception->getMessage()), 'unique')) {
-                throw ValidationException::withMessages(['hostname' => 'This hostname is already claimed or retained in quarantine.']);
+                // K-DOMAIN-001F §24 — truthful, non-disclosing copy. Never
+                // reveal whether the hostname is currently active elsewhere
+                // or was previously released (that would leak another
+                // Church's history); never imply a timer or reclaim path.
+                throw ValidationException::withMessages(['hostname' => 'This domain is already connected or was previously released in Keryon and cannot currently be claimed through self-service.']);
             }
             throw $exception;
         }

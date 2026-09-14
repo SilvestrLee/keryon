@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Domains;
 
+use App\Commercial\Entitlements\EntitlementResolver;
 use App\Domain\ChurchDomainHealthCycle;
 use App\Domain\ChurchDomainLifecycle;
 use App\Domain\Dns\DnsAddressResult;
@@ -22,6 +23,7 @@ use App\Models\ChurchDomain;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Mockery;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -37,6 +39,13 @@ class ChurchDomainHealthCycleTest extends TestCase
         parent::setUp();
 
         config()->set('public-website.custom_domains.dns_ingress_target', 'ingress.keryon.app');
+        // This file exercises domain lifecycle/health/scheduling behaviour,
+        // not entitlement gating — allow every entitlement so claim/activate
+        // fixtures succeed. Entitlement enforcement itself is covered by
+        // CustomDomainEntitlementTest (K-DOMAIN-001F).
+        $entitlements = Mockery::mock(EntitlementResolver::class);
+        $entitlements->shouldReceive('allows')->andReturnTrue();
+        $this->app->instance(EntitlementResolver::class, $entitlements);
     }
 
     public function test_all_checks_healthy_clears_prior_partial_failure_state_and_preserves_verification_timestamps(): void

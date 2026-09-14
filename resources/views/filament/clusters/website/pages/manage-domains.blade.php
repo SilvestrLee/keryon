@@ -47,14 +47,24 @@
         @endunless
 
         @if ($domains->isEmpty())
-            <section class="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8" aria-labelledby="connect-domain-heading">
-                <div class="max-w-2xl">
-                    <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-gray-100 text-gray-700"><x-filament::icon icon="heroicon-o-link" class="h-6 w-6" /></span>
-                    <h2 id="connect-domain-heading" class="mt-5 text-xl font-semibold text-gray-950">Connect your domain</h2>
-                    <p class="mt-2 text-sm leading-6 text-gray-600">Use a domain your Church already owns for your Keryon Website. Your Keryon address will continue working as a fallback.</p>
-                </div>
-                @include('filament.clusters.website.pages.partials.domain-claim-form')
-            </section>
+            @if ($customDomainAllowed)
+                <section class="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8" aria-labelledby="connect-domain-heading">
+                    <div class="max-w-2xl">
+                        <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-gray-100 text-gray-700"><x-filament::icon icon="heroicon-o-link" class="h-6 w-6" /></span>
+                        <h2 id="connect-domain-heading" class="mt-5 text-xl font-semibold text-gray-950">Connect your domain</h2>
+                        <p class="mt-2 text-sm leading-6 text-gray-600">Use a domain your Church already owns for your Keryon Website. Your Keryon address will continue working as a fallback.</p>
+                    </div>
+                    @include('filament.clusters.website.pages.partials.domain-claim-form')
+                </section>
+            @else
+                <section class="rounded-2xl border border-gray-200 bg-gray-50 p-6 sm:p-8" aria-labelledby="custom-domain-unavailable-heading">
+                    <div class="max-w-2xl">
+                        <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-gray-100 text-gray-700"><x-filament::icon icon="heroicon-o-link" class="h-6 w-6" /></span>
+                        <h2 id="custom-domain-unavailable-heading" class="mt-5 text-xl font-semibold text-gray-950">Custom domains aren't included in your current plan</h2>
+                        <p class="mt-2 text-sm leading-6 text-gray-600">Your Keryon Church address remains available.</p>
+                    </div>
+                </section>
+            @endif
         @else
             <section aria-labelledby="custom-domains-heading">
                 <div>
@@ -120,7 +130,7 @@
                                                 <button type="button" x-data x-on:click="navigator.clipboard.writeText(@js($verificationToken))" aria-label="Copy DNS verification value" class="mt-2 text-sm font-semibold text-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700">Copy verification value</button>
                                             @else
                                                 <p class="text-sm leading-6 text-gray-600">For security, the verification value is not stored by Keryon after it is shown.</p>
-                                                @if ($presenter->canRegenerate($domain))
+                                                @if ($presenter->canRegenerate($domain) && $customDomainAllowed)
                                                     <button type="button" wire:click="regenerate({{ $domain->id }})" wire:confirm="Generate a new verification value? The previous value will no longer work, and you will need to update the TXT record." class="mt-3 inline-flex min-h-10 items-center rounded-xl border border-gray-300 px-4 text-sm font-semibold text-gray-800 hover:border-amber-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700">Generate new verification value</button>
                                                 @endif
                                             @endif
@@ -143,29 +153,31 @@
                             @endif
 
                             <div class="mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                                @if ($connectionAvailable && ! $domain->isEligible())
+                                @if ($connectionAvailable && ! $domain->isEligible() && $customDomainAllowed)
                                     <button type="button" wire:click="verify({{ $domain->id }})" class="inline-flex min-h-10 items-center justify-center rounded-xl bg-amber-800 px-4 text-sm font-semibold text-white hover:bg-amber-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700 focus-visible:ring-offset-2">Check connection</button>
                                 @endif
-                                @if ($domain->isEligible() && ! $domain->is_primary)
+                                @if ($domain->isEligible() && ! $domain->is_primary && $customDomainAllowed)
                                     <button type="button" wire:click="makePrimary({{ $domain->id }})" wire:confirm="Make {{ $domain->normalized_hostname }} your official Website address? Your Keryon address will continue to work as a fallback." class="inline-flex min-h-10 items-center justify-center rounded-xl bg-amber-800 px-4 text-sm font-semibold text-white hover:bg-amber-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700 focus-visible:ring-offset-2">Make primary</button>
                                 @endif
                                 @unless (in_array($domain->status, [\App\Enums\DomainStatus::Disabled, \App\Enums\DomainStatus::Released], true))
                                     <button type="button" wire:click="disable({{ $domain->id }})" wire:confirm="Disable this domain? It will stop serving your Website through Keryon. Your content and Keryon address will remain available." class="inline-flex min-h-10 items-center justify-center rounded-xl border border-gray-300 px-4 text-sm font-semibold text-gray-800 hover:border-red-400 hover:text-red-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-700">Disable</button>
                                 @endunless
                                 @if ($domain->status !== \App\Enums\DomainStatus::Released)
-                                    <button type="button" wire:click="release({{ $domain->id }})" wire:confirm="Release this domain? It will be disconnected from this Church and enter a 30-day quarantine. Its history will remain." class="inline-flex min-h-10 items-center justify-center rounded-xl px-4 text-sm font-semibold text-red-700 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-700">Release domain</button>
+                                    <button type="button" wire:click="release({{ $domain->id }})" wire:confirm="Release this domain? It will be disconnected from this Church. Keryon will retain its domain history, and released domains cannot currently be reclaimed through self-service." class="inline-flex min-h-10 items-center justify-center rounded-xl px-4 text-sm font-semibold text-red-700 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-700">Release domain</button>
                                 @endif
                             </div>
                         </article>
                     @endforeach
                 </div>
 
-                @if ($canAddDomain)
+                @if ($canAddDomain && $customDomainAllowed)
                     <div class="mt-6 rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-5 sm:p-6">
                         <h3 class="font-semibold text-gray-950">Add a companion address</h3>
                         <p class="mt-1 text-sm leading-6 text-gray-600">Keryon supports one primary custom domain and one companion address.</p>
                         @include('filament.clusters.website.pages.partials.domain-claim-form')
                     </div>
+                @elseif (! $customDomainAllowed)
+                    <p class="mt-5 rounded-xl bg-gray-50 p-4 text-sm text-gray-600">Custom domains aren't included in your current plan. Your Keryon Church address remains available.</p>
                 @else
                     <p class="mt-5 rounded-xl bg-gray-50 p-4 text-sm text-gray-600">Keryon currently supports one primary custom domain and one companion address.</p>
                 @endif
@@ -177,7 +189,7 @@
                 <summary class="cursor-pointer font-semibold text-gray-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700">Previous domains ({{ $releasedDomains->count() }})</summary>
                 <div class="mt-4 space-y-3">
                     @foreach ($releasedDomains as $domain)
-                        <div class="rounded-xl bg-gray-50 p-4"><p class="break-all text-sm font-semibold text-gray-800">{{ $domain->normalized_hostname }}</p><p class="mt-1 text-xs text-gray-500">Released {{ $domain->released_at?->format('j M Y, H:i') }}. Protected by a 30-day quarantine.</p></div>
+                        <div class="rounded-xl bg-gray-50 p-4"><p class="break-all text-sm font-semibold text-gray-800">{{ $domain->normalized_hostname }}</p><p class="mt-1 text-xs text-gray-500">Released {{ $domain->released_at?->format('j M Y, H:i') }}. Disconnected from this Church; Keryon retains its history. Not currently reclaimable through self-service.</p></div>
                     @endforeach
                 </div>
             </details>

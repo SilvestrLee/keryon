@@ -54,6 +54,23 @@ class Church extends Model
                 throw new DomainException('An activated Church slug is stable public infrastructure identity and cannot be changed.');
             }
         });
+
+        // K-DOMAIN-001F §17 — this is the invariant's last line of defense:
+        // it must hold for Church creation, provisional slug edits, and any
+        // direct model/service write, not merely the ChurchSlugService form
+        // path. saving() covers both create and update in one place.
+        // config('public-website.reserved_subdomains') is the single
+        // canonical reserved-label source — see ChurchSlugService.
+        static::saving(function (self $church): void {
+            if (! $church->isDirty('slug') || $church->slug === null) {
+                return;
+            }
+
+            $reserved = array_map('strtolower', config('public-website.reserved_subdomains', []));
+            if (in_array(strtolower(trim($church->slug)), $reserved, true)) {
+                throw new DomainException('This Church slug is reserved for Keryon platform infrastructure.');
+            }
+        });
     }
 
     /**

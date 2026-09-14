@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\Website\Pages;
 
 use App\Domain\ChurchDomainStatusPresenter;
+use App\Domain\CustomDomainEntitlementGuard;
 use App\Domain\DisableChurchDomain;
 use App\Domain\MakeChurchDomainPrimary;
 use App\Domain\RegenerateChurchDomainToken;
@@ -85,6 +86,7 @@ class ManageDomains extends Page
     public function verify(int $domainId): void
     {
         $domain = $this->domainForCurrentChurch($domainId);
+        app(CustomDomainEntitlementGuard::class)->assertAllowed($domain);
         abort_unless($this->productionConnectionAvailable(), 409);
         VerifyChurchDomain::dispatch($domain->getKey());
         Notification::make()->title('Verification check started')->body('Keryon is checking your DNS records.')->success()->send();
@@ -131,6 +133,10 @@ class ManageDomains extends Page
             'canAddDomain' => $activeDomains->count() < (int) config('public-website.custom_domains.claim_limit', 2),
             'connectionAvailable' => $this->productionConnectionAvailable(),
             'routingInstructions' => $this->routingInstructions(),
+            // K-DOMAIN-001F §10/§33 — resolved exactly once per render, not
+            // once per ChurchDomain card. The first-party Keryon address
+            // above and existing-domain evidence are never gated by this.
+            'customDomainAllowed' => app(CustomDomainEntitlementGuard::class)->allows($church),
         ];
     }
 
