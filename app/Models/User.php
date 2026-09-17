@@ -3,10 +3,13 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\OrganizationStatus;
 use App\Platform\Security\PlatformMfaCredentialService;
 use Database\Factories\UserFactory;
 use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthentication;
 use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthenticationRecovery;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,7 +22,7 @@ use SensitiveParameter;
 
 #[Fillable(['name', 'email', 'password', 'church_id', 'locale'])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable implements HasAppAuthentication, HasAppAuthenticationRecovery
+class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -58,6 +61,20 @@ class User extends Authenticatable implements HasAppAuthentication, HasAppAuthen
     public function platformMembership(): HasOne
     {
         return $this->hasOne(PlatformMembership::class);
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return match ($panel->getId()) {
+            'admin' => $this->activeMemberships()
+                ->whereHas('church', fn ($query) => $query->where('is_active', true))
+                ->exists(),
+            'organization' => $this->activeOrganizationMemberships()
+                ->whereHas('organization', fn ($query) => $query->where('status', OrganizationStatus::ACTIVE->value))
+                ->exists(),
+            'central' => $this->platformMembership()->active()->exists(),
+            default => false,
+        };
     }
 
     public function getAppAuthenticationSecret(): ?string

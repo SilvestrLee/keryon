@@ -120,7 +120,7 @@ class CampaignContentHandoffTest extends TestCase
 
         $this->get(ContentItemResource::getUrl('index', [
             'campaign_communication' => $foreign->id,
-        ]))->assertForbidden();
+        ]))->assertNotFound();
 
         Livewire::test(ListContentItems::class)
             ->callAction('create', data: [

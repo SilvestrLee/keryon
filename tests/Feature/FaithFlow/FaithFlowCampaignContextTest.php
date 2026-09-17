@@ -145,7 +145,7 @@ class FaithFlowCampaignContextTest extends TestCase
 
         $this->get(FaithFlow::getUrl([
             'campaign_communication' => $this->communication->id,
-        ]))->assertForbidden();
+        ]))->assertNotFound();
 
         $ordinary = FaithFlowRun::factory()->forChurch($churchB)->create();
         Livewire::test(FaithFlow::class, ['run' => $ordinary->id])

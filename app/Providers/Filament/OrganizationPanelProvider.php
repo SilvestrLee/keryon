@@ -5,9 +5,9 @@ namespace App\Providers\Filament;
 use App\Filament\Organization\Pages\OrganizationOverview;
 use App\Filament\Pages\AccountProfile;
 use App\Http\Middleware\ApplyUserLocale;
-use App\Http\Middleware\AuthenticateOrganizationWorkspace;
 use App\Http\Middleware\EnsureOrganizationAccess;
 use App\Http\Middleware\ResolveOrganizationContext;
+use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -57,7 +57,7 @@ class OrganizationPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
-                AuthenticateOrganizationWorkspace::class,
+                Authenticate::class,
                 ResolveOrganizationContext::class,
                 EnsureOrganizationAccess::class,
             ])

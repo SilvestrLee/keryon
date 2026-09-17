@@ -105,15 +105,10 @@ class FaithFlowPageAccessTest extends TestCase
     }
 
     /**
-     * Uses Livewire::test() directly rather than a real HTTP $this->get()
-     * call — matches the established pattern in
-     * ContentItemResourceAccessTest (see its own cross-Church direct-URL
-     * tests). A real HTTP request to any authenticated Filament route in
-     * this test environment always 403s at Filament's own Authenticate
-     * middleware first (User does not implement FilamentUser, and
-     * APP_ENV is "testing" not "local" — see that middleware's own
-     * app.env-gated fallback), which would mask the actual
-     * tenancy/Policy-level assertion this test exists to prove.
+     * Uses Livewire::test() directly to isolate the component's
+     * tenancy/Policy-level behavior, matching the established pattern in
+     * ContentItemResourceAccessTest (see its cross-Church direct-URL
+     * tests).
      *
      * Expects ModelNotFoundException, not AuthorizationException: Church
      * B's run is invisible to Church A's tenant-scoped query before

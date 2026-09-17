@@ -48,7 +48,7 @@ class DashboardTenancyTest extends TestCase
     {
         [, $user, $membership] = $this->dashboardActor([ChurchRole::ADMINISTRATOR]);
         $other = Church::factory()->create();
-        ChurchMembership::factory()->for($other)->for($user)->create();
+        $otherMembership = ChurchMembership::factory()->for($other)->for($user)->create();
         session()->forget('active_church_id');
         app(TenantContext::class)->forgetResolved();
 
@@ -60,6 +60,7 @@ class DashboardTenancyTest extends TestCase
         }
 
         $membership->update(['status' => MembershipStatus::SUSPENDED]);
+        $otherMembership->update(['status' => MembershipStatus::SUSPENDED]);
         app(TenantContext::class)->forgetResolved();
         $this->get('/admin')->assertForbidden();
     }

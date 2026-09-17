@@ -6,13 +6,13 @@ use App\Filament\Central\Auth\CentralLogin;
 use App\Filament\Central\Pages\CentralHome;
 use App\Filament\Pages\AccountProfile;
 use App\Http\Middleware\ApplyUserLocale;
-use App\Http\Middleware\AuthenticatePlatformWorkspace;
 use App\Http\Middleware\CentralSecurityHeaders;
 use App\Http\Middleware\EnsureCentralMfaSession;
 use App\Http\Middleware\EnsurePlatformAccess;
 use App\Http\Middleware\RequireCentralMfaReadiness;
 use App\Http\Middleware\ResolvePlatformContext;
 use App\Platform\Security\PlatformAppAuthentication;
+use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -66,7 +66,7 @@ class CentralPanelProvider extends PanelProvider
                 CentralSecurityHeaders::class,
             ])
             ->authMiddleware([
-                AuthenticatePlatformWorkspace::class,
+                Authenticate::class,
                 RequireCentralMfaReadiness::class,
                 ResolvePlatformContext::class,
                 EnsurePlatformAccess::class,

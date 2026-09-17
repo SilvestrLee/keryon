@@ -118,6 +118,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Test Database Safety
+    |--------------------------------------------------------------------------
+    |
+    | SQLite's in-memory database is always the preferred test target. A
+    | persistent target must be explicitly allowlisted by both connection
+    | name and database name, and its name must visibly identify it as a
+    | test database. Tests\Support\TestDatabaseSafety enforces this before
+    | Laravel's database-reset traits can run.
+    |
+    */
+
+    'testing_safety' => [
+        'allowed_persistent_connection' => env('TEST_DATABASE_ALLOWED_CONNECTION'),
+        'allowed_persistent_database' => env('TEST_DATABASE_ALLOWED_DATABASE'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Migration Repository Table
     |--------------------------------------------------------------------------
     |
