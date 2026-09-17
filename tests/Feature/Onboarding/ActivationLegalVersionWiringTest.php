@@ -51,7 +51,11 @@ class ActivationLegalVersionWiringTest extends TestCase
         $this->post(route('invitations.accept', ['continuation' => $continuation]), ['legal_acceptance' => '1'])
             ->assertStatus(503);
 
-        $this->assertSame(ChurchActivationStatus::PENDING, $activation['activation']->fresh()->status);
+        $fresh = $activation['activation']->fresh();
+        $this->assertSame(ChurchActivationStatus::PENDING, $fresh->status);
+        $this->assertNull($fresh->terms_version);
+        $this->assertNull($fresh->privacy_version);
+        $this->assertDatabaseMissing('church_memberships', ['church_id' => $activation['activation']->church_id]);
     }
 
     public function test_blank_privacy_version_config_fails_closed(): void
@@ -64,7 +68,11 @@ class ActivationLegalVersionWiringTest extends TestCase
         $this->post(route('invitations.accept', ['continuation' => $continuation]), ['legal_acceptance' => '1'])
             ->assertStatus(503);
 
-        $this->assertSame(ChurchActivationStatus::PENDING, $activation['activation']->fresh()->status);
+        $fresh = $activation['activation']->fresh();
+        $this->assertSame(ChurchActivationStatus::PENDING, $fresh->status);
+        $this->assertNull($fresh->terms_version);
+        $this->assertNull($fresh->privacy_version);
+        $this->assertDatabaseMissing('church_memberships', ['church_id' => $activation['activation']->church_id]);
     }
 
     public function test_canonical_activation_never_uses_the_legacy_test_fallback_identifiers(): void
