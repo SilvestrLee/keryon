@@ -26,11 +26,13 @@ class ChurchStaffInvitationController extends Controller
     public function accept(Request $request, string $token, AcceptChurchStaffInvitation $accept): RedirectResponse
     {
         $data = $request->validate([
-            'terms_version' => ['required', 'string', 'max:100'], 'privacy_version' => ['required', 'string', 'max:100'],
             'acceptance_idempotency_key' => ['required', 'uuid'], 'legal_acceptance' => ['accepted'],
         ]);
+        $termsVersion = (string) config('staff.terms_version');
+        $privacyVersion = (string) config('staff.privacy_version');
+        abort_if(blank($termsVersion) || blank($privacyVersion), 503);
         try {
-            $result = $accept->execute($token, $request->user(), $data['terms_version'], $data['privacy_version'], $data['acceptance_idempotency_key']);
+            $result = $accept->execute($token, $request->user(), $termsVersion, $privacyVersion, $data['acceptance_idempotency_key']);
         } catch (DomainException $exception) {
             return back()->withErrors(['invitation' => $exception->getMessage()]);
         }

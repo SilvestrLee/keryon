@@ -84,7 +84,10 @@ final class InvitationLandingController extends Controller
                 abort_if(blank($termsVersion) || blank($privacyVersion), 503);
                 $primary->execute($data['token'], $request->user(), $termsVersion, $privacyVersion, (string) Str::uuid());
             } else {
-                $result = $staff->execute($data['token'], $request->user(), (string) config('staff.terms_version'), (string) config('staff.privacy_version'), (string) Str::uuid());
+                $termsVersion = (string) config('staff.terms_version');
+                $privacyVersion = (string) config('staff.privacy_version');
+                abort_if(blank($termsVersion) || blank($privacyVersion), 503);
+                $result = $staff->execute($data['token'], $request->user(), $termsVersion, $privacyVersion, (string) Str::uuid());
             }
         } catch (DomainException) {
             return back()->withErrors(['invitation' => 'This invitation cannot be accepted.']);
