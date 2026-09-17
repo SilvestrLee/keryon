@@ -79,7 +79,10 @@ final class InvitationLandingController extends Controller
         unset($validated);
         try {
             if ($data['type'] === 'activation') {
-                $primary->execute($data['token'], $request->user(), (string) config('onboarding.terms_version', 'test-terms-v1'), (string) config('onboarding.privacy_version', 'test-privacy-v1'), (string) Str::uuid());
+                $termsVersion = (string) config('onboarding.legal.terms_version');
+                $privacyVersion = (string) config('onboarding.legal.privacy_version');
+                abort_if(blank($termsVersion) || blank($privacyVersion), 503);
+                $primary->execute($data['token'], $request->user(), $termsVersion, $privacyVersion, (string) Str::uuid());
             } else {
                 $result = $staff->execute($data['token'], $request->user(), (string) config('staff.terms_version'), (string) config('staff.privacy_version'), (string) Str::uuid());
             }
