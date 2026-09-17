@@ -54,7 +54,7 @@ class ProvisionChurchCommand extends Command
                 $this->components->info("Activation delivery queued as [{$attempt->uuid}].");
             } else {
                 $this->components->warn('SENSITIVE LOCAL ACTIVATION LINK — deliver only to the intended Primary:');
-                $this->line(route('church-activation.show', ['token' => $token]));
+                $this->line(route('invitations.landing', ['type' => 'activation', 'token' => $token]));
             }
         }
 
