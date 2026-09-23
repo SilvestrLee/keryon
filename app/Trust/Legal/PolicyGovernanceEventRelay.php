@@ -91,7 +91,14 @@ final class PolicyGovernanceEventRelay
             $acknowledgement = null;
         }
 
-        if ($acknowledgement === null) {
+        // blank() covers null, '', and whitespace-only strings — a channel
+        // returning any of these has not confirmed delivery. This is checked
+        // here, defensively, rather than left for PolicyGovernanceEvent's own
+        // model guard to reject: that guard throwing on a blank acknowledgement
+        // is correct in principle, but letting it fire here would surface a
+        // model-validation exception out of an ordinary "destination didn't
+        // confirm" outcome instead of the event simply staying pending.
+        if (blank($acknowledgement)) {
             return false; // the attempt above is already recorded; the event remains pending
         }
 

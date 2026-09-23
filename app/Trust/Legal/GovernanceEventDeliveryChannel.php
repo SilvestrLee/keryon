@@ -19,6 +19,8 @@ use App\Models\PolicyGovernanceEvent;
  * treated by the relay identically to a null return (see
  * PolicyGovernanceEventRelay) — implementations do not need their own
  * try/catch purely to satisfy this contract, but should not rely on that.
+ * An empty or whitespace-only string is treated identically to null by the
+ * relay — it is not a valid acknowledgement reference.
  */
 interface GovernanceEventDeliveryChannel
 {

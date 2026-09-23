@@ -32,6 +32,47 @@ class PolicyGovernanceEventRelayTest extends TestCase
         $this->assertNull($fresh->delivered_at);
     }
 
+    public function test_an_empty_string_acknowledgement_is_treated_as_unsuccessful_delivery_without_a_model_exception(): void
+    {
+        $event = PolicyGovernanceEvent::record('terms', 'v1', PolicyGovernanceTransitionType::APPROVED, str_repeat('a', 64), 'operator:jane');
+        $channel = new class implements \App\Trust\Legal\GovernanceEventDeliveryChannel
+        {
+            public function deliver(PolicyGovernanceEvent $event): ?string
+            {
+                return '';
+            }
+        };
+        $relay = new PolicyGovernanceEventRelay($channel);
+
+        $delivered = $relay->relayOne($event);
+
+        $this->assertFalse($delivered);
+        $fresh = $event->fresh();
+        $this->assertSame(PolicyGovernanceDeliveryStatus::PENDING, $fresh->delivery_status);
+        $this->assertSame(1, $fresh->delivery_attempts);
+        $this->assertNull($fresh->external_acknowledgement_reference);
+    }
+
+    public function test_a_whitespace_only_acknowledgement_is_treated_as_unsuccessful_delivery_without_a_model_exception(): void
+    {
+        $event = PolicyGovernanceEvent::record('terms', 'v1', PolicyGovernanceTransitionType::APPROVED, str_repeat('a', 64), 'operator:jane');
+        $channel = new class implements \App\Trust\Legal\GovernanceEventDeliveryChannel
+        {
+            public function deliver(PolicyGovernanceEvent $event): ?string
+            {
+                return "   \n\t";
+            }
+        };
+        $relay = new PolicyGovernanceEventRelay($channel);
+
+        $delivered = $relay->relayOne($event);
+
+        $this->assertFalse($delivered);
+        $fresh = $event->fresh();
+        $this->assertSame(PolicyGovernanceDeliveryStatus::PENDING, $fresh->delivery_status);
+        $this->assertNull($fresh->external_acknowledgement_reference);
+    }
+
     public function test_a_channel_that_throws_is_treated_identically_to_unavailable(): void
     {
         $event = PolicyGovernanceEvent::record('terms', 'v1', PolicyGovernanceTransitionType::APPROVED, str_repeat('a', 64), 'operator:jane');

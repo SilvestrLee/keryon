@@ -37,6 +37,22 @@ class PolicyGovernanceEventTest extends TestCase
         PolicyGovernanceEvent::record('terms', 'v1', PolicyGovernanceTransitionType::APPROVED, 'too-short', 'operator:jane');
     }
 
+    public function test_record_rejects_a_64_character_hash_containing_non_hexadecimal_characters(): void
+    {
+        $this->expectException(DomainException::class);
+
+        // Exactly 64 characters, but 'z' and '-' are not valid hex digits — the length-only
+        // check this used to be would have wrongly accepted this.
+        PolicyGovernanceEvent::record('terms', 'v1', PolicyGovernanceTransitionType::APPROVED, str_repeat('z', 63).'-', 'operator:jane');
+    }
+
+    public function test_record_accepts_uppercase_hexadecimal_content_hashes(): void
+    {
+        $event = PolicyGovernanceEvent::record('terms', 'v1', PolicyGovernanceTransitionType::APPROVED, strtoupper(str_repeat('a', 64)), 'operator:jane');
+
+        $this->assertSame(strtoupper(str_repeat('a', 64)), $event->content_hash);
+    }
+
     public function test_record_rejects_blank_document_type_version_or_actor_reference(): void
     {
         foreach ([['', 'v1', 'operator:jane'], ['terms', '', 'operator:jane'], ['terms', 'v1', '']] as [$type, $version, $actor]) {
@@ -48,6 +64,74 @@ class PolicyGovernanceEventTest extends TestCase
             }
         }
         $this->assertDatabaseCount('policy_governance_events', 0);
+    }
+
+    public function test_direct_creation_of_an_already_delivered_event_is_rejected(): void
+    {
+        // Bypassing record() entirely — a caller constructing the row directly
+        // and claiming it was already delivered must not be able to fabricate
+        // evidence of a delivery that never actually happened via the relay.
+        $this->expectException(DomainException::class);
+
+        PolicyGovernanceEvent::create([
+            'event_uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'document_type' => 'terms', 'version' => 'v1',
+            'transition_type' => PolicyGovernanceTransitionType::APPROVED->value,
+            'content_hash' => str_repeat('a', 64), 'actor_reference' => 'operator:jane',
+            'occurred_at' => now(),
+            'delivery_status' => PolicyGovernanceDeliveryStatus::DELIVERED->value,
+            'delivery_attempts' => 1,
+            'external_acknowledgement_reference' => 'forged-ack',
+            'delivered_at' => now(),
+        ]);
+    }
+
+    public function test_direct_creation_with_nonzero_delivery_attempts_is_rejected(): void
+    {
+        $this->expectException(DomainException::class);
+
+        PolicyGovernanceEvent::create([
+            'event_uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'document_type' => 'terms', 'version' => 'v1',
+            'transition_type' => PolicyGovernanceTransitionType::APPROVED->value,
+            'content_hash' => str_repeat('a', 64), 'actor_reference' => 'operator:jane',
+            'occurred_at' => now(), 'delivery_status' => PolicyGovernanceDeliveryStatus::PENDING->value,
+            'delivery_attempts' => 5,
+        ]);
+    }
+
+    public function test_direct_creation_with_a_delivery_timestamp_already_set_is_rejected(): void
+    {
+        foreach (['last_attempted_at', 'delivered_at'] as $timestampField) {
+            try {
+                PolicyGovernanceEvent::create([
+                    'event_uuid' => (string) \Illuminate\Support\Str::uuid(),
+                    'document_type' => 'terms', 'version' => 'v1',
+                    'transition_type' => PolicyGovernanceTransitionType::APPROVED->value,
+                    'content_hash' => str_repeat('a', 64), 'actor_reference' => 'operator:jane',
+                    'occurred_at' => now(), 'delivery_status' => PolicyGovernanceDeliveryStatus::PENDING->value,
+                    'delivery_attempts' => 0, $timestampField => now(),
+                ]);
+                $this->fail("Expected creation with [{$timestampField}] preset to be rejected.");
+            } catch (DomainException) {
+                $this->addToAssertionCount(1);
+            }
+        }
+        $this->assertDatabaseCount('policy_governance_events', 0);
+    }
+
+    public function test_direct_creation_with_an_acknowledgement_reference_already_set_is_rejected(): void
+    {
+        $this->expectException(DomainException::class);
+
+        PolicyGovernanceEvent::create([
+            'event_uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'document_type' => 'terms', 'version' => 'v1',
+            'transition_type' => PolicyGovernanceTransitionType::APPROVED->value,
+            'content_hash' => str_repeat('a', 64), 'actor_reference' => 'operator:jane',
+            'occurred_at' => now(), 'delivery_status' => PolicyGovernanceDeliveryStatus::PENDING->value,
+            'delivery_attempts' => 0, 'external_acknowledgement_reference' => 'pre-set-ack',
+        ]);
     }
 
     public function test_identity_and_content_fields_are_immutable_once_recorded(): void
@@ -119,13 +203,59 @@ class PolicyGovernanceEventTest extends TestCase
         $event->save();
     }
 
-    public function test_delivery_attempts_and_last_attempted_at_remain_freely_mutable(): void
+    public function test_delivery_attempts_and_last_attempted_at_remain_mutable_while_pending(): void
     {
         $event = PolicyGovernanceEvent::record('terms', 'v1', PolicyGovernanceTransitionType::APPROVED, str_repeat('a', 64), 'operator:jane');
 
         $event->forceFill(['delivery_attempts' => 3, 'last_attempted_at' => now()])->save();
 
         $this->assertSame(3, $event->fresh()->delivery_attempts);
+    }
+
+    public function test_delivery_attempts_cannot_change_after_the_event_is_delivered(): void
+    {
+        $event = PolicyGovernanceEvent::record('terms', 'v1', PolicyGovernanceTransitionType::APPROVED, str_repeat('a', 64), 'operator:jane');
+        $event->forceFill(['delivery_attempts' => 2, 'last_attempted_at' => now()])->save();
+        $event->forceFill([
+            'delivery_status' => PolicyGovernanceDeliveryStatus::DELIVERED->value,
+            'external_acknowledgement_reference' => 'ack-1', 'delivered_at' => now(),
+        ])->save();
+
+        $delivered = $event->fresh();
+        $delivered->delivery_attempts = 99;
+
+        $this->expectException(DomainException::class);
+        $delivered->save();
+    }
+
+    public function test_last_attempted_at_cannot_change_after_the_event_is_delivered(): void
+    {
+        $event = PolicyGovernanceEvent::record('terms', 'v1', PolicyGovernanceTransitionType::APPROVED, str_repeat('a', 64), 'operator:jane');
+        $event->forceFill([
+            'delivery_status' => PolicyGovernanceDeliveryStatus::DELIVERED->value,
+            'external_acknowledgement_reference' => 'ack-1', 'delivered_at' => now(),
+        ])->save();
+
+        $delivered = $event->fresh();
+        $delivered->last_attempted_at = now()->addMinute();
+
+        $this->expectException(DomainException::class);
+        $delivered->save();
+    }
+
+    public function test_the_legitimate_pending_to_delivered_transition_still_succeeds_after_the_freeze_guard(): void
+    {
+        $event = PolicyGovernanceEvent::record('terms', 'v1', PolicyGovernanceTransitionType::APPROVED, str_repeat('a', 64), 'operator:jane');
+        $event->forceFill(['delivery_attempts' => 1, 'last_attempted_at' => now()])->save();
+
+        $event->forceFill([
+            'delivery_status' => PolicyGovernanceDeliveryStatus::DELIVERED->value,
+            'external_acknowledgement_reference' => 'ack-1', 'delivered_at' => now(),
+        ])->save();
+
+        $fresh = $event->fresh();
+        $this->assertSame(PolicyGovernanceDeliveryStatus::DELIVERED, $fresh->delivery_status);
+        $this->assertSame('ack-1', $fresh->external_acknowledgement_reference);
     }
 
     public function test_an_event_can_never_be_deleted(): void
