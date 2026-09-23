@@ -19,6 +19,7 @@ class ChurchActivationController extends Controller
     {
         $activation = $this->validActivation($token);
         abort_unless(strtolower($request->user()->email) === strtolower($activation->prospective_primary_email), 403);
+        abort_if(blank(config('onboarding.legal.terms_version')) || blank(config('onboarding.legal.privacy_version')), 503);
 
         return view('onboarding.church-activation', ['activation' => $activation, 'token' => $token]);
     }
@@ -26,13 +27,14 @@ class ChurchActivationController extends Controller
     public function accept(Request $request, string $token, AcceptChurchPrimaryActivation $accept, SelectActiveChurch $select): RedirectResponse
     {
         $validated = $request->validate([
-            'terms_version' => ['required', 'string', 'max:100'],
-            'privacy_version' => ['required', 'string', 'max:100'],
             'acceptance_idempotency_key' => ['required', 'uuid'],
             'legal_acceptance' => ['accepted'],
         ]);
+        $termsVersion = (string) config('onboarding.legal.terms_version');
+        $privacyVersion = (string) config('onboarding.legal.privacy_version');
+        abort_if(blank($termsVersion) || blank($privacyVersion), 503);
         try {
-            $result = $accept->execute($token, $request->user(), $validated['terms_version'], $validated['privacy_version'], $validated['acceptance_idempotency_key']);
+            $result = $accept->execute($token, $request->user(), $termsVersion, $privacyVersion, $validated['acceptance_idempotency_key']);
         } catch (DomainException $exception) {
             return back()->withErrors(['activation' => $exception->getMessage()]);
         }

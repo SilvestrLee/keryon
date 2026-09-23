@@ -18,8 +18,6 @@
         @endif
         <form method="POST" class="mt-6 space-y-4">
             @csrf
-            <input type="hidden" name="terms_version" value="{{ config('onboarding.legal.terms_version') }}">
-            <input type="hidden" name="privacy_version" value="{{ config('onboarding.legal.privacy_version') }}">
             <input type="hidden" name="acceptance_idempotency_key" value="{{ (string) Illuminate\Support\Str::uuid() }}">
             <label class="flex gap-3 text-sm text-gray-700">
                 <input type="checkbox" name="legal_acceptance" value="1" required>
