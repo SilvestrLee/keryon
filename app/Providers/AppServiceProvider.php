@@ -30,6 +30,9 @@ use App\PublicWebsite\Themes\ThemeRegistry;
 use App\Support\OrganizationContext;
 use App\Support\PlatformContext;
 use App\Support\TenantContext;
+use App\Trust\Legal\FakeGovernanceEventDeliveryChannel;
+use App\Trust\Legal\GovernanceEventDeliveryChannel;
+use App\Trust\Legal\UnavailableGovernanceEventDeliveryChannel;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
@@ -86,6 +89,21 @@ class AppServiceProvider extends ServiceProvider
             }
 
             return $app->make(UnavailableDomainProvisioner::class);
+        });
+        $this->app->bind(GovernanceEventDeliveryChannel::class, function ($app): GovernanceEventDeliveryChannel {
+            $driver = config('policy-governance.delivery_channel');
+            // Allowlisted local/testing only — deliberately narrower than the
+            // "not production" check used elsewhere in this file (DnsResolver,
+            // DomainProvisioner). Durable governance evidence warrants excluding
+            // staging too, not only production: a fake, always-succeeds channel
+            // silently active in staging would defeat exactly the kind of
+            // pre-production verification staging exists to provide.
+            if ($driver === 'fake' && $app->environment(['local', 'testing'])) {
+                return $app->make(FakeGovernanceEventDeliveryChannel::class);
+            }
+
+            // No real driver exists yet — see K-LEGAL-001B-A-DECISION-ADDENDUM.md §3.
+            return $app->make(UnavailableGovernanceEventDeliveryChannel::class);
         });
     }
 
