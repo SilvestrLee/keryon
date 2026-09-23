@@ -2,31 +2,66 @@
 
 **Milestone:** K-LEGAL-001B-B1A — Registry Schema & Integrity Foundation
 **Date:** 2026-09-24
-**Status:** Review only. **No package has been installed by this document or this milestone.** Grounded in `origin/staging` at `ef266658a6d3772a47abc80d3aa3240085201b1b`, `K-LEGAL-001B-A-ARCHITECTURE.md` Revision 3, and `K-LEGAL-001B-A-DECISION-ADDENDUM.md`.
+**Revision:** 2 — corrects §1 of Revision 1, which recommended `symfony/html-sanitizer` as a self-contained new addition without checking its complete dependency requirements. It is in fact already an indirect dependency of this project (via `filament/support`), and its already-installed 8.1.x line requires PHP `>=8.4.1`, exceeding this project's declared `^8.3` range — a materially different finding than Revision 1 presented. §2 and §3 are unchanged.
+**Status:** Review only. **No package has been installed by this document or this milestone.** Every `composer require --dry-run` performed for this correction was non-mutating and confirmed reverted via `git diff` immediately afterward. Grounded in `origin/staging` at `ef266658a6d3772a47abc80d3aa3240085201b1b`, `K-LEGAL-001B-A-ARCHITECTURE.md` Revision 3, and `K-LEGAL-001B-A-DECISION-ADDENDUM.md`.
 
 ---
 
 ## 1. HTML sanitizer recommendation
 
-### 1.1 Recommendation: `symfony/html-sanitizer`
+**Correction to Revision 1 of this document:** the original claim — "no other dependency requires updating," implying `symfony/html-sanitizer` would be a clean, self-contained new addition — was made without checking the package's own complete dependency requirements. Checking them directly (via `vendor/symfony/html-sanitizer/composer.json`, Packagist's real metadata, and two non-mutating `composer require --dry-run` runs, all reverted and confirmed via `git diff` afterward) surfaced a materially different and more important fact than anything in the original recommendation.
 
-| Fact | Value | Status |
+### 1.1 `symfony/html-sanitizer` is already present — as an indirect dependency
+
+`symfony/html-sanitizer` **v8.1.0 is already installed in `vendor/`, already in `composer.lock`'s production `packages` section, and already autoloadable** — confirmed directly: `class_exists(\Symfony\Component\HtmlSanitizer\HtmlSanitizer::class)` returns `true` in this worktree right now, with no `composer require` run. It is not a direct dependency of this project's own `composer.json` — it is pulled in transitively by `filament/support` v4.11.7, which requires `symfony/html-sanitizer: ^7.0|^8.0`.
+
+This changes the actual decision in front of Product Office: it is not "install a new package," it is **"add an explicit direct `require` for a package already silently relied upon transitively"** — the safer engineering practice, since a future Filament upgrade that drops or narrows its own `html-sanitizer` requirement could otherwise silently remove this project's access to a class its own code has started depending on, with no direct constraint of its own protecting against that.
+
+### 1.2 Verified requirements — 8.1 vs. 7.4, and why they differ materially
+
+| | `symfony/html-sanitizer` **8.1.x** (already installed, v8.1.0) | `symfony/html-sanitizer` **7.4.x** |
 |---|---|---|
-| Package identity, license, minimum PHP | `symfony/html-sanitizer`, MIT, PHP 8.1+ (project requires `^8.3` — satisfied) | **Verified** — public package facts, not dependent on any decision |
-| Maintainer / support cycle | Symfony core team, same cycle as every other `symfony/*` package | **Verified** |
-| `symfony/*` already present in this project | `composer.lock` contains `symfony/console`, `symfony/event-dispatcher`, `symfony/filesystem`, `symfony/finder`, `symfony/css-selector`, `symfony/clock`, and others at the `v8.1.x` line, transitively via `laravel/framework: ^13.8` | **Verified** — confirmed by reading `composer.lock` directly in this worktree, not assumed |
-| Design (allowlist-based, safe-by-default) | Nothing permitted unless explicitly allowed via `HtmlSanitizerConfig`; `<script>`, `on*`, `javascript:`/`data:`, `<iframe>`/`<object>`/`<embed>`, `<style>` stripped by default | **Verified** — documented library behavior |
-| **Choosing this package over `mews/purifier`, and installing it at all** | — | **Recommendation — requires Product Office/Engineering approval before `composer require` runs.** Nothing above being verified makes the choice itself pre-approved. |
+| PHP requirement (from the package's own `composer.json`, not inferred) | `>=8.4.1` | `>=8.2` |
+| `ext-dom` | Required | Required |
+| `league/uri` | `^6.5\|^7.0` | `^6.5\|^7.0` |
+| `masterminds/html5` | Not required | **`^2.7.2` — required** |
+| `symfony/deprecation-contracts` | Not required | `^2.5\|^3` |
+| License | MIT | MIT |
 
-The row split above is deliberate: everything about *what the package is* is a checkable fact, independent of anyone's judgment. *Whether to adopt it* is a decision this document proposes but does not make.
+**Verified, not assumed:**
+- `league/uri` is already locked in this project at `7.8.1`, which satisfies `^7.0` — no version bump needed for either line.
+- `masterminds/html5` is **not** currently present in `composer.lock` at all — choosing the 7.4.x line means a genuinely new package, not merely a version change.
+- `symfony/deprecation-contracts` is already locked at `v3.7.0`, satisfying `^2.5|^3` — already satisfied for the 7.4.x line too.
+- `ext-dom` is loaded in this environment (`php -m` confirms `dom` present).
 
-**Why this over the more commonly recommended `mews/purifier`:** this project's `composer.lock` already pulls in `symfony/*` components (console, event-dispatcher, filesystem, finder, css-selector, clock, and others) at the `v8.1.x` line, transitively via `laravel/framework: ^13.8`. Adding `symfony/html-sanitizer` at a version from that same family introduces no new dependency ecosystem and no version-conflict risk — it slots into a tree that already exists. `mews/purifier` would instead pull in `ezyang/htmlpurifier`, an entirely separate, older library with **LGPL-2.1** licensing — worth flagging explicitly given this specific subsystem exists to serve legal documents: introducing a copyleft-family license into exactly the code path responsible for rendering the Terms of Use is the kind of detail that invites avoidable legal-review friction. `symfony/html-sanitizer`'s MIT license carries no such concern.
+**The critical, previously-unchecked fact: this project's `composer.json` declares `"php": "^8.3"`.** The already-installed `symfony/html-sanitizer` v8.1.0 requires PHP `>=8.4.1` — a range this project's own declared PHP floor does **not** guarantee. This is a **pre-existing inconsistency already in the repository** (via Filament's own transitive requirement), not something this review's recommendation introduces — but adopting 8.1.x as an *explicit* direct dependency would make that reliance explicit rather than silent, and does not by itself resolve the inconsistency between what `composer.json` claims to support and what is actually required for the dependency tree to install.
 
-`mews/purifier`/`ezyang/htmlpurifier` remains a credible alternative on pure technical merit — it has a longer production track record — but is not the primary recommendation here for the licensing reason above, on top of the dependency-tree argument.
+### 1.3 Dry-run verification (non-mutating; confirmed reverted both times via `git diff`)
 
-**Composer changes required (not performed by this document):** `composer require symfony/html-sanitizer` (dev-time: no corresponding `--dev` package needed; a `PolicyContentSanitizerTest` would use the same package). No other dependency requires updating — the existing `symfony/*` v8.1.x lock entries already satisfy `symfony/html-sanitizer`'s own internal `symfony/*` constraints at that version line.
+```txt
+$ composer require "symfony/html-sanitizer:^7.4" --dry-run
+  - Locking masterminds/html5 (2.11.0)
+  - Downgrading symfony/html-sanitizer (v8.1.0 => v7.4.19)
 
-### 1.2 Proposed `PolicyContentSanitizer` contract
+$ composer require "symfony/html-sanitizer:^8.1" --dry-run
+  - Upgrading symfony/html-sanitizer (v8.1.0 => v8.1.7)
+```
+
+Both resolve without conflict **in this environment**, which runs PHP 8.5.8 — satisfying both lines' PHP floors regardless of which is chosen. This is exactly the distinction that matters and that Revision 1 did not draw: **resolving successfully in this sandboxed dev environment is not evidence of compatibility with the project's declared `^8.3` range or with any specific deployment target.** Choosing 7.4.x would be a real *downgrade* from what Filament already transitively resolves to, plus a new `masterminds/html5` dependency; choosing 8.1.x keeps the already-resolved version but requires accepting (or correcting) the `^8.3`/`>=8.4.1` inconsistency above.
+
+### 1.4 Open question this review cannot resolve: the intended deployment PHP version
+
+`docs/06-Engineering/Deployment_Guardrails.md` and `docs/06-Engineering/Local_Development.md` were checked directly — **neither documents a specific target PHP version** for staging/production. This is the actual blocking question for choosing between the two lines, not a stylistic preference:
+- If the real deployment target runs PHP `>=8.4.1`: the already-installed 8.1.x line should simply be made an explicit direct dependency — no downgrade, no new package, and this is also the moment to correct `composer.json`'s `"php": "^8.3"` declaration to reflect what the dependency tree actually requires.
+- If the real deployment target is genuinely PHP 8.3.x only: the 8.1.x line **cannot** be used at all (not "should be avoided" — the package's own `composer.json` constraint makes installation fail on 8.3.x), and the 7.4.x line must be chosen instead, accepting the downgrade from what Filament already resolves to and the new `masterminds/html5` dependency.
+
+This review does not have visibility into the actual deployment target's PHP version and does not decide between the two lines. **Both remain named options pending that answer, not a single recommendation as Revision 1 incorrectly presented.**
+
+### 1.5 `mews/purifier` alternative (unchanged from Revision 1)
+
+`mews/purifier`/`ezyang/htmlpurifier` remains a credible alternative — longer production track record — but was not re-investigated to the same depth in this correction, since it was not the subject of the finding above. Its LGPL-2.1 licensing (vs. `symfony/html-sanitizer`'s MIT) remains a flagged consideration specific to a legal-document-serving subsystem, unchanged from Revision 1.
+
+### 1.6 Proposed `PolicyContentSanitizer` contract
 
 ```php
 namespace App\Trust\Legal;
@@ -45,7 +80,7 @@ interface PolicyContentSanitizer
 
 A single method, matching the shape `PolicyVersion::previewSanitizedContent()` (Architecture §4.2) already expects to call.
 
-### 1.3 Permitted elements and attributes
+### 1.7 Permitted elements and attributes
 
 | Category | Elements | Notes |
 |---|---|---|
@@ -101,12 +136,15 @@ All three must hold simultaneously. Until they do, `GovernanceEventDeliveryChann
 
 ## 4. Summary — verified facts vs. open recommendations
 
-| Item | Verified fact (checkable now, not a judgment call) | Recommendation (requires Product Office/Engineering approval before acting) |
+| Item | Verified fact (checkable now, not a judgment call) | Recommendation / open question (requires Product Office/Engineering approval or answer before acting) |
 |---|---|---|
-| Sanitizer | `symfony/html-sanitizer` is MIT-licensed, requires PHP 8.1+, and `symfony/*` v8.1.x already exists in this project's `composer.lock` | **Adopting it, and running `composer require`, is not yet approved** |
-| Alternative | `mews/purifier`/`ezyang/htmlpurifier` exists, is LGPL-2.1, has a longer production track record | Rejecting it in favor of the above is this review's position, not a decided fact |
-| Permitted elements/attributes (§1.3) | Architecture §5 literally names headings/paragraphs/lists/tables/bold-italic/links | Whether to add `br`, `rel`, or `target` is explicitly left open, not decided here |
+| Sanitizer presence | `symfony/html-sanitizer` v8.1.0 is **already installed**, already autoloadable, transitively via `filament/support` — confirmed via `class_exists()`, not merely `composer.lock` inspection | **Adding it as a direct `composer.json` dependency is not yet approved** |
+| Sanitizer PHP requirement | The already-installed v8.1.0's own `composer.json` requires `php: >=8.4.1` — confirmed by reading `vendor/symfony/html-sanitizer/composer.json` directly | **This project's declared `"php": "^8.3"` does not guarantee that floor.** Pre-existing inconsistency, not introduced by this review — open for Product Office/Engineering to resolve |
+| 8.1.x vs. 7.4.x tradeoff (§1.2–§1.3) | 7.4.x needs PHP `>=8.2` (compatible with `^8.3`) but requires a genuinely new package (`masterminds/html5`) and downgrades the already-resolved version; 8.1.x needs nothing new but requires PHP `>=8.4.1` — both verified via non-mutating dry-runs, reverted | **Not decided by this review** — depends on the deployment-PHP-version answer in §1.4 |
+| Deployment target PHP version | Not documented anywhere in this repository (`Deployment_Guardrails.md`, `Local_Development.md` checked directly) | **Open question Product Office/Ops must answer** — it is the actual blocking decision, not a style preference |
+| Alternative (`mews/purifier`) | Exists, is LGPL-2.1, has a longer production track record | Rejecting it in favor of `symfony/html-sanitizer` remains this review's position, not a decided fact |
+| Permitted elements/attributes (§1.7) | Architecture §5 literally names headings/paragraphs/lists/tables/bold-italic/links | Whether to add `br`, `rel`, or `target` is explicitly left open, not decided here |
 | Authorization mechanism | `PlatformMembership`/`PlatformContext`/`PlatformCapability`/`PlatformRole`/`PlatformAuditEvent` exist today, unmodified, exactly as described in §2 | **Adding `PolicyGovernanceManage` to `PlatformCapability` has not been done** — recommended only |
 | Publication gate (§3) | Restates Decision Addendum §3 verbatim; not a new claim | N/A — no recommendation here, purely a restatement |
 
-No package has been installed. No capability enum change has been made. No authorization policy class has been created. Every item in the right-hand column above is a proposal for a future milestone, not an action this review or K-LEGAL-001B-B1A has taken.
+No package has been installed and no `composer.json`/`composer.lock` change has been made by this document — both `composer require --dry-run` invocations used to produce §1.3's evidence were confirmed reverted via `git diff` immediately after each ran. No capability enum change has been made. No authorization policy class has been created. Every item in the right-hand column above is a proposal or an open question for Product Office/Engineering, not an action this review or K-LEGAL-001B-B1A has taken.

@@ -82,8 +82,26 @@ class PolicyVersion extends Model
             // unsanitized working text) and re-derived from the SANITIZED
             // content by the future approve() method, which will overwrite
             // both content and sha256 together in the same write.
+            //
+            // saving() fires BEFORE creating() in Eloquent's event order.
+            // During a create(), $version->exists is still false at this
+            // point and creating() has not yet forced status back to draft —
+            // gating this recompute on the CURRENT status value would let a
+            // caller who sets status/sha256 directly (forceCreate(), or
+            // direct property assignment bypassing $fillable on a new,
+            // unsaved instance) skip the recompute entirely, persisting a
+            // forged hash underneath a status creating() then silently
+            // corrects back to draft. For a brand-new record there is no
+            // legitimate non-draft status yet, so the recompute must be
+            // unconditional here; only an UPDATE to an already-persisted,
+            // still-draft row is gated on the current status.
+            if (! $version->exists) {
+                $version->sha256 = hash('sha256', (string) $version->content);
+
+                return;
+            }
             $status = $version->status instanceof PolicyVersionStatus ? $version->status->value : $version->status;
-            if (($status ?? PolicyVersionStatus::DRAFT->value) === PolicyVersionStatus::DRAFT->value) {
+            if ($status === PolicyVersionStatus::DRAFT->value) {
                 $version->sha256 = hash('sha256', (string) $version->content);
             }
         });

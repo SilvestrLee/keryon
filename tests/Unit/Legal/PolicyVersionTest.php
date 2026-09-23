@@ -95,6 +95,64 @@ class PolicyVersionTest extends TestCase
         $this->assertSame(hash('sha256', 'real content'), $draft->fresh()->sha256);
     }
 
+    public function test_direct_model_construction_with_forged_status_and_hash_still_yields_a_safe_draft(): void
+    {
+        // saving() fires BEFORE creating() in Eloquent's event order — at the moment saving()
+        // runs during a create, $model->exists is still false and creating() has not yet forced
+        // status back to draft. A caller who sets status/sha256/approval fields directly on a new
+        // (unsaved) instance, bypassing $fillable entirely, must still end up with an ordinary,
+        // correctly-hashed draft once save() completes.
+        $model = new PolicyVersion();
+        $model->document_type = PolicyDocumentType::TERMS->value;
+        $model->version = 'terms-direct-construct-v1';
+        $model->title = 'Forged Title';
+        $model->content = 'real content';
+        $model->status = PolicyVersionStatus::APPROVED->value;
+        $model->sha256 = str_repeat('f', 64);
+        $model->approved_by_reference = 'forged-operator';
+        $model->approved_at = now();
+        $model->approval_evidence_reference = 'forged-evidence';
+        $model->published_at = now();
+
+        $model->save();
+
+        $fresh = $model->fresh();
+        $this->assertSame(PolicyVersionStatus::DRAFT, $fresh->status);
+        $this->assertSame(hash('sha256', 'real content'), $fresh->sha256);
+        $this->assertNull($fresh->approved_by_reference);
+        $this->assertNull($fresh->approved_at);
+        $this->assertNull($fresh->approval_evidence_reference);
+        $this->assertNull($fresh->published_at);
+        $this->assertNull($fresh->retired_at);
+    }
+
+    public function test_force_create_with_an_attempted_approved_status_and_forged_hash_still_yields_a_safe_draft(): void
+    {
+        // forceCreate() bypasses $fillable guarding via forceFill() before save() is ever called,
+        // so status/sha256/approval fields are already set on the model when saving() fires.
+        $version = PolicyVersion::forceCreate([
+            'document_type' => PolicyDocumentType::TERMS->value,
+            'version' => 'terms-force-create-v1',
+            'title' => 'Forged Title',
+            'content' => 'real content',
+            'status' => PolicyVersionStatus::APPROVED->value,
+            'sha256' => str_repeat('f', 64),
+            'approved_by_reference' => 'forged-operator',
+            'approved_at' => now(),
+            'approval_evidence_reference' => 'forged-evidence',
+            'published_at' => now(),
+        ]);
+
+        $fresh = $version->fresh();
+        $this->assertSame(PolicyVersionStatus::DRAFT, $fresh->status);
+        $this->assertSame(hash('sha256', 'real content'), $fresh->sha256);
+        $this->assertNull($fresh->approved_by_reference);
+        $this->assertNull($fresh->approved_at);
+        $this->assertNull($fresh->approval_evidence_reference);
+        $this->assertNull($fresh->published_at);
+        $this->assertNull($fresh->retired_at);
+    }
+
     // --- Invalid document types and audiences -------------------------------
 
     public function test_creating_with_an_invalid_document_type_string_is_rejected(): void
