@@ -144,8 +144,14 @@ class PolicyVersion extends Model
         });
 
         static::deleting(function (self $version): void {
-            $status = $version->status instanceof PolicyVersionStatus ? $version->status->value : $version->status;
-            if ($status !== PolicyVersionStatus::DRAFT->value) {
+            // Authorize by the PERSISTED status (getRawOriginal(), the value
+            // as it exists in the database), never the in-memory $version
+            // ->status attribute — a caller could set ->status = 'draft' on
+            // an already-persisted, genuinely approved row without saving
+            // that change, then call delete(); checking the in-memory value
+            // would incorrectly authorize deleting a real approved record.
+            $originalStatus = PolicyVersionStatus::tryFrom((string) $version->getRawOriginal('status'));
+            if ($originalStatus !== PolicyVersionStatus::DRAFT) {
                 throw new DomainException('Only a draft PolicyVersion may be deleted.');
             }
         });

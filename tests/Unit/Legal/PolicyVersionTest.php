@@ -358,6 +358,36 @@ class PolicyVersionTest extends TestCase
         $this->assertDatabaseMissing('policy_versions', ['id' => $draft->id]);
     }
 
+    public function test_deletion_is_authorized_by_the_persisted_status_not_an_unsaved_in_memory_change(): void
+    {
+        // No legitimate approve() exists in this milestone to reach a persisted approved row
+        // through the application itself — test-only direct database setup simulates that
+        // future, otherwise-unreachable state.
+        $draft = PolicyVersion::createDraft(PolicyDocumentType::TERMS, 'terms-persisted-approved-v1', 'content', 'Title');
+        \Illuminate\Support\Facades\DB::table('policy_versions')->where('id', $draft->id)->update([
+            'status' => PolicyVersionStatus::APPROVED->value,
+            'published_at' => now(),
+            'approved_by_reference' => 'operator:jane',
+            'approved_at' => now(),
+            'approval_evidence_reference' => 'evidence-123',
+        ]);
+
+        $reloaded = PolicyVersion::find($draft->id);
+        $this->assertSame(PolicyVersionStatus::APPROVED, $reloaded->status);
+
+        // Mutate the in-memory status only — never saved.
+        $reloaded->status = PolicyVersionStatus::DRAFT->value;
+
+        try {
+            $reloaded->delete();
+            $this->fail('Expected deletion authorized by an unsaved in-memory status change to be rejected.');
+        } catch (DomainException) {
+            $this->addToAssertionCount(1);
+        }
+
+        $this->assertDatabaseHas('policy_versions', ['id' => $draft->id, 'status' => 'approved']);
+    }
+
     public function test_content_body_column_exists_but_document_type_and_version_form_the_natural_key(): void
     {
         $this->assertTrue(\Illuminate\Support\Facades\Schema::hasColumn('policy_versions', 'content'));
